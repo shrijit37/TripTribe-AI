@@ -22,7 +22,7 @@ app.use(cookieParser());
 const port = 8080
 app.use(
     cors({
-      origin: `http://localhost:${port}`,
+      origin: `http://localhost:5173`,
       methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
       credentials: true,
     })

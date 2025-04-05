@@ -3,7 +3,7 @@ import getResponse from "../controllers/gptResponse.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => { 
+router.post("/", async (req, res) => { 
     try {
         const { days, cityName, budget } = req.body; 
         console.log("API is working");
@@ -14,7 +14,11 @@ router.get("/", async (req, res) => {
         res.json(response); // Send the actual response
     } catch (error) {
         console.error("Error fetching response:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        if (error instanceof SyntaxError) {
+            res.status(500).json({ error: "Invalid JSON response from OpenAI" });
+        } else {
+            res.status(500).json({ error: "Internal Server Error" });
+        }
     }
 });
 

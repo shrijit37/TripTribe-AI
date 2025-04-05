@@ -1,10 +1,13 @@
-
 import GridDistortion from '../components/GridDistortion';
 import GradientText from '../components/TextAnimations/GradientText/GradientText'
 
+// Change the import statement to react-router-dom
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
-    return (
+        let navigate = useNavigate();
+
+       return (
 
         <div>
 
@@ -31,7 +34,7 @@ const Hero = () => {
                     Your Dream Trip, Perfectly Planned
                 </GradientText>
                 <div className='text-xl self-center my-2'>Discover the world with ease! Create personalized travel itineraries in minutes – tailored to your style, budget, and schedule. Start your adventure today!</div>
-                <button className="btn btn-outline w-[150px] rounded-full self-center m-5">Try it! ↗</button>
+                <button className="btn btn-outline w-[150px] rounded-full self-center m-5" onClick={() => navigate("/search")}>Try it! ↗</button>
             </section>
 
             <section className='flex content-center flex-col p-5'>

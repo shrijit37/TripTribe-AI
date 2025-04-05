@@ -5,7 +5,6 @@
 */
 
 import "./GradientText.css";
-
 export default function GradientText({
   children,
   className = "",
