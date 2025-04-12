@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import SignInButton from "./SignInButton";
 import { ToastContainer, toast } from 'react-toastify';
 
-const Signup = () => {
+const Signup = (props) => {
 
     const emailRef = useRef();
     const passRef = useRef();
@@ -86,7 +86,15 @@ const Signup = () => {
                     <input type="text" className="grow" placeholder="Confirm Password" />
                 </label>
                 <div className="flex flex-col justify-evenly">
-                    <div className="text-md flex text-center">New user, <div className="text-md">sign up here</div></div>
+                    <div className="text-md flex text-center">
+                        Already have an account?&nbsp;
+                        <div
+                            className="text-md cursor-pointer text-blue-500"
+                            onClick={() => props.setSignin(true)} // Switch to Signin
+                        >
+                            Sign in here.
+                        </div>
+                    </div>
                     <button className="btn btn-outline btn-success flex mt-5" onClick={submitHandler}>Register</button>
                 </div>
             </>) :
@@ -102,4 +110,4 @@ const Signup = () => {
     )
 }
 
-export default Signup   
+export default Signup

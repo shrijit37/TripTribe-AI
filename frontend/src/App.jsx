@@ -4,13 +4,13 @@ import Navbar from "./components/navbar";
 import Hero from "./pages/Hero.jsx"
 import Search from "./pages/Search.jsx"
 import NotFound from "./pages/NotFound.jsx";
-
-import { AuthProvider } from "./context/AuthProvider.jsx";
 import  Result  from "./pages/Result.jsx";
+import {Provider} from "react-redux"
+import  store  from "../Redux/store.js";
 function App() {
   return (
     <>
-      <AuthProvider>
+      <Provider store={store}>
         <BrowserRouter>
           <Navbar />
           <Routes>
@@ -20,7 +20,7 @@ function App() {
             <Route path = '/result' element={<Result />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
+        </Provider>
     </>
   );
 }

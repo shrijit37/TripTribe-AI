@@ -33,7 +33,7 @@ Here is a sample structure for the JSON output:
     "Region/State" : "______",
     "Country" : "______",
     "description": "________",
-    "Icomic place" : "_______"
+    "IconicPlace" : "_______"
   },
   "itinerary": [
     {

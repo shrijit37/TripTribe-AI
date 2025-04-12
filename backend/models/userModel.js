@@ -17,6 +17,13 @@ const userSchema = mongoose.Schema(
         password:{
             type:String,
             required:true,
+        },
+        recentSearch : {
+            type: Array,        //not sure
+            default: [],
+        },
+        savedPlaces : {
+
         }
     },{timestamps:true}
 );
