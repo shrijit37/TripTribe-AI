@@ -13,16 +13,11 @@ const Search = () => {
 
     const inputRef = useRef(null);
     const autocompleteRef = useRef(null);
-    
-    // This approach ensures the Google Maps API is already loaded in your HTML
-    // with the correct params and the element is available when initializing
+
     useEffect(() => {
-        // Wait for component to fully mount
         const initializeAutocomplete = () => {
-            // Check if Google Maps is loaded and input element exists
             if (window.google && window.google.maps && window.google.maps.places && inputRef.current) {
                 try {
-                    // Create new autocomplete instance
                     const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
                         types: ['(cities)'],
                         fields: ['name', 'place_id'] // Specify fields to reduce response size
@@ -42,7 +37,6 @@ const Search = () => {
                     console.error("Error initializing Places Autocomplete:", error);
                 }
             } else {
-                // Retry after a short delay if dependencies aren't ready
                 setTimeout(initializeAutocomplete, 500);
             }
         };

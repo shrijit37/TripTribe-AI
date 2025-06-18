@@ -1,6 +1,6 @@
 import express from "express";
 import getResponse from "../controllers/gptResponse.js";
-
+import User from "../models/userModel.js";
 const router = express.Router();
 
 router.post("/", async (req, res) => { 
@@ -10,6 +10,7 @@ router.post("/", async (req, res) => {
         console.log(days, cityName, budget);
         
         const response = await getResponse(days, cityName, budget);
+
         console.log(response)
         res.json(response); // Send the actual response
     } catch (error) {

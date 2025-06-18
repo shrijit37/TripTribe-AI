@@ -2,32 +2,46 @@ import mongoose, { Schema, mongo } from "mongoose";
 
 const userSchema = mongoose.Schema(
     {
-        fname:{
-            type:String,
-            required:true,
+        fname: {
+            type: String,
+            required: true,
         },
-        lname:{
-            type:String,
+        lname: {
+            type: String,
         },
-        email:{
-            type:String,
-            required:true,
-            unique:true
+        email: {
+            type: String,
+            required: true,
+            unique: true
         },
-        password:{
-            type:String,
-            required:true,
+        password: {
+            type: String,
+            required: true,
         },
-        recentSearch : {
-            type: Array,        //not sure
+        recentSearch: {
+            type: [{
+                name: String,
+                Region: String,
+                Country: String,
+                description: String,
+                IconicPlace: String,
+                // itinerary: [
+                //     { day: Number, activities: [Array], meals: [Object] },
+                // ], 
+                // isSaved: Boolean,
+                // time : { type: Date, default: Date.now }
+            }],        //not sure
             default: [],
         },
-        savedPlaces : {
-
-        }
-    },{timestamps:true}
+    }, { timestamps: true }
 );
-
-const User = mongoose.model('User',userSchema);
+const User = mongoose.model('User', userSchema);
+// console.log(User);
+async function check(){
+    const email = 'johndoe@example.com';
+    const chk = await User.findOne({email});
+    console.log(chk);
+}
+check();
 
 export default User;

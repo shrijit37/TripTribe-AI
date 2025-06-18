@@ -24,7 +24,7 @@ The itinerary should include at least three activities per day.
 Provide a brief overview of the city, including its main attractions and cultural significance.  
 Ensure that the dining options cater to a range of tastes and are within a reasonable distance from the day's activities.
 give data in json and write nothing else
-
+Only mention hotels that are in the speceified budget give atleast 5 hotels for each destinations.
 
 Here is a sample structure for the JSON output:  
 {
@@ -33,7 +33,41 @@ Here is a sample structure for the JSON output:
     "Region/State" : "______",
     "Country" : "______",
     "description": "________",
-    "IconicPlace" : "_______"
+    "IconicPlace" : "_______",
+    "BestTimeToVisit": "________",
+    "Currency": "________",
+    "Language": "________",
+    "PopularDishes": ["________", "________", "________"],
+    "SafetyTips": "________",
+    "EmergencyNumbers": {
+      "Police": "________",
+      "Medical": "________",
+      "Fire": "________"
+    },
+  },
+  "Reach" : {
+    "nearestAirport":[Airport Name, Distance from city],
+    "nearestRailwayStation":[Railway Station Name, Distance from city],
+    "nearestBusStation":[Bus Station Name, Distance from city],
+    "localTransportation": "________",
+  }, 
+  Tips: {
+  [array of tips for the city, e.g., "Stay hydrated", "Carry local currency for small purchases", "Respect local customs and traditions"]
+  }, 
+  Budget : {
+    "total": "________",
+    "breakdown": {
+      "accommodation": "________",
+      "meals": "________",
+      "activities": "________",
+      "transportation": "________"
+    },
+    insufficientBudget: True/False,
+    alternativeOptions: "________",
+    averageTotalCost: "________",
+    averageAccommodationCost: "________",
+    insufficientBudgetMessage: "________"
+
   },
   "itinerary": [
     {
@@ -97,6 +131,38 @@ Here is a sample structure for the JSON output:
           "description": "________"
         }
       }
+    }
+  ],
+  hotels:[
+    "hotelName": {
+    hotelName:
+      location:
+      prices: 
+      rating:
+    },
+    "hotelName": {
+      hotelName:
+      location:
+      prices: 
+      rating:
+    }
+      "hotelName": {
+      hotelName:
+      location:
+      prices: 
+      rating:
+    }
+      "hotelName": {
+      hotelName:
+      location:
+      prices: 
+      rating:
+    },
+    "hotelName": {
+    hotelName:
+      location:
+      prices: 
+      rating:
     }
   ]
 }`;

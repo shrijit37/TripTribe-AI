@@ -1,9 +1,12 @@
 import { useState, useRef } from "react";
 import SignInButton from "./SignInButton";
 import { ToastContainer, toast } from 'react-toastify';
-
+import { useRegisterMutation } from "../../Redux/api/userApiSlice";
+import { useDispatch, useSelector } from "react-redux";
 const Signup = (props) => {
-
+    const userInfo = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
+    const [register] = useRegisterMutation();
     const emailRef = useRef();
     const passRef = useRef();
     const [isDataEntered, setIsDataEntered] = useState(false)
