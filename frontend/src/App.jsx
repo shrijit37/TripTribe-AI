@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Navbar from "./components/navbar";
+import Navbar from "./components/Navbar";
 import Hero from "./pages/Hero.jsx"
 import Search from "./pages/Search.jsx"
 import NotFound from "./pages/NotFound.jsx";

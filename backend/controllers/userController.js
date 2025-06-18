@@ -7,14 +7,12 @@ const createUser = asyncHandler(async (req, res) => {
     const { fname, lname, email, password } = req.body;
 
     if (!fname || !email || !password) {
-        res.status(400);
-        throw new Error("Please fill all the fields");
+        return res.status(400).json({ message: "Please fill all the fields" });
     }
 
     const userExist = await User.findOne({ email });
     if (userExist) {
-        res.status(400).json({ message: "User already exist" });
-        throw new Error("User already exist");
+        return res.status(400).json({ message: "User already exist" });
     } else {
         try {
             const salt = await bcrypt.genSalt(10);
@@ -26,9 +24,10 @@ const createUser = asyncHandler(async (req, res) => {
                 password: hashedPassword,
             });
             generateToken(res, newUser._id);
-            res.status(201).json({ _id: newUser.id });
+            return res.status(201).json({ _id: newUser.id });
         } catch (error) {
-            res.status(500).json({ message: "Something went wrong: " + error });
+            console.error("Error in createUser:", error); // Log the error for debugging
+            return res.status(500).json({ message: "Something went wrong: " + error.message });
         }
     }
 });

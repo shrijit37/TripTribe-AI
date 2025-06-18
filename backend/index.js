@@ -8,7 +8,6 @@ import cookieParser from "cookie-parser";
 import test from "./routes/test.js"
 import itenaryRoute from "./routes/itenaryRoute.js"
 import userRoute from "./routes/userRoute.js"
-
 //database
 import connectDb from "./config/db.js";
 
@@ -17,6 +16,7 @@ connectDb()
 const app = express()
 
 app.use(express.json());
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 const port = 8080

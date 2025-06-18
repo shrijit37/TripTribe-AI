@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build: frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - triptribe
+
+  backend:
+    build: backend
+    ports:
+      - "8080:8080"
+    networks:
+      - triptribe
+
+networks:
+  triptribe:
+    driver: bridge
