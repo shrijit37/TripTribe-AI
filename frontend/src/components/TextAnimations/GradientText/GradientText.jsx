@@ -1,27 +1,28 @@
-/*
-	jsrepo 1.39.3
-	Installed from https://reactbits.dev/default/
-	23-2-2025
-*/
-
 import "./GradientText.css";
+
 export default function GradientText({
   children,
   className = "",
-  colors = ["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"], // Default colors
-  animationSpeed = 8, // Default animation speed in seconds
-  showBorder = false, // Default overlay visibility
+  colors = ["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"],
+  animationSpeed = 8,
+  showBorder = false,
 }) {
   const gradientStyle = {
     backgroundImage: `linear-gradient(to right, ${colors.join(", ")})`,
     animationDuration: `${animationSpeed}s`,
-    fontSize : '60px'
   };
 
   return (
     <div className={`animated-gradient-text ${className}`}>
-      {showBorder && <div className="gradient-overlay" style={gradientStyle}></div>}
-      <div className="text-content" style={gradientStyle}>{children}</div>
+      {showBorder && (
+        <div className="gradient-overlay" style={gradientStyle}></div>
+      )}
+      <div
+        className={`text-content text-[16px] sm:text-[20px] md:text-[28px] lg:text-[36px] xl:text-[48px] font-bold`}
+        style={gradientStyle}
+      >
+        {children}
+      </div>
     </div>
   );
 }

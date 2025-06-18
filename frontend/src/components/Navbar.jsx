@@ -27,7 +27,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="flex justify-between items-center w-[92%] mx-auto my-4">
+      <nav className="flex justify-between items-center lg:w-[92%] w-[100vh] mx-auto my-4 px-2">
         <div className="">
           <div
             className="text-5xl font-poppin cursor-pointer"
@@ -38,7 +38,7 @@ const Navbar = () => {
             TripTribe
           </div>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between ">
           <button
             className="btn btn-primary mx-5"
             onClick={() => navigate("/search")}
@@ -135,8 +135,8 @@ const Navbar = () => {
             </button>
           )}
           <dialog id="my_modal_4" className="modal">
-            <div className="modal-box w-3/12 max-w-5xl">
-              <div className="modal-action">
+            <div className="modal-box w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 xl:w-1/4 max-w-5xl">
+              <div className="modal-action justify-end">
                 <form method="dialog">
                   <button className="btn btn-square">
                     <svg
@@ -156,7 +156,7 @@ const Navbar = () => {
                   </button>
                 </form>
               </div>
-              {}
+
               {signin ? (
                 <Signin setSignin={setSignin} />
               ) : (
@@ -164,6 +164,7 @@ const Navbar = () => {
               )}
             </div>
           </dialog>
+
         </div>
       </nav>
     </>

@@ -39,12 +39,21 @@ const Result = () => {
       {/* <div className='text-5xl text-center'>{state.city.name}</div> */}
       {/* <div className='text-5xl text-center'>{imageUrl}</div> */}
 
-      <div className='flex items-end justify-end mx-10'>
+      <div className='flex items-end justify-end mx-10 '>
         {saved && (<div className="badge badge-outline badge-success">Saved</div>)}
       </div>
-      <div className=''>
+      <div className='lg:w-[100%] w-[100vh]'>
 
         <div style={{ width: '100%', height: '600px', position: 'relative' }}>
+          {/* <GridDistortion
+            crossOrigin="anonymous"
+            imageSrc={"https://picsum.photos/1920/1080?grayscale"}
+            grid={10}
+            mouse={0.1}
+            strength={0.25}
+            relaxation={0.9}
+            className="custom-class m-3"
+          /> */}
           <GridDistortion
             crossOrigin="anonymous"
             imageSrc={imageUrl}

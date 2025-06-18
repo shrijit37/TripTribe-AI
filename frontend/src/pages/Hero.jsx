@@ -12,7 +12,7 @@ const Hero = () => {
         <div>
 
             <section>
-                <div className="w-[100%] h-[600px] rounded-xl relative ">
+                <div className="lg:w-[100%] w-[100vh] md:w-[100%] h-[40vh] rounded-xl relative lg:h-[600px]">
                     <GridDistortion
                         imageSrc="https://picsum.photos/1920/1080?grayscale"
                         grid={12}
@@ -24,7 +24,7 @@ const Hero = () => {
                 </div>
             </section>
 
-            <section className='flex content-center flex-col p-5'>
+            <section className='flex content-center flex-col p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
                 <GradientText
                     colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
                     animationSpeed={6}
@@ -37,7 +37,7 @@ const Hero = () => {
                 <button className="btn btn-outline w-[150px] rounded-full self-center m-5" onClick={() => navigate("/search")}>Try it! ↗</button>
             </section>
 
-            <section className='flex content-center flex-col p-5'>
+            <section className='flex content-center flex-col p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
 
                 <div className='flex flex-row justify-between '>
                     <div className='flex justify-center flex-col items-center'>
@@ -50,7 +50,7 @@ const Hero = () => {
                             Why Choose TripTribe?
                         </GradientText>
 
-                        <div className="w-[50%] mt-4">
+                        <div className="lg:w-[50%] mt-4 m-0 p-0">
                             <ul >
                                 <li className='text-xl mb-7'>✨ Personalized Itineraries: Tell us your destination, travel dates, and interests, and we’ll craft a unique itinerary just for you.</li>
                                 <li className='text-xl mb-7'>🌍 Endless Destinations: From bustling cities to hidden gems, explore the world your way.</li>
@@ -60,14 +60,14 @@ const Hero = () => {
                         </div>
                     </div>
 
-                    <div className="w-[50%]"><img src="https://picsum.photos/1920/1080?grayscale" alt="" /></div>
+                    <div className="lg:w-[50%] w-[100%] h-[180%] self-center"><img src="https://picsum.photos/1920/1080?grayscale" alt="" /></div>
                 </div>
             </section>
 
-            <section className='flex content-center flex-col p-5'>
+            <section className='flex content-center flex-col lg:p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
 
                 <div className='flex flex-row justify-around p-5'>
-                    <div className="w-[50%]"><img src="https://picsum.photos/1920/1080?grayscale&random=2" alt="" /></div>
+                    <div className="lg:w-[50%] w-[100%] h-[180%] self-center"><img src="https://picsum.photos/1920/1080?grayscale&random=2" alt="" /></div>
 
                     <div className='flex justify-center flex-col items-center'>
                         <GradientText
@@ -78,7 +78,7 @@ const Hero = () => {
                         >
                             How It Works
                         </GradientText>
-                        <div className="w-[50%] m-9 mb-11">
+                        <div className="lg:w-[50%] mt-4 ml-4 p-0">
                             <ul>
                                 <li className='text-xl mb-7'>📍 Enter Your Details: Share your destination, travel dates, and preferences.</li>
                                 <li className='text-xl mb-7'>⚡ Generate Your Itinerary: Our smart algorithm creates a customized plan in seconds.</li>
@@ -90,7 +90,7 @@ const Hero = () => {
                 </div>
             </section>
 
-            <section className='flex content-center flex-col p-5'>
+            <section className='flex content-center flex-col p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
                 <div className='flex justify-center flex-col items-center'>
                     <GradientText
                         colors={["#40ffaa", "#4079ff", "#ff40ff", "#40ffff", "#000000", "#cccccc"]}

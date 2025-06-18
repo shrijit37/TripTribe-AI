@@ -84,7 +84,7 @@ const Search = () => {
     };
     
     return (
-        <div className='w-[100vh] h-[90vh] flex flex-row'>
+        <div className='lg:w-[100vh] h-[90vh] flex flex-row'>
             <ToastContainer
                 position="bottom-right"
                 autoClose={5000}
@@ -97,7 +97,7 @@ const Search = () => {
                 pauseOnHover
                 theme="dark"
             />
-            <img src="https://picsum.photos/1920/1080?grayscale&random=2" alt="Background" />
+            <img src="https://picsum.photos/1920/1080?grayscale&random=2" className='hidden lg:block' alt="Background" />
 
             {loading ? (
                 <div className='flex flex-col items-center justify-center mx-[50vh]'>
