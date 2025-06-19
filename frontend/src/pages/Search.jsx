@@ -62,7 +62,11 @@ const Search = () => {
             // const response = await axios.post('http://localhost:8080/api/itenary', {
             // const response = await axios.post('https://triptribe-backend-1057328050970.asia-south1.run.app/api/itenary', {
                 days: days,
-              navigate("/result", { state: response.data });
+                cityName: cityName,
+                budget: budget
+            });
+            if (response) {
+                navigate("/result", { state: response.data });
             }
         } catch (error) {
             // Log more details for CORS/network debugging
