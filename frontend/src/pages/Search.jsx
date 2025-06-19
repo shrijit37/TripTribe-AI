@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import { useNavigate } from 'react-router';
+import { cloneUniforms } from 'three/src/renderers/shaders/UniformsUtils.js';
 
 const Search = () => {
     const [cityName, setCityName] = useState("");
@@ -57,7 +58,9 @@ const Search = () => {
     const fetchData = async () => {
         try {
             // console.log(days, cityName, budget);
-            const response = await axios.post('http://localhost:8080/api/itenary', {
+            const response = await axios.post('https://triptribe-ai.onrender.com/api/itenary', {
+            // const response = await axios.post('http://localhost:8080/api/itenary', {
+            // const response = await axios.post('https://triptribe-backend-1057328050970.asia-south1.run.app/api/itenary', {
                 days: days,
                 cityName: cityName,
                 budget: budget
@@ -66,8 +69,18 @@ const Search = () => {
                 navigate("/result", { state: response.data });
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
-            toast.error("Failed to generate itinerary. Please try again.");
+            // Log more details for CORS/network debugging
+            console.error('Error fetching itinerary:', error);
+            if (error.response) {
+                console.error('Error response:', error.response);
+            } else if (error.request) {
+                console.error('Error request:', error.request);
+            } else {
+                console.error('Error message:', error.message);
+            }
+            console.log("first")
+            toast.error("Failed to generate itinerary.kjnkjn Please try again.");
+            // toast.error(error);
             setLoading(false);
         }
     };

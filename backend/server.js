@@ -8,4 +8,12 @@ export default defineConfig({
     port: 5173,
     // proxy: { ... } // Remove proxy if using absolute URLs in frontend code
   },
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'http://<your-pc-lan-ip>:5173',
+      'https://your-frontend-domain.com'
+    ],
+    credentials: true
+  }
 });
