@@ -14,7 +14,7 @@ const Result = () => {
 
   const location = useLocation();
   const state = location.state || {};
-
+ 
 
  
 
