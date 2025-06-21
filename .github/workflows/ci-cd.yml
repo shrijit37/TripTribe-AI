@@ -20,7 +20,7 @@ jobs:
             pwd
             echo "📁 Listing current directory:"
             ls -la
-            cd backend
+            cd TripTribe-AI/backend
             echo "🔄 Pulling latest changes:"
             git pull origin main || echo "Repo already updated"
             echo "📦 Installing dependencies:"
