@@ -16,15 +16,24 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            nvm --version || echo "Node.js not installed, installing now..."
-            node --version || nvm install node
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+            echo "✅ NVM loaded"
+            nvm install 20
+            nvm use 20
+
             cd TripTribe-AI/backend
             echo "🔄 Pulling latest changes:"
             git pull origin main || echo "Repo already updated"
+
             echo "📦 Installing dependencies:"
             npm install
+
             echo "🚀 Restarting PM2 process:"
             pm2 restart backend || pm2 start index.js --name backend
             pm2 save
+
 
 
