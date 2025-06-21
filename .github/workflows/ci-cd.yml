@@ -16,10 +16,17 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            whereami
+            echo "🧭 Current Directory:"
+            pwd
+            echo "📁 Listing current directory:"
+            ls -la
             cd backend
+            echo "🔄 Pulling latest changes:"
             git pull origin main || echo "Repo already updated"
+            echo "📦 Installing dependencies:"
             npm install
+            echo "🚀 Restarting PM2 process:"
             pm2 restart backend || pm2 start index.js --name backend
             pm2 save
+
 
