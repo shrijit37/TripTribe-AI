@@ -16,7 +16,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd TripTribeAI/backend
+            cd backend
             git pull origin main || echo "Repo already updated"
             npm install
             pm2 restart backend || pm2 start index.js --name backend
