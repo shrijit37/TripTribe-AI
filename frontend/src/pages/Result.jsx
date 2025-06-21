@@ -25,7 +25,7 @@ const Result = () => {
         const data = await fetch(`https://www.googleapis.com/customsearch/v1?q=${state.city.IconicPlace}&searchType=image&cx=c63fff3e039f04940&key=${import.meta.env.VITE_GOOGLE_CUSTOM_SEARCH_API_KEY}`).then((res) => res.json())
         console.log(data.items[0].link);
 
-        setImageUrl(`https://api.codetabs.com/v1/proxy/?quest=${data.items[3].link}`);
+        setImageUrl(`https://api.codetabs.com/v1/proxy/?quest=${data.items[1].link}`);
       } catch (e) {
         console.log(e)
       }
@@ -78,7 +78,7 @@ const Result = () => {
             <div className='text-2xl text-center'>{state.city.description}</div>
           </div>
           <div className='flex flex-wrap flex-col w-[40%] border-2 border-green-300 rounded-lg p-6 m-4'>
-            <div className="text-6xl mb-4 text-green-300 self-center">Information</div>
+            <div className="lg:text-6xl text-4xl mb-4 text-green-300 self-center">Information</div>
             <div className="flex flex-col gap-3 self-center">
               <div className="text-2xl"><span className="text-green-400">Country :</span> {state.city.Country}</div>
               <div className="text-2xl"><span className="text-green-400">Region/State :</span> {state.city["Region/State"]}</div>

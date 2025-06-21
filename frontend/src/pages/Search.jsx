@@ -58,8 +58,9 @@ const Search = () => {
         try {
             // console.log(days, cityName, budget);
             // const response = await axios.post('https://triptribe-ai.onrender.com/api/itenary', {
-            const response = await axios.post('http://localhost:8080/api/itenary', {
+            // const response = await axios.post('http://localhost:8080/api/itenary', {
             // const response = await axios.post('https://triptribe-backend-1057328050970.asia-south1.run.app/api/itenary', {
+            const response = await axios.post('https://my-node-backend-1057328050970.asia-south1.run.app/api/itenary', {
                 days: days,
                 cityName: cityName,
                 budget: budget

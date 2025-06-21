@@ -23,8 +23,9 @@ const Signin = (props) => {
 
             dispatch(setCredentials({ ...res }));
             navigate('/')
-        } catch (e) {
-            console.log("eroor" + e)
+        } catch (error) {
+            console.dir(error);
+            // alert(error.data.message);
         }
     }
 
@@ -37,7 +38,7 @@ const Signin = (props) => {
                     <div className="">
                         <div className="text-3xl text-center">Sign-in</div>
                         <label className="input input-bordered flex items-center gap-2 m-6">
-                            <input type="text" className="grow" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+                            <input type="text" className="grow" placeholder="Email" onChange={(e) => setEmail(e.target.value.toLowerCase())} />
                         </label>
 
                         <label className="input input-bordered flex items-center gap-2 m-6">

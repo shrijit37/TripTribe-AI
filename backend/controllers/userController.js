@@ -4,31 +4,41 @@ import bcrypt from "bcryptjs";
 import generateToken from "../utils/createToken.js";
 
 const createUser = asyncHandler(async (req, res) => {
-    const { fname, lname, email, password } = req.body;
+    try {
+        const { fname, lname, email, password } = req.body;
 
-    if (!fname || !email || !password) {
-        return res.status(400).json({ message: "Please fill all the fields" });
-    }
-
-    const userExist = await User.findOne({ email });
-    if (userExist) {
-        return res.status(400).json({ message: "User already exist" });
-    } else {
-        try {
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-            const newUser = await User.create({
-                fname,
-                lname,
-                email,
-                password: hashedPassword,
-            });
-            generateToken(res, newUser._id);
-            return res.status(201).json({ _id: newUser.id });
-        } catch (error) {
-            console.error("Error in createUser:", error); // Log the error for debugging
-            return res.status(500).json({ message: "Something went wrong: " + error.message });
+        if (!fname || !email || !password) {
+            return res.status(400).json({ message: "Please fill all the fields" });
         }
+
+        const userExist = await User.findOne({ email });
+        if (userExist) {
+            return res.status(400).json({ message: "User already exist" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const newUser = await User.create({
+            fname,
+            lname,
+            email,
+            password: hashedPassword,
+        });
+        generateToken(res, newUser._id);
+        return res.status(201).json({ _id: newUser.id });
+    } catch (error) {
+        // Log the error for debugging
+        console.error("Error in createUser:", error);
+        // Handle Mongoose validation errors
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ message: error.message });
+        }
+        // Handle duplicate key error (race condition)
+        if (error.code === 11000) {
+            return res.status(400).json({ message: "User already exist" });
+        }
+        // Generic server error
+        return res.status(500).json({ message: "Something went wrong: " + error.message });
     }
 });
 

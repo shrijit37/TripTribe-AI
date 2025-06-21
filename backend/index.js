@@ -15,16 +15,10 @@ connectDb()
 
 const app = express()
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://192.168.0.198:5173', // Your LAN IP for local frontend access
- // Add your deployed frontend domain if you have one
-];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: true,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
