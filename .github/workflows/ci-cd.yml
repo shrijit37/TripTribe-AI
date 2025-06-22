@@ -16,10 +16,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
             echo "✅ NVM loaded"
             nvm install 20
             nvm use 20
@@ -34,6 +30,7 @@ jobs:
             echo "🚀 Restarting PM2 process:"
             pm2 restart backend || pm2 start index.js --name backend
             pm2 save
+          shell: "bash -eo pipefail --login {0}"
 
 
 
