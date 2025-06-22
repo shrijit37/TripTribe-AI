@@ -53,14 +53,13 @@ const Search = () => {
     }, []);
     
     const navigate = useNavigate();
-    
+
     const fetchData = async () => {
         try {
             // console.log(days, cityName, budget);
-            // const response = await axios.post('https://triptribe-ai.onrender.com/api/itenary', {
-            // const response = await axios.post('http://localhost:8080/api/itenary', {
-            // const response = await axios.post('https://triptribe-backend-1057328050970.asia-south1.run.app/api/itenary', {
-            const response = await axios.post('https://my-node-backend-1057328050970.asia-south1.run.app/api/itenary', {
+            console.log("VITE_ITENARY_API_UR", import.meta.VITE_ITENARY_API_URL);
+            const response = await axios.post(import.meta.env.VITE_ITENARY_API_URL, {
+            
                 days: days,
                 cityName: cityName,
                 budget: budget
