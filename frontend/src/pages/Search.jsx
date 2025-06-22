@@ -56,8 +56,7 @@ const Search = () => {
 
     const fetchData = async () => {
         try {
-            // console.log(days, cityName, budget);
-            console.log("VITE_ITENARY_API_UR", import.meta.VITE_ITENARY_API_URL);
+            // console.log(days, cityName, budget)
             const response = await axios.post(import.meta.env.VITE_ITENARY_API_URL, {
             
                 days: days,
