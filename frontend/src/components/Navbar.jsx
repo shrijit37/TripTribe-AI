@@ -5,6 +5,7 @@ import Signup from "./Signup";
 import { useDispatch, useSelector } from "react-redux";
 import { logOut } from "../../Redux/auth/authSlice";
 const Navbar = () => {
+
   let navigate = useNavigate();
   const [signin, setSignin] = useState(true);
   const userInfo = useSelector((state) => state.auth);
@@ -60,7 +61,7 @@ const Navbar = () => {
                     htmlFor="my-drawer-4"
                   >
                     <span>
-                      {userInfo.userInfo.fname[0] + userInfo.userInfo.lname[0]}
+                      {userInfo.userInfo.fname[0]}
                     </span>
                   </label>
                 </div>
@@ -74,17 +75,13 @@ const Navbar = () => {
                     <div className="avatar avatar-placeholder content-center text-center justify-center my-5">
                       <div className="bg-neutral text-neutral-content w-24 rounded-full content-center text-center">
                         <span className="text-3xl">
-                          {userInfo.userInfo.fname[0] +
-                            userInfo.userInfo.lname[0]}
-                        </span>
+                          {userInfo.userInfo.fname[0] }                        </span>
                       </div>
                     </div>
                     {/* to be done after doing recent search and saved itenary backend*/}
                     <div className="flex justify-center flex-col text-center content-center items-center">
                       <div className="text-3xl justify-center">
-                        {userInfo.userInfo.fname +
-                          " " +
-                          userInfo.userInfo.lname}{" "}
+                        {userInfo.userInfo.fname}
                       </div>
                       <div
                         className="badge badge-outline badge-error justify-center mt-1 btn h-2"

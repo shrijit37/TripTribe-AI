@@ -8,6 +8,7 @@ const createUser = asyncHandler(async (req, res) => {
         const { fname, lname, email, password } = req.body;
 
         if (!fname || !email || !password) {
+            console.log("Missing fields in request body:", req.body);
             return res.status(400).json({ message: "Please fill all the fields" });
         }
 
@@ -25,7 +26,12 @@ const createUser = asyncHandler(async (req, res) => {
             password: hashedPassword,
         });
         generateToken(res, newUser._id);
-        return res.status(201).json({ _id: newUser.id });
+        return res.status(201).json({ _id: newUser.id,
+            fname: newUser.fname,
+    
+            email: newUser.email,
+
+         });
     } catch (error) {
         // Log the error for debugging
         console.error("Error in createUser:", error);
@@ -62,7 +68,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
+    const user = await User.findOne(req.user._id);
     if (user) {
         return res.json({
             _id: user._id,
@@ -75,6 +81,17 @@ const getCurrentUserProfile = asyncHandler(async (req, res) => {
     }
 });
 
+
+const checkDuplicate = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    console.log(email);
+    const user = await User.findOne({email});
+    if (user) {
+        return res.status(409).json({ message: "User already exists" });
+    } else {
+        return res.status(200).json({ message: "User not found" });
+    }
+});
 const updateCurrentUserProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
   
@@ -105,4 +122,4 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
   });
-export { createUser, loginUser, logoutUser, getCurrentUserProfile, updateCurrentUserProfile };
+export { createUser, loginUser, logoutUser, getCurrentUserProfile, updateCurrentUserProfile, checkDuplicate };

@@ -9,3 +9,4 @@ frontend/.env
 frontend/node_modules/
 backend/.env
 backend/node_modules/
+frontend/src/FirebaseConfig.js
