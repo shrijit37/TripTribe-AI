@@ -1,12 +1,10 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { ToastContainer, toast } from 'react-toastify';
 import { useRegisterMutation } from "../../Redux/api/userApiSlice";
-import { useDispatch } from "react-redux";
-import auth from "../FirebaseConfig";
 import { setCredentials } from "../../Redux/auth/authSlice";
+import auth from "../FirebaseConfig";
 import { sendEmailVerification, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { meta } from "@eslint/js";
-
 
 
 const Signup = (props) => {
