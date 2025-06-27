@@ -10,6 +10,7 @@ import itenaryRoute from "./routes/itenaryRoute.js"
 import userRoute from "./routes/userRoute.js"
 //database
 import connectDb from "./config/db.js";
+import saveItenary from "./controllers/saveItenary.js";
 
 connectDb()
 
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const port = 8080;
+
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`)

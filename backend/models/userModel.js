@@ -18,29 +18,15 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true,
         },
-        recentSearch: {
-            type: [{
-                name: String,
-                Region: String,
-                Country: String,
-                description: String,
-                IconicPlace: String,
-                // itinerary: [
-                //     { day: Number, activities: [Array], meals: [Object] },
-                // ], 
-                // isSaved: Boolean,
-                // time : { type: Date, default: Date.now }
-            }],        //not sure
-            default: [],
-        },
+        recentSearch : [{type : Object}]
     }, { timestamps: true }
 );
 const User = mongoose.model('User', userSchema);
 // console.log(User);
 async function check(){
-    const email = 'johndoe@example.com';
+    const email = 'shrijitsrivastav@gmail.com';
     const chk = await User.findOne({email});
-    console.log(chk);
+    // console.log(chk);
 }
 check();
 

@@ -3,36 +3,66 @@ import { useState, useEffect } from 'react';
 import GridDistortion from '../components/GridDistortion';
 import ActivityCard from '../components/ActivityCard';
 import HotelSection from '../components/HotelSection';
-
+import { useProfileQuery } from '../../Redux/api/userApiSlice';
+import { useDispatch, useSelector } from 'react-redux';
 const Result = () => {
 
+  const { data: profile, refetch } = useProfileQuery();
+  const userInfo = useSelector(state => state.auth);
+
   const [imageUrl, setImageUrl] = useState(null);
-  const saved = false;
   const [activeActivityTab, setActiveActivityTab] = useState(0);
   const [activeMealTab, setActiveMealTab] = useState(0);
   const [roadTripCost, setRoadTripCost] = useState(0);
 
+
   const location = useLocation();
   const state = location.state || {};
- 
+  const saved = false;
 
- 
 
-  console.log(state);
+  const fetchProfile = async () => {
+    try {
+      const res = await refetch().unwrap();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchProfile();
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  
   useEffect(() => {
     const getPhoto = async () => {
       try {
         const data = await fetch(`https://www.googleapis.com/customsearch/v1?q=${state.city.IconicPlace}&searchType=image&cx=c63fff3e039f04940&key=${import.meta.env.VITE_GOOGLE_CUSTOM_SEARCH_API_KEY}`).then((res) => res.json())
-        console.log(data.items[0].link);
-
+        // console.log(data.items[0].link);
         setImageUrl(`https://api.codetabs.com/v1/proxy/?quest=${data.items[1].link}`);
       } catch (e) {
         console.log(e)
       }
     }
-
     getPhoto();
   }, [state]);
+
+
+   useEffect(() => {
+    const img = new Image();
+    img.src = imageUrl;
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      console.log("loaded");
+    };
+    img.onerror = () => {
+      setImageUrl("https://picsum.photos/1920/1080?grayscale&random=2");
+      console.log("error");
+    };
+  }, [imageUrl]);
 
   return (
     <div>
@@ -110,15 +140,15 @@ const Result = () => {
             </div>
             <div className="tab-contents bg-base-100 rounded-lg p-6">
               {state.itinerary.map((day, index) => (
-                <div 
-                  key={`act-content-${index}`} 
+                <div
+                  key={`act-content-${index}`}
                   className={`${activeActivityTab === index ? 'block' : 'hidden'}`}
                 >
                   <div className="space-y-4">
                     {day.activities.map((activity, actIndex) => (
-                      <ActivityCard 
-                        key={actIndex} 
-                        activity={activity.place} 
+                      <ActivityCard
+                        key={actIndex}
+                        activity={activity.place}
                         description={activity.description}
                       />
                     ))}
@@ -144,8 +174,8 @@ const Result = () => {
             </div>
             <div className="tab-contents bg-base-100 rounded-lg p-6">
               {state.itinerary.map((day, index) => (
-                <div 
-                  key={`meal-content-${index}`} 
+                <div
+                  key={`meal-content-${index}`}
                   className={`${activeMealTab === index ? 'block' : 'hidden'}`}
                 >
                   <div className="space-y-4">
@@ -154,8 +184,8 @@ const Result = () => {
                         <h4 className="text-lg font-medium text-green-400 mb-2 capitalize">
                           {mealType}
                         </h4>
-                        <ActivityCard 
-                          activity={meal.place} 
+                        <ActivityCard
+                          activity={meal.place}
                           description={meal.description}
                         />
                       </div>
@@ -194,41 +224,49 @@ const Result = () => {
           </div>
           <div className='flex flex-wrap flex-col w-[40%] border-2 border-green-300 rounded-lg p-6 m-4'>
             <div className="text-6xl mb-4 text-green-300 self-center">Planning a Road Trip 🚗</div>
-            {roadTripCost?(
+            {roadTripCost ? (
               <div className="flex flex-col gap-5 self-center mt-5">
-              <div className='text-center'><span className='text-2xl'>Estimated Cost (Toll + fuel):</span> <span className='text-green-400 text-2xl'>Rs. {roadTripCost}</span></div>
-              <button className='bg-gray-300 text-black hover:bg-gray-400 rounded-3xl text-2xl'>Calculate Again 🔁</button>
+                <div className='text-center'><span className='text-2xl'>Estimated Cost (Toll + fuel):</span> <span className='text-green-400 text-2xl'>Rs. {roadTripCost}</span></div>
+                <button className='bg-gray-300 text-black hover:bg-gray-400 rounded-3xl text-2xl'>Calculate Again 🔁</button>
               </div>
-            ):(
+            ) : (
               <>
-            <div className='text-md text-center'>Estimate the cost of your road trip with our tool!</div>
-            <div className="flex flex-col gap-5 self-center mt-5">
-              <input type="text" placeholder="Enter your starting point" className="input input-bordered w-full" />
-              <input type="text" placeholder="Enter your Car's Average" className="input input-bordered w-full" />
-              <input type="text" placeholder="Enter your Fuel Price" className="input input-bordered w-full" />
-              <button className='bg-green-500 text-black hover:bg-green-400 rounded-3xl text-2xl'>Calculate</button>
-            </div>
+                <div className='text-md text-center'>Estimate the cost of your road trip with our tool!</div>
+                <div className="flex flex-col gap-5 self-center mt-5">
+                  <input type="text" placeholder="Enter your starting point" className="input input-bordered w-full" />
+                  <input type="text" placeholder="Enter your Car's Average" className="input input-bordered w-full" />
+                  <input type="text" placeholder="Enter your Fuel Price" className="input input-bordered w-full" />
+                  <button className='bg-green-500 text-black hover:bg-green-400 rounded-3xl text-2xl'>Calculate</button>
+                </div>
               </>
-          )}
+            )}
           </div>
 
           <div className='flex flex-wrap flex-col w-[40%] border-2 border-green-300 rounded-lg p-6 m-4'>
             <div className="text-6xl mb-5 text-green-300 self-center">Tips 💡</div>
-              {state.Tips.map((tip, index) => (
-                  <ul key={index} className="text-md text-center mb-4 list-disc list-inside"> 
-                    <li className='text-gray-400 text-xl'> {tip}</li>
-                  </ul>
-                ))}
+            {state.Tips.map((tip, index) => (
+              <ul key={index} className="text-md text-center mb-4 list-disc list-inside">
+                <li className='text-gray-400 text-xl'> {tip}</li>
+              </ul>
+            ))}
           </div>
         </div>
         <div className="divider"></div>
         <div className='text-6xl font-bold text-green-400 text-center mb-10'>Hotels and Accommodations 🏨</div>
-       
+
         <HotelSection />
-        {}
+        { }
       </div>
     </div>
   )
 }
 
 export default Result
+
+
+
+
+
+
+
+

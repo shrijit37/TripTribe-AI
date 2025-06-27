@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import { useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
 
 const Search = () => {
     const [cityName, setCityName] = useState("");
@@ -10,7 +11,15 @@ const Search = () => {
     const [budget, setBudget] = useState(0);
     const [reload, setReload] = useState(0);
     const [loading, setLoading] = useState(false);
+    const userInfo = useSelector((state) => state.auth);
+    // const [email, setEmail] = useState("");
+    var email = "";
+    if(userInfo.userInfo){
+        email = userInfo.userInfo.email;
 
+    }
+                
+                
     const inputRef = useRef(null);
     const autocompleteRef = useRef(null);
 
@@ -57,11 +66,15 @@ const Search = () => {
     const fetchData = async () => {
         try {
             // console.log(days, cityName, budget)
+      
+                
+           
             const response = await axios.post(import.meta.env.VITE_ITENARY_API_URL, {
             
                 days: days,
                 cityName: cityName,
-                budget: budget
+                budget: budget,
+                email: email
             });
             if (response) {
                 navigate("/result", { state: response.data });
@@ -76,8 +89,7 @@ const Search = () => {
             } else {
                 console.error('Error message:', error.message);
             }
-            console.log("first")
-            toast.error("Failed to generate itinerary.kjnkjn Please try again.");
+            toast.error("Failed to generate itinerary. Please try again.");
             // toast.error(error);
             setLoading(false);
         }

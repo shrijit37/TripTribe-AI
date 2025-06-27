@@ -1,7 +1,5 @@
 /*
-	jsrepo 1.39.3
-	Installed from https://reactbits.dev/default/
-	23-2-2025
+	Installed from https://reactbits.dev/tailwind/
 */
 
 import React, { useEffect, useRef } from "react";
@@ -54,7 +52,6 @@ const FuzzyText = ({
 
       const text = React.Children.toArray(children).join("");
 
-      // Create offscreen canvas
       const offscreen = document.createElement("canvas");
       const offCtx = offscreen.getContext("2d");
       if (!offCtx) return;

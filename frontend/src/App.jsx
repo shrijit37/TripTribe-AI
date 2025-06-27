@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound.jsx";
 import  Result  from "./pages/Result.jsx";
 import {Provider} from "react-redux"
 import  store  from "../Redux/store.js";
+import Footer from "./components/Footer.jsx";
 function App() {
   return (
     <>
@@ -19,6 +20,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path = '/result' element={<Result />} />
           </Routes>
+          <Footer />
         </BrowserRouter>
         </Provider>
     </>

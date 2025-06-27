@@ -4,20 +4,26 @@ import Signin from "./Signin";
 import Signup from "./Signup";
 import { useDispatch, useSelector } from "react-redux";
 import { logOut } from "../../Redux/auth/authSlice";
-const Navbar = () => {
+import { useLogoutMutation } from "../../Redux/api/userApiSlice";
 
+const Navbar = () => {
+  const date = new Date();
   let navigate = useNavigate();
+  const [logout] = useLogoutMutation();
+
+
   const [signin, setSignin] = useState(true);
   const userInfo = useSelector((state) => state.auth);
-  if (userInfo.userInfo) {
-    console.log(userInfo.userInfo);
-  }
+
   const dispatch = useDispatch();
+
+  const data = userInfo.userInfo;
 
   const logoutHandler = async (e) => {
     e.preventDefault();
     try {
       dispatch(logOut());
+      await logout().unwrap();
       localStorage.removeItem("userInfo");
       localStorage.removeItem("expirationTime");
       navigate("/");
@@ -26,6 +32,15 @@ const Navbar = () => {
     }
   };
 
+
+  const recentHandler =  (item) => {
+    if(item) {
+      const iten = item.itenary;
+      navigate("/result", {state: iten})
+    } else {
+      console.log("cant find the itenary.");
+    }
+  }
   return (
     <>
       <nav className="flex justify-between items-center lg:w-[92%] w-[100vh] mx-auto my-4 px-2">
@@ -75,7 +90,7 @@ const Navbar = () => {
                     <div className="avatar avatar-placeholder content-center text-center justify-center my-5">
                       <div className="bg-neutral text-neutral-content w-24 rounded-full content-center text-center">
                         <span className="text-3xl">
-                          {userInfo.userInfo.fname[0] }                        </span>
+                          {userInfo.userInfo.fname[0]}                        </span>
                       </div>
                     </div>
                     {/* to be done after doing recent search and saved itenary backend*/}
@@ -91,34 +106,31 @@ const Navbar = () => {
                       </div>
                     </div>
                     <br />
-                    {/* 
-                                            <div className="text-xl my-5 text-gray-400">Saved Itenaries</div>
+                    <hr />
+                    <div className="text-xl text-center mt-3">
+                      Recent Search
+                    </div>
 
-                                            <ul className="list">
-                                                <li className="list-row">
-                                                    <div className="list-col-grow">
-                                                        <div>Manali</div>
-                                                        <div className="text-xs uppercase font-semibold opacity-60">2 days ago</div>
-                                                    </div>
-                                                </li>
-                                            </ul>
+                    <ul className="list">
 
-                                            <div className="mt-2">
+                      <div className="list-col-grow space-y-2 font-medium">
+                        {
+                          data && data.recentSearch && data.recentSearch.map((item, idx) => {
+                            return (
+                              <li className="list-row" key={idx}>
+                                <div onClick={() => recentHandler(item)}>
+                                  <div>{item.city[0].toUpperCase() + item.city.slice(1)}</div>
+                                  <span className="inline">{Math.floor((date - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)) ? Math.floor((date - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)) + " days ago" : "today"}</span>
+                                </div>
 
-                                                <div className="text-xl my-5 text-gray-400">Recent Search</div>
+                              </li>
+                            )
+                          })
+                        }
 
-
-                                                <ul className="list">
-                                                    <li className="list-row">
-                                                        <div className="list-col-grow">
-                                                            <div>Manali</div>
-                                                            <div className="text-xs uppercase font-semibold opacity-60">2 days ago</div>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </ul>
-                                    </div> */}
+                      </div>
+                    </ul>
+                    <br />
                   </ul>
                 </div>
               </div>

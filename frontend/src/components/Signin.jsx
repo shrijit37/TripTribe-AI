@@ -5,7 +5,6 @@ import { setCredentials } from "../../Redux/auth/authSlice";
 import { useNavigate } from "react-router";
 
 
-
 const Signin = (props) => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
@@ -19,15 +18,14 @@ const Signin = (props) => {
         e.preventDefault();
         try {
             const res = await login({ email, password }).unwrap();
-            console.log(res)
-
             dispatch(setCredentials({ ...res }));
             navigate('/')
         } catch (error) {
             console.dir(error);
-            // alert(error.data.message);
+            setError(error);
         }
     }
+
 
     return (
         <div className="p-3 mb-10">
@@ -57,12 +55,14 @@ const Signin = (props) => {
                                     Sign up here.
                                 </div>
                             </div>
+                            {error && <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                                <span className="font-medium">{error}</span>
+                            </div>}
                             <button className="btn btn-outline btn-success flex mt-5" onClick={handleSubmit}>
                                 Login
                             </button>
                         </div>
                     </div>
-
                 </>
             )}
         </div>
