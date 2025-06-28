@@ -24,6 +24,7 @@ const Result = () => {
   const fetchProfile = async () => {
     try {
       const res = await refetch().unwrap();
+      console.log(res);
     } catch (error) {
       console.log(error);
     }
@@ -36,7 +37,7 @@ const Result = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  
+
   useEffect(() => {
     const getPhoto = async () => {
       try {

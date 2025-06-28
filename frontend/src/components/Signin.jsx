@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLoginMutation } from "../../Redux/api/userApiSlice";
 import { setCredentials } from "../../Redux/auth/authSlice";
@@ -21,11 +21,9 @@ const Signin = (props) => {
             dispatch(setCredentials({ ...res }));
             navigate('/')
         } catch (error) {
-            console.dir(error);
-            setError(error);
+            setError(error.data.message);
         }
     }
-
 
     return (
         <div className="p-3 mb-10">
@@ -42,9 +40,6 @@ const Signin = (props) => {
                         <label className="input input-bordered flex items-center gap-2 m-6">
                             <input type="password" className="grow" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
                         </label>
-
-                        {error && <div className="text-red-500 text-center">{error}</div>}
-
                         <div className="flex flex-col justify-evenly">
                             <div className="text-md flex text-center">
                                 Don't have an account?&nbsp;

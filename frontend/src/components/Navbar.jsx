@@ -120,7 +120,7 @@ const Navbar = () => {
                               <li className="list-row" key={idx}>
                                 <div onClick={() => recentHandler(item)}>
                                   <div>{item.city[0].toUpperCase() + item.city.slice(1)}</div>
-                                  <span className="inline">{Math.floor((date - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)) ? Math.floor((date - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)) + " days ago" : "today"}</span>
+                                  <span className="inline text-green-300">{Math.floor((date - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)) ? Math.floor((date - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)) + " days ago" : "today"}</span>
                                 </div>
 
                               </li>
