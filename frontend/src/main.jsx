@@ -12,7 +12,7 @@ document.head.appendChild(script);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Analytics />
+    <Analytics/>
     <SpeedInsights />
     <App />
   </StrictMode>,
