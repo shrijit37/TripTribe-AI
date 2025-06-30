@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-spring/web": "^9.7.5",
     "@reduxjs/toolkit": "^2.6.1",
+    "@vercel/speed-insights": "^1.2.0",
     "axios": "^1.8.1",
     "daisyui": "^4.12.23",
     "firebase": "^11.9.1",
