@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { Analytics } from "@vercel/analytics/react"
 
 const script = document.createElement("script");
 script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}&libraries=places`;
@@ -11,6 +12,7 @@ document.head.appendChild(script);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <Analytics />
     <SpeedInsights />
     <App />
   </StrictMode>,
