@@ -37,7 +37,7 @@ const Signup = (props) => {
                 },
                 body: JSON.stringify({ email: email})
             });
-            console.log(res.staus);
+            console.log(res.status);
 
 
             try {
@@ -48,7 +48,7 @@ const Signup = (props) => {
 
             } catch (error) {
                 console.dir(error);
-                setError(error.data.message || "Something went wrong. Please try again.");
+                setError(error.data?.message || "Something went wrong. Please try again.");
                 return;
             }
 
@@ -58,43 +58,31 @@ const Signup = (props) => {
             await sendEmailVerification(userCred.user);
 
             const intervalId = setInterval(async () => {
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        user.reload().then(async () => {
-                            if (user.emailVerified) {
-                                console.log(`User ${user.email} has verified their email.`);
-
-                                toast("Email verified successfully!");
-                                console.log("Email verified successfully!");
-                                clearInterval(intervalId); 
-                                try {
-                                    console.log("Registering user...");
-                                    console.log(email);
-                                    const res = await register({
+                const user = auth.currentUser;
+                if (user) {
+                    try {
+                        await user.reload();
+                        if (user.emailVerified) {
+                            console.log(`User ${user.email} has verified their email.`);
+                            toast("Email verified successfully!");
+                            clearInterval(intervalId);
+                            try {
+                                console.log("Registering user...");
+                                const res = await register({
                                     email: email,
                                     password: password,
                                     fname: fname,
-                                    
                                 }).unwrap();
-                                console.log("usernameRef.current.value")
                                 dispatch(setCredentials({ ...res }));
                             } catch (error) {
-                                setError(error.data.message || "Something went wrong. Please try again.");
-                                return;
+                                setError(error.data?.message || "Something went wrong. Please try again.");
                             }
-                                // window.location.href = "/"; // Redirect to home page
-
-                            } else {
-                                // console.log(`User ${user.email} has NOT verified their email.`);
-                            }
-                        }).catch((error) => {
-                            console.error("Error reloading user:", error);
-                        });
-                    } else {
-                        console.log("No user is signed in.");
+                        }
+                    } catch (error) {
+                        console.error("Error reloading user:", error);
                     }
-                });
-            }, 1000)
+                }
+            }, 2000);
         }
 
 
@@ -155,7 +143,7 @@ const Signup = (props) => {
                             d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
                             clipRule="evenodd" />
                     </svg>
-                    <input type="password" className="grow" placeholder="password" onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <input type="password" className="grow" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
                 </label>
 
                 <label className="input input-bordered flex items-center gap-2 m-6">
@@ -169,7 +157,7 @@ const Signup = (props) => {
                             d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
                             clipRule="evenodd" />
                     </svg>
-                    <input type="text" className="grow" placeholder="Confirm Password" onChange={(e)=>{setPassword(e.target.value)}} />
+                    <input type="password" className="grow" placeholder="Confirm Password" onChange={(e) => setConfirmPassword(e.target.value)} />
                 </label>
                 {error && <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
                     <span className="font-medium">{error}</span>

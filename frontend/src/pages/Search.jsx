@@ -93,21 +93,17 @@ const Search = () => {
 
     const searchHandler = async () => {
         console.log(cityName, days, budget);
-        if (cityName && days && budget && citySelected) {
+        if (cityName && days && budget) {
             setLoading(true);
             fetchData();
         } else {
-            if (!citySelected) {
-                toast('Make sure you select a city from the suggestions.');
-            } else {
-                toast('Please enter all the data.');
-            }
+            toast('Please enter all the data.');
             setReload((prev) => prev + 1);
         }
     };
 
     return (
-        <div className="lg:w-[100vh] h-[90vh] flex flex-row">
+        <div className="w-full min-h-[90vh] flex flex-col lg:flex-row">
             <ToastContainer
                 position="bottom-right"
                 autoClose={5000}
@@ -127,7 +123,7 @@ const Search = () => {
             />
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center mx-[50vh]">
+                <div className="flex flex-col items-center justify-center w-full py-20">
                     <span className="loading loading-bars loading-lg"></span>
                     <div className="text-md">Loading...</div>
                 </div>
@@ -195,7 +191,7 @@ const Search = () => {
                             <h2>Number of days</h2>
                             <input
                                 type="number"
-                                placeholder="Enter numberBuild number of days"
+                                placeholder="Enter number of days"
                                 className="input input-bordered w-full max-w-xs mt-5"
                                 onChange={(e) => setDays(Number(e.target.value))}
                             />

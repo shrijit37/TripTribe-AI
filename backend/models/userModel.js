@@ -18,16 +18,17 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true,
         },
-        recentSearch : [{type : Object}]
+        recentSearch : [{type : Object}],
+        userInterest: {
+            type: [String],
+            default: []
+        },
+        userAddress: {
+            type: String,
+            default: ""
+        }
     }, { timestamps: true }
 );
 const User = mongoose.model('User', userSchema);
-// console.log(User);
-async function check(){
-    const email = 'shrijitsrivastav@gmail.com';
-    const chk = await User.findOne({email});
-    // console.log(chk);
-}
-check();
 
 export default User;

@@ -1,6 +1,6 @@
 import { apiSlice } from './apislice';
 import { USER_URL } from '../constants';
-import {setCredentials} from "../auth/authSlice";
+import { setCredentials, logOut } from "../auth/authSlice";
 export const userApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => {
     return {
@@ -30,6 +30,7 @@ export const userApiSlice = apiSlice.injectEndpoints({
         async onQueryStarted(arg, { dispatch, queryFulfilled }) {
           try {
             const { data } = await queryFulfilled;
+            dispatch(setCredentials(data));
           } catch (error) {
             console.error('Register error:', error);
           }
@@ -45,8 +46,9 @@ export const userApiSlice = apiSlice.injectEndpoints({
         async onQueryStarted(arg, { dispatch, queryFulfilled }) {
           try {
             const { data } = await queryFulfilled;
+            dispatch(logOut());
           } catch (error) {
-            console.error('Register error:', error);
+            console.error('Logout error:', error);
           }
         },
       }),

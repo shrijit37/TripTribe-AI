@@ -14,6 +14,23 @@ const Result = () => {
   const [activeActivityTab, setActiveActivityTab] = useState(0);
   const [activeMealTab, setActiveMealTab] = useState(0);
   const [roadTripCost, setRoadTripCost] = useState(0);
+  
+  // Road trip calculator state
+  const [startPoint, setStartPoint] = useState("");
+  const [carAverage, setCarAverage] = useState("");
+  const [fuelPrice, setFuelPrice] = useState("");
+
+  const handleCalculateRoadTrip = () => {
+    const avg = parseFloat(carAverage);
+    const price = parseFloat(fuelPrice);
+    if (!isNaN(avg) && avg > 0 && !isNaN(price) && price > 0) {
+      // Mocked travel distance to destination
+      const distance = 380;
+      const fuelCost = (distance / avg) * price;
+      const tolls = 480;
+      setRoadTripCost(Math.round(fuelCost + tolls));
+    }
+  };
 
 
   const location = useLocation();
@@ -41,14 +58,22 @@ const Result = () => {
   useEffect(() => {
     const getPhoto = async () => {
       try {
-        const data = await fetch(`https://www.googleapis.com/customsearch/v1?q=${state.city.IconicPlace}&searchType=image&cx=c63fff3e039f04940&key=${import.meta.env.VITE_GOOGLE_CUSTOM_SEARCH_API_KEY}`).then((res) => res.json())
-        // console.log(data.items[0].link);
-        setImageUrl(`https://api.codetabs.com/v1/proxy/?quest=${data.items[1].link}`);
+        const res = await fetch(`/api/itenary/city-image?query=${encodeURIComponent(state.city.IconicPlace || state.city.name)}`);
+        const data = await res.json();
+        if (data.items && data.items.length > 1) {
+          const originLink = data.items[1].link;
+          setImageUrl(`/api/itenary/proxy-image?url=${encodeURIComponent(originLink)}`);
+        } else {
+          setImageUrl("https://picsum.photos/1920/1080?grayscale&random=2");
+        }
       } catch (e) {
-        console.log(e)
+        console.error("Error fetching city photo:", e);
+        setImageUrl("https://picsum.photos/1920/1080?grayscale&random=2");
       }
     }
-    getPhoto();
+    if (state && state.city) {
+      getPhoto();
+    }
   }, [state]);
 
 
@@ -73,7 +98,7 @@ const Result = () => {
       <div className='flex items-end justify-end mx-10 '>
         {saved && (<div className="badge badge-outline badge-success">Saved</div>)}
       </div>
-      <div className='lg:w-[100%] w-[100vh]'>
+      <div className='w-full'>
 
         <div style={{ width: '100%', height: '600px', position: 'relative' }}>
           {/* <GridDistortion
@@ -211,7 +236,7 @@ const Result = () => {
           <div className='flex flex-wrap flex-col w-fit border-2 border-green-300 rounded-lg p-6 m-4'>
             <div className="text-2xl mb-4 text-green-300 self-center">Railway Station 🚝</div>
             <div className="flex flex-col gap-3 self-center">
-              <div className="text-md"><span className="text-green-400">Nearest Airport :</span> {state.Reach.nearestRailwayStation[0]}</div>
+              <div className="text-md"><span className="text-green-400">Nearest Railway Station :</span> {state.Reach.nearestRailwayStation[0]}</div>
               <div className="text-md"><span className="text-green-400">Distance from the city :</span> {state.Reach.nearestRailwayStation[1]}</div>
             </div>
           </div>
@@ -219,7 +244,7 @@ const Result = () => {
           <div className='flex flex-wrap flex-col w-fit border-2 border-green-300 rounded-lg p-6 m-4'>
             <div className="text-2xl mb-4 text-green-300 self-center">Bus Station 🚌</div>
             <div className="flex flex-col gap-3 self-center">
-              <div className="text-md"><span className="text-green-400">Nearest Airport :</span> {state.Reach.nearestBusStation[0]}</div>
+              <div className="text-md"><span className="text-green-400">Nearest Bus Station :</span> {state.Reach.nearestBusStation[0]}</div>
               <div className="text-md"><span className="text-green-400">Distance from the city :</span> {state.Reach.nearestBusStation[1]}</div>
             </div>
           </div>
@@ -228,16 +253,21 @@ const Result = () => {
             {roadTripCost ? (
               <div className="flex flex-col gap-5 self-center mt-5">
                 <div className='text-center'><span className='text-2xl'>Estimated Cost (Toll + fuel):</span> <span className='text-green-400 text-2xl'>Rs. {roadTripCost}</span></div>
-                <button className='bg-gray-300 text-black hover:bg-gray-400 rounded-3xl text-2xl'>Calculate Again 🔁</button>
+                <button className='bg-gray-300 text-black hover:bg-gray-400 rounded-3xl text-2xl p-2' onClick={() => {
+                  setRoadTripCost(0);
+                  setStartPoint("");
+                  setCarAverage("");
+                  setFuelPrice("");
+                }}>Calculate Again 🔁</button>
               </div>
             ) : (
               <>
-                <div className='text-md text-center'>Estimate the cost of your road trip with our tool!</div>
-                <div className="flex flex-col gap-5 self-center mt-5">
-                  <input type="text" placeholder="Enter your starting point" className="input input-bordered w-full" />
-                  <input type="text" placeholder="Enter your Car's Average" className="input input-bordered w-full" />
-                  <input type="text" placeholder="Enter your Fuel Price" className="input input-bordered w-full" />
-                  <button className='bg-green-500 text-black hover:bg-green-400 rounded-3xl text-2xl'>Calculate</button>
+                <div className='text-md text-center'>Estimate the cost of your road trip to {state.city.name}!</div>
+                <div className="flex flex-col gap-5 self-center mt-5 w-full">
+                  <input type="text" placeholder="Enter starting point" value={startPoint} onChange={(e) => setStartPoint(e.target.value)} className="input input-bordered w-full" />
+                  <input type="number" placeholder="Enter Car's Average (km/l)" value={carAverage} onChange={(e) => setCarAverage(e.target.value)} className="input input-bordered w-full" />
+                  <input type="number" placeholder="Enter Fuel Price (Rs./l)" value={fuelPrice} onChange={(e) => setFuelPrice(e.target.value)} className="input input-bordered w-full" />
+                  <button className='bg-green-500 text-black hover:bg-green-400 rounded-3xl text-2xl p-2' onClick={handleCalculateRoadTrip}>Calculate</button>
                 </div>
               </>
             )}

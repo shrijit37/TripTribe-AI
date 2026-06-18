@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 
 app.listen(port, () => {
@@ -39,4 +39,4 @@ app.listen(port, () => {
 
 app.use("/api/test", test)
 app.use("/api/itenary", itenaryRoute)
-app.use("/api/signup", userRoute)
+app.use("/api/users", userRoute)

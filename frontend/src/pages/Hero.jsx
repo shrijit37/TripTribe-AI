@@ -24,7 +24,7 @@ const Hero = () => {
             
             <div>
                 <section>
-                    <div className="lg:w-[100%] w-[100vh] md:w-[100%] h-[40vh] rounded-xl relative lg:h-[600px]">
+                    <div className="w-full h-[40vh] rounded-xl relative lg:h-[600px]">
                         <GridDistortion
                             imageSrc="https://picsum.photos/1920/1080?grayscale"
                             grid={12}
@@ -36,7 +36,7 @@ const Hero = () => {
                     </div>
                 </section>
 
-                <section className='flex content-center flex-col p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
+                <section className='flex content-center flex-col p-5 w-full'>
                     <GradientText
                         colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
                         animationSpeed={6}
@@ -49,7 +49,7 @@ const Hero = () => {
                     <button className="btn btn-outline w-[150px] rounded-full self-center m-5" onClick={() => navigate("/search")}>Try it! ↗</button>
                 </section>
 
-                <section className='flex content-center flex-col p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
+                <section className='flex content-center flex-col p-5 w-full'>
 
                     <div className='flex flex-row justify-between '>
                         <div className='flex justify-center flex-col items-center'>
@@ -76,7 +76,7 @@ const Hero = () => {
                     </div>
                 </section>
 
-                <section className='flex content-center flex-col lg:p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
+                <section className='flex content-center flex-col lg:p-5 w-full'>
 
                     <div className='flex flex-row justify-around p-5'>
                         <div className="lg:w-[50%] w-[100%] h-[180%] self-center"><img src="https://picsum.photos/1920/1080?grayscale&random=2" alt="" /></div>
@@ -102,7 +102,7 @@ const Hero = () => {
                     </div>
                 </section>
 
-                <section className='flex content-center flex-col p-5 lg:w-[100%] w-[100vh] md:w-[100%]'>
+                <section className='flex content-center flex-col p-5 w-full'>
                     <div className='flex justify-center flex-col items-center'>
                         <GradientText
                             colors={["#40ffaa", "#4079ff", "#ff40ff", "#40ffff", "#000000", "#cccccc"]}

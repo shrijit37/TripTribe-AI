@@ -33,18 +33,18 @@ Here is a sample structure for the JSON output:
       "Police": "________",
       "Medical": "________",
       "Fire": "________"
-    },
+    }
   },
   "Reach" : {
-    "nearestAirport":[Airport Name, Distance from city],
-    "nearestRailwayStation":[Railway Station Name, Distance from city],
-    "nearestBusStation":[Bus Station Name, Distance from city],
-    "localTransportation": "________",
+    "nearestAirport": ["Airport Name", "Distance from city"],
+    "nearestRailwayStation": ["Railway Station Name", "Distance from city"],
+    "nearestBusStation": ["Bus Station Name", "Distance from city"],
+    "localTransportation": "________"
   }, 
-  Tips: {
-  [array of tips for the city, e.g., "Stay hydrated", "Carry local currency for small purchases", "Respect local customs and traditions"]
-  }, 
-  Budget : {
+  "Tips": [
+    "Stay hydrated", "Carry local currency for small purchases", "Respect local customs and traditions"
+  ], 
+  "Budget" : {
     "total": "________",
     "breakdown": {
       "accommodation": "________",
@@ -52,12 +52,11 @@ Here is a sample structure for the JSON output:
       "activities": "________",
       "transportation": "________"
     },
-    insufficientBudget: True/False,
-    alternativeOptions: "________",
-    averageTotalCost: "________",
-    averageAccommodationCost: "________",
-    insufficientBudgetMessage: "________"
-
+    "insufficientBudget": false,
+    "alternativeOptions": "________",
+    "averageTotalCost": "________",
+    "averageAccommodationCost": "________",
+    "insufficientBudgetMessage": "________"
   },
   "itinerary": [
     {
@@ -90,69 +89,14 @@ Here is a sample structure for the JSON output:
           "description": "________"
         }
       }
-    },
-    {
-      "day": 2,
-      "activities": [
-        {
-          "place": "________",
-          "description": "________"
-        },
-        {
-          "place": "________",
-          "description": "________"
-        },
-        {
-          "place": "________",
-          "description": "________"
-        }
-      ],
-      "meals": {
-        "breakfast": {
-          "place": "________",
-          "description": "________"
-        },
-        "lunch": {
-          "place": "________",
-          "description": "________"
-        },
-        "dinner": {
-          "place": "________",
-          "description": "________"
-        }
-      }
     }
   ],
-  hotels:[
-    "hotelName": {
-    hotelName:
-      location:
-      prices: 
-      rating:
-    },
-    "hotelName": {
-      hotelName:
-      location:
-      prices: 
-      rating:
-    }
-      "hotelName": {
-      hotelName:
-      location:
-      prices: 
-      rating:
-    }
-      "hotelName": {
-      hotelName:
-      location:
-      prices: 
-      rating:
-    },
-    "hotelName": {
-    hotelName:
-      location:
-      prices: 
-      rating:
+  "hotels": [
+    {
+      "hotelName": "Hotel Name",
+      "location": "Location description",
+      "prices": "Price in INR",
+      "rating": "Rating (out of 5)"
     }
   ]
 }`;

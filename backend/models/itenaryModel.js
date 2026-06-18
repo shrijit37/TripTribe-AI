@@ -7,7 +7,7 @@ const itenarySchema = new Schema(
             required: true,
             unique: true // this reflects the MongoDB index
         },
-        city: { type: String, require: true },
+        city: { type: String, required: true },
         itenary: { type: Object, required: true },
         userEmail: { type: String, required: true }
     }, { timestamps: true }

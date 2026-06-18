@@ -17,7 +17,7 @@ const Footer = () => {
                 <p>Copyright © {new Date().getFullYear()} - All right reserved</p>
             </aside>
             <nav className="grid-flow-col gap-4 md:place-self-center md:justify-self-end">
-                <div className="text-xl">Contact: <a href="shrijit@triptribe.info">shrijit@triptribe.info</a></div>
+                <div className="text-xl">Contact: <a href="mailto:shrijit@triptribe.info">shrijit@triptribe.info</a></div>
             </nav>
         </footer>
     )

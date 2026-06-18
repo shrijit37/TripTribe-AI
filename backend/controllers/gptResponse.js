@@ -16,7 +16,8 @@ const openai = new OpenAI({
 const cleanJsonResponse = (text) => {
   // Remove markdown code block syntax if present
   let cleaned = text.replace(/```(json)?|```/g, '');
-  cleaned = cleaned.replace(/[^\x00-\x7F]+/g, "");
+  // Remove control characters (excluding tab, linefeed, carriage return) to prevent JSON parsing issues, preserving Unicode/UTF-8
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
   // Trim whitespace
   cleaned = cleaned.trim();
   
@@ -24,7 +25,10 @@ const cleanJsonResponse = (text) => {
 };
 
 // to be passed no of days, cityName, budget 
-const getResponse = asyncHandler(async (days, cityName, budget) => {
+const getResponse = asyncHandler(async (days, cityName, budget, retryCount = 0) => {
+  if (retryCount >= 3) {
+    throw new Error("Failed to generate a valid JSON itinerary response after 3 retries.");
+  }
   try {
     const completion = await openai.chat.completions.create({
         model: "google/gemini-2.0-flash-lite-001", 
@@ -42,7 +46,7 @@ const getResponse = asyncHandler(async (days, cityName, budget) => {
     
     if (!completion.choices[0].message.content) {
       console.log("Empty response from OpenAI, retrying...");
-      return await getResponse(days, cityName, budget);
+      return await getResponse(days, cityName, budget, retryCount + 1);
     }
     
     // Clean the response before parsing
@@ -56,7 +60,7 @@ const getResponse = asyncHandler(async (days, cityName, budget) => {
       console.error("Error parsing JSON:", parseError);
       console.log("Problematic content:", cleanedContent);
       // If parsing fails, retry the API call
-      return await getResponse(days, cityName, budget);
+      return await getResponse(days, cityName, budget, retryCount + 1);
     }
   } catch (error) {
     console.error("Error calling OpenAI API:", error);

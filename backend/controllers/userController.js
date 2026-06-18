@@ -84,7 +84,14 @@ const createUser = asyncHandler(async (req, res) => {
             email: newUser.email
         });
     } catch (error) {
-        // same error handling
+        console.error("Error in createUser:", error);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ message: error.message });
+        }
+        if (error.code === 11000) {
+            return res.status(400).json({ message: "User already exist" });
+        }
+        return res.status(500).json({ message: "Something went wrong: " + error.message });
     }
 });
 
@@ -125,7 +132,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findOne(req.user._id);
+    const user = await User.findById(req.user._id);
     if (user) {
         return res.json({
             _id: user._id,

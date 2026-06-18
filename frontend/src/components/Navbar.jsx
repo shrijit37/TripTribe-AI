@@ -43,7 +43,7 @@ const Navbar = () => {
   }
   return (
     <>
-      <nav className="flex justify-between items-center lg:w-[92%] w-[100vh] mx-auto my-4 px-2">
+      <nav className="flex justify-between items-center lg:w-[92%] w-full mx-auto my-4 px-2">
         <div className="">
           <div
             className="text-5xl font-poppin cursor-pointer"
