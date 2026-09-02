@@ -1,15 +1,21 @@
-FROM node:20.19.2
+# Frontend (Vite React) — multi-stage production build served by nginx.
+FROM node:20.19.2 AS build
 
 WORKDIR /app
 
-COPY package.json .
-
-RUN npm install --force
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 
-EXPOSE 5173
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+FROM nginx:1.27-alpine AS runtime
 
+# Custom nginx config: serve SPA, proxy /api to backend service
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
