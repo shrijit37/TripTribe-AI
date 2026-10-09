@@ -81,10 +81,12 @@ jobs:
           cache-from: type=gha,scope=triptribe-web
           cache-to: type=gha,mode=max,scope=triptribe-web
           # Proxy target + version are baked at build time (nginx has no
-          # runtime env): prod web talks to the public api URL.
+          # runtime env). Internal swarm DNS (no public hairpin: container
+          # egress to the public IP is unreliable). App names are stable;
+          # if the api app is ever recreated, update this + STATE.md.
           build-args: |
             APP_VERSION=${{ github.sha }}
-            BACKEND_URL=https://api.triptribe.shrijit.tech
+            BACKEND_URL=http://triptribe-api-y59lny:8080
             VITE_AUTH_API_URL=/api/users
             VITE_ITENARY_API_URL=/api/itenary
             VITE_GOOGLE_PLACES_API_KEY=${{ secrets.TRIBE_GOOGLE_PLACES_API_KEY }}
