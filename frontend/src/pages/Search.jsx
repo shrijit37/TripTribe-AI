@@ -17,7 +17,7 @@ const Search = () => {
 
     const inputRef = useRef(null);
     const autocompleteRef = useRef(null);
-    const [citySelected, setCitySelected] = useState(false);
+    const [, setCitySelected] = useState(false);
 
     const navigate = useNavigate();
 

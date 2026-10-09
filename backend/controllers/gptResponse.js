@@ -5,7 +5,10 @@ import getPrompt from "../config/prompt.js";
 
 dotenv.config();
 
-const openai = new OpenAI({
+// Lazy client: constructing OpenAI at import time throws when no key is
+// configured (SDK v7+) and would crash the whole boot. AI features fail
+// at request time instead; everything else keeps working.
+const getClient = () => new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENAI_KEY,
 });
@@ -30,7 +33,7 @@ const getResponse = asyncHandler(async (days, cityName, budget, retryCount = 0) 
     throw new Error("Failed to generate a valid JSON itinerary response after 3 retries.");
   }
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await getClient().chat.completions.create({
         model: "google/gemini-2.0-flash-lite-001", 
         messages: [
           { 

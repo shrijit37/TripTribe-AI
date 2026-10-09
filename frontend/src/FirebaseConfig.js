@@ -13,7 +13,16 @@ const firebaseConfig = {
 };
 
 
-const app = initializeApp(firebaseConfig);
-var auth = getAuth(app);
+// Defensive init: without VITE_FIREBASE_* keys (see .env.example) the app
+// must still boot — only email signup fails at request time with a clear
+// error. initializeApp with an empty config throws and would kill the
+// whole SPA through the static import chain (Navbar -> Signup -> here).
+let auth = null;
+try {
+  if (!firebaseConfig.apiKey) throw new Error("firebase not configured");
+  auth = getAuth(initializeApp(firebaseConfig));
+} catch (e) {
+  console.warn("Firebase disabled:", e.message);
+}
 
 export default auth;

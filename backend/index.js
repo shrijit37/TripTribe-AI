@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 
 
 //routes
+import health from "./routes/health.js";
 import test from "./routes/test.js"
 import itenaryRoute from "./routes/itenaryRoute.js"
 import userRoute from "./routes/userRoute.js"
@@ -37,6 +38,7 @@ app.listen(port, () => {
   });
 
 
+app.use("/health", health);
 app.use("/api/test", test)
 app.use("/api/itenary", itenaryRoute)
 app.use("/api/users", userRoute)

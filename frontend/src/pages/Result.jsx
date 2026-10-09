@@ -4,11 +4,9 @@ import GridDistortion from '../components/GridDistortion';
 import ActivityCard from '../components/ActivityCard';
 import HotelSection from '../components/HotelSection';
 import { useProfileQuery } from '../../Redux/api/userApiSlice';
-import { useDispatch, useSelector } from 'react-redux';
 const Result = () => {
 
-  const { data: profile, refetch } = useProfileQuery();
-  const userInfo = useSelector(state => state.auth);
+  const { refetch } = useProfileQuery();
 
   const [imageUrl, setImageUrl] = useState(null);
   const [activeActivityTab, setActiveActivityTab] = useState(0);

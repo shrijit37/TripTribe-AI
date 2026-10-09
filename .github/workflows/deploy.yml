@@ -1,0 +1,161 @@
+name: CI + Deploy to Dokploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: triptribe-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: shrijit37
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend — install + syntax check
+        run: |
+          npm ci --ignore-scripts
+          node --check index.js
+          node --check routes/health.js
+          node --check controllers/gptResponse.js
+        working-directory: backend
+      - name: Frontend — lint + build
+        run: |
+          npm ci --ignore-scripts
+          npm run lint
+          npm run build
+        working-directory: frontend
+
+  build:
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        run: echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build+push triptribe-api
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          platforms: linux/amd64,linux/arm64
+          push: true
+          cache-from: type=gha,scope=triptribe-api
+          cache-to: type=gha,mode=max,scope=triptribe-api
+          build-args: APP_VERSION=${{ github.sha }}
+          tags: ghcr.io/${{ env.OWNER }}/triptribe-ai-api:${{ github.sha }}
+      - name: Build+push triptribe-web
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          platforms: linux/amd64,linux/arm64
+          push: true
+          cache-from: type=gha,scope=triptribe-web
+          cache-to: type=gha,mode=max,scope=triptribe-web
+          # Proxy target + version are baked at build time (nginx has no
+          # runtime env): prod web talks to the public api URL.
+          build-args: |
+            APP_VERSION=${{ github.sha }}
+            BACKEND_URL=https://api.triptribe.shrijit.tech
+            VITE_AUTH_API_URL=/api/users
+            VITE_ITENARY_API_URL=/api/itenary
+            VITE_GOOGLE_PLACES_API_KEY=${{ secrets.TRIBE_GOOGLE_PLACES_API_KEY }}
+            VITE_FIREBASE_API_KEY=${{ secrets.TRIBE_FIREBASE_API_KEY }}
+            VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.TRIBE_FIREBASE_AUTH_DOMAIN }}
+            VITE_FIREBASE_PROJECT_ID=${{ secrets.TRIBE_FIREBASE_PROJECT_ID }}
+            VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.TRIBE_FIREBASE_STORAGE_BUCKET }}
+            VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.TRIBE_FIREBASE_MESSAGING_SENDER_ID }}
+            VITE_FIREBASE_APP_ID=${{ secrets.TRIBE_FIREBASE_APP_ID }}
+            VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.TRIBE_FIREBASE_MEASUREMENT_ID }}
+            VITE_EMAIL_VERIFICATION_API_URL=${{ secrets.TRIBE_EMAIL_VERIFICATION_API_URL }}
+          tags: ghcr.io/${{ env.OWNER }}/triptribe-ai-web:${{ github.sha }}
+
+  deploy-prod:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
+      DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+      GHCR_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+      SHA: ${{ needs.build.outputs.sha }}
+    steps:
+      # Dokploy authenticates GHCR pulls with a long-lived pull token kept
+      # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
+      # it expires after the job and silently breaks every later pull.
+      - name: Re-assert Dokploy env (Infisical sync wipes app env)
+        run: |
+          DOL='$'
+          REF="${DOL}{{vault.infisical-prod."
+          post_env() {
+            curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
+              -H 'Content-Type: application/json' -d @- \
+              "$DOKPLOY_URL/api/application.saveEnvironment" >/dev/null
+          }
+          jq -n --arg ref "$REF" \
+            --arg id "${{ vars.DOKPLOY_API_APP_ID }}" \
+            '{applicationId: $id,
+              env: ("PORT=8080\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nJWT_SECRET=" + $ref + "TRIPTRIBE_JWT_SECRET}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}"),
+              buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env
+          echo "dokploy env re-asserted"
+      - name: Point Dokploy at SHA images and redeploy
+        run: |
+          point() {
+            curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
+              -H 'Content-Type: application/json' \
+              -d "{\"applicationId\":\"$1\",\"dockerImage\":\"$2\",\"username\":\"${{ github.actor }}\",\"password\":\"$GHCR_TOKEN\",\"registryUrl\":\"ghcr.io\"}" \
+              "$DOKPLOY_URL/api/application.saveDockerProvider" &&
+            curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
+              -H 'Content-Type: application/json' \
+              -d "{\"applicationId\":\"$1\"}" \
+              "$DOKPLOY_URL/api/application.redeploy" >/dev/null
+          }
+          point "${{ vars.DOKPLOY_API_APP_ID }}" "ghcr.io/$OWNER/triptribe-ai-api:$SHA"
+          point "${{ vars.DOKPLOY_WEB_APP_ID }}" "ghcr.io/$OWNER/triptribe-ai-web:$SHA"
+          echo "redeploy triggered for $SHA"
+      # Wait on /health (uniform contract): ok or degraded both serve
+      # traffic; only down/503 fails the gate.
+      - name: Wait for the new containers to converge
+        run: |
+          for i in $(seq 1 30); do
+            ok=0
+            for base in "${{ vars.API_URL }}" "${{ vars.WEB_URL }}"; do
+              body=$(curl -s --max-time 10 "$base/health" || echo '')
+              echo "$body" | grep -q '"status":"ok"\|"status":"degraded"' && ok=$((ok+1))
+            done
+            if [ "$ok" = "2" ]; then
+              echo "both services healthy after $i attempt(s)"
+              exit 0
+            fi
+            echo "attempt $i/30: $ok/2 healthy"
+            sleep 10
+          done
+          echo "services did not converge" >&2
+          exit 1

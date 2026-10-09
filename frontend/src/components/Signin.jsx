@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLoginMutation } from "../../Redux/api/userApiSlice";
 import { setCredentials } from "../../Redux/auth/authSlice";
@@ -42,7 +42,7 @@ const Signin = (props) => {
                         </label>
                         <div className="flex flex-col justify-evenly">
                             <div className="text-md flex text-center">
-                                Don't have an account?&nbsp;
+                                Don&apos;t have an account?&nbsp;
                                 <div
                                     className="text-md cursor-pointer text-blue-500"
                                     onClick={() => props.setSignin(false)} // Switch to Signup

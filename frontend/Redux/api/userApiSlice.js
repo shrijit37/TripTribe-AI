@@ -45,7 +45,7 @@ export const userApiSlice = apiSlice.injectEndpoints({
         invalidatesTags: ['Auth'],
         async onQueryStarted(arg, { dispatch, queryFulfilled }) {
           try {
-            const { data } = await queryFulfilled;
+            await queryFulfilled;
             dispatch(logOut());
           } catch (error) {
             console.error('Logout error:', error);

@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useRegisterMutation } from "../../Redux/api/userApiSlice";
 import { setCredentials } from "../../Redux/auth/authSlice";
 import auth from "../FirebaseConfig";
-import { sendEmailVerification, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { sendEmailVerification, createUserWithEmailAndPassword } from "firebase/auth";
 
 
 const Signup = (props) => {
@@ -52,6 +52,10 @@ const Signup = (props) => {
                 return;
             }
 
+            if (!auth) {
+                setError("Email signup is unavailable right now (auth not configured). Please try again later.");
+                return;
+            }
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
 
