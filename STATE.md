@@ -14,7 +14,7 @@ via Google Places.
 |---|---|---|---|
 | web | `triptribe-web-acbq9o` | https://triptribe.shrijit.tech | ok, assets:up |
 | api | `triptribe-api-y59lny` | https://api.triptribe.shrijit.tech | ok, database:up |
-| mongo | `mongo-override-redundant-firewall-1p7yfo` (mongo:8.0) | internal only | via api check |
+| mongo | `mongo-override-redundant-firewall-1p7yfo` (mongo:9.0) | internal only | via api check |
 
 Images: `ghcr.io/shrijit37/triptribe-ai-{api,web}:<sha>`,
 multi-arch, built on GH Actions. Secrets from Infisical
