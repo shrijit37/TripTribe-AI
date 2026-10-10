@@ -8,10 +8,12 @@ import  Result  from "./pages/Result.jsx";
 import {Provider} from "react-redux"
 import  store  from "../Redux/store.js";
 import Footer from "./components/Footer.jsx";
+import { AuthProvider } from "./context/AuthProvider.jsx";
 function App() {
   return (
     <>
       <Provider store={store}>
+        <AuthProvider>
         <BrowserRouter>
           <Navbar />
           <Routes>
@@ -22,6 +24,7 @@ function App() {
           </Routes>
           <Footer />
         </BrowserRouter>
+        </AuthProvider>
         </Provider>
     </>
   );

@@ -1,33 +1,44 @@
-import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
+import User from "../models/userModel.js";
+
+// The session cookie is set on Domain=.shrijit.tech, so it arrives on every API
+// call: forward it to the shared Better Auth service and mirror the user into
+// this app's own profile document.
+const AUTH_URL = process.env.AUTH_URL || "https://auth.shrijit.tech";
 
 const authenticate = asyncHandler(async (req, res, next) => {
-  let token;
-
-  // Check for token in Authorization header
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer ")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-  // Fallback to cookie
-  else if (req.cookies && req.cookies.jwt) {
-    token = req.cookies.jwt;
-  }
-
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.userId).select("-password");
-      next();
-    } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token failed." });
+    const cookie = req.headers.cookie || "";
+    if (!cookie.includes("better-auth.session_token")) {
+        return res.status(401).json({ message: "Not authorized, no session." });
     }
-  } else {
-    return res.status(401).json({ message: "Not authorized, no token." });
-  }
+
+    const session = await fetch(`${AUTH_URL}/api/auth/get-session`, {
+        headers: { cookie },
+        cache: "no-store",
+    })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+    const sessionUser = session?.user;
+    if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Not authorized, session failed." });
+    }
+
+    const user = await User.findOneAndUpdate(
+        { authId: sessionUser.id },
+        {
+            $setOnInsert: {
+                authId: sessionUser.id,
+                email: sessionUser.email,
+                fname: sessionUser.name?.split(" ")[0] || sessionUser.email,
+            },
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    req.user = user;
+    req.sessionUser = sessionUser;
+    next();
 });
 
 export { authenticate };

@@ -2,34 +2,22 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import Signin from "./Signin";
 import Signup from "./Signup";
-import { useDispatch, useSelector } from "react-redux";
-import { logOut } from "../../Redux/auth/authSlice";
-import { useLogoutMutation } from "../../Redux/api/userApiSlice";
+import { useSelector } from "react-redux";
+import { useAuth } from "../context/AuthProvider";
 
 const Navbar = () => {
   const date = new Date();
   let navigate = useNavigate();
-  const [logout] = useLogoutMutation();
+  const { logout } = useAuth();
 
 
   const [signin, setSignin] = useState(true);
   const userInfo = useSelector((state) => state.auth);
-
-  const dispatch = useDispatch();
-
   const data = userInfo.userInfo;
-
   const logoutHandler = async (e) => {
     e.preventDefault();
-    try {
-      dispatch(logOut());
-      await logout().unwrap();
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("expirationTime");
-      navigate("/");
-    } catch (error) {
-      console.log(error);
-    }
+    await logout();
+    navigate("/");
   };
 
 

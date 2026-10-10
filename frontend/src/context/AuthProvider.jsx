@@ -1,56 +1,48 @@
-import { createContext, useState, useEffect } from "react";
-import Cookies from "js-cookie";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { getSession, signOut } from "../lib/auth-client";
+import { setCredentials, logOut } from "../../Redux/auth/authSlice";
 
-export const AuthContext = createContext();
+const AuthContext = createContext({ user: null, loading: true, refresh: async () => {}, logout: async () => {} });
 
+// Navbar/other components read the session from redux (state.auth.userInfo),
+// so the shared session is mirrored there on every refresh.
 export const AuthProvider = ({ children }) => {
+  const dispatch = useDispatch();
   const [user, setUser] = useState(null);
-  const [fname, setFname] = useState(null);
-  const [lname, setLname] = useState(null);
-  const [email, setEmail] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  const refresh = useCallback(async () => {
+    try {
+      const session = await getSession();
+      const sessionUser = session?.user;
+      const next = sessionUser
+        ? { ...sessionUser, fname: sessionUser.name?.split(" ")[0] || sessionUser.email }
+        : null;
+      setUser(next);
+      dispatch(next ? setCredentials(next) : logOut());
+    } catch {
+      setUser(null);
+      dispatch(logOut());
+    } finally {
+      setLoading(false);
+    }
+  }, [dispatch]);
 
   useEffect(() => {
-    const session = Cookies.get("session_token");
-    if (session) {
-      setUser({ token: session });
-    }
-  }, []);
+    refresh();
+  }, [refresh]);
 
-  const login = async (email, password) => {
-    try {
-      const response = await fetch("http://localhost:8080/api/signup/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: "include", // Ensures cookies are stored
-      });
-      console.log(response.body)
-      const data = await response.json();
-      if (response.ok) {
-        // Cookies.set("session_token", data.token, { expires: 1 }); // Expires in 1 day
-        setUser({ token: response.body, email});
-        setFname(data.fname);
-        setLname(data.lname);
-        setEmail(data.email);
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
-  };
-
-  const logout = () => {
-    Cookies.remove("session_token");
-    setUser(null);
-  };
+  const logout = useCallback(async () => {
+    await signOut().catch(() => {});
+    await refresh();
+  }, [refresh]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, fname, lname, email }}>
+    <AuthContext.Provider value={{ user, loading, refresh, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

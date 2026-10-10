@@ -29,7 +29,6 @@ COPY --from=build /app/controllers /app/controllers
 COPY --from=build /app/middleware /app/middleware
 COPY --from=build /app/models /app/models
 COPY --from=build /app/routes /app/routes
-COPY --from=build /app/utils /app/utils
 
 EXPOSE 8080
 USER node

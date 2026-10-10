@@ -2,8 +2,6 @@ import express from "express";
 import getResponse from "../controllers/gptResponse.js";
 import saveItenary from "../controllers/saveItenary.js";
 import DataModel from "../models/itenaryModel.js";
-import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
 import { authenticate } from "../middleware/authenticate.js";
 
 const router = express.Router();

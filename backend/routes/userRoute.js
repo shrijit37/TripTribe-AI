@@ -1,20 +1,14 @@
 import express from 'express';
-import {createUser, loginUser, logoutUser, getCurrentUserProfile, updateCurrentUserProfile, checkDuplicate} from '../controllers/userController.js';
+import { getCurrentUserProfile, updateCurrentUserProfile } from '../controllers/userController.js';
 import { authenticate } from '../middleware/authenticate.js';
 
-const router = express.Router(); 
+const router = express.Router();
 
-router.route('/').post(createUser);
-router.post('/auth',loginUser);
-router.post('/logout',logoutUser);
-router.post("/verify", checkDuplicate);
-router.get('/test', (req, res) => {
-  console.log("User route is working");
-  res.send("User route is working");
-}
-);
+// Sign-up, sign-in and sign-out live in the shared auth service
+// (auth.shrijit.tech); this router only serves the app's own profile.
 router
   .route("/profile")
   .get(authenticate, getCurrentUserProfile)
   .put(authenticate, updateCurrentUserProfile);
+
 export default router;

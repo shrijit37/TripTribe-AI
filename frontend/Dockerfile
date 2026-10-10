@@ -10,19 +10,12 @@ RUN npm ci
 COPY . .
 
 # VITE_* values are baked into the bundle at build time (Vite static
-# replacement). CI passes real values from Infisical; empty defaults keep
-# the build green and the app boots degraded (see FirebaseConfig.js).
+# replacement). VITE_AUTH_URL is the shared Better Auth service that issues
+# the .shrijit.tech session cookie (src/lib/auth-client.js).
 ARG VITE_AUTH_API_URL=/api/users
 ARG VITE_ITENARY_API_URL=/api/itenary
 ARG VITE_GOOGLE_PLACES_API_KEY=
-ARG VITE_FIREBASE_API_KEY=
-ARG VITE_FIREBASE_AUTH_DOMAIN=
-ARG VITE_FIREBASE_PROJECT_ID=
-ARG VITE_FIREBASE_STORAGE_BUCKET=
-ARG VITE_FIREBASE_MESSAGING_SENDER_ID=
-ARG VITE_FIREBASE_APP_ID=
-ARG VITE_FIREBASE_MEASUREMENT_ID=
-ARG VITE_EMAIL_VERIFICATION_API_URL=
+ARG VITE_AUTH_URL=https://auth.shrijit.tech
 
 RUN npm run build
 
