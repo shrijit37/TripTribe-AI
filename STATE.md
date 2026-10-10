@@ -18,7 +18,7 @@ via Google Places.
 
 Images: `ghcr.io/shrijit37/triptribe-ai-{api,web}:<sha>`,
 multi-arch, built on GH Actions. Secrets from Infisical
-(`TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_JWT_SECRET`, vault `infisical-prod`
+(`TRIPTRIBE_MONGO_URI`, vault `infisical-prod`
 assigned to the TripTribe-AI env). Old idle compose (never deployed)
 deleted 2026-10-09. `triptribe.shrijit.tech` DNS moved off Vercel
 (CNAME) to A 130.210.29.215. Stale `triptribe-ai.shrijit.tech` A
