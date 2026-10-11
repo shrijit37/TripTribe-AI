@@ -62,6 +62,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Infisical is the single source of truth for every key. The frontend
+      # key lives in the frontend project (pinned by .infisical.json);
+      # GH secrets must not duplicate it, or the two silently drift.
+      - name: Fetch VITE_* keys from Infisical
+        uses: Infisical/secrets-action@v1.0.18
+        with:
+          method: universal
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          project-id: 9541bd35-aa6f-4719-b663-ec7ec99b8073
+          env-slug: prod
+          domain: https://secrets.shrijit.tech
+          export-type: env
       - name: Build+push triptribe-api
         uses: docker/build-push-action@v6
         with:
@@ -89,7 +102,7 @@ jobs:
             BACKEND_URL=http://triptribe-api-y59lny:8080
             VITE_AUTH_API_URL=/api/users
             VITE_ITENARY_API_URL=/api/itenary
-            VITE_GOOGLE_PLACES_API_KEY=${{ secrets.TRIBE_GOOGLE_PLACES_API_KEY }}
+            VITE_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}
             VITE_AUTH_URL=https://auth.shrijit.tech
           tags: ghcr.io/${{ env.OWNER }}/triptribe-ai-web:${{ github.sha }}
 
