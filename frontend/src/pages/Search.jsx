@@ -4,11 +4,15 @@ import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router';
 
 const Search = () => {
-    const [cityName, setCityName] = useState('');
-    const [days, setDays] = useState(0);
-    const [budget, setBudget] = useState(0);
+    // Seeded from the landing page's slip, so the visitor never retypes what
+    // they just told us. Still fully editable here.
+    const seed = useLocation().state || {};
+    const [cityName, setCityName] = useState(seed.cityName || '');
+    const [days, setDays] = useState(Number(seed.days) || 0);
+    const [budget, setBudget] = useState(Number(seed.budget) || 0);
     const [reload, setReload] = useState(0);
     const [loading, setLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(1); // Track the current step
@@ -17,6 +21,8 @@ const Search = () => {
 
     const inputRef = useRef(null);
     const autocompleteRef = useRef(null);
+    // Bounds the Places retry loop and cancels it on unmount.
+    const retryRef = useRef({ attempt: 0, timer: null, cancelled: false });
     const [, setCitySelected] = useState(false);
 
     const navigate = useNavigate();
@@ -44,10 +50,14 @@ const Search = () => {
             } catch (error) {
                 console.error('Error initializing Places Autocomplete:', error);
             }
-        } else {
-            // Retry after a short delay if Google Maps API is not loaded
-            setTimeout(initializeAutocomplete, 500);
+            return;
         }
+
+        // Retry while the Maps script is still loading, but bound the retries
+        // and stop on unmount. An unbounded timer here outlives the step.
+        retryRef.current.attempt += 1;
+        if (retryRef.current.attempt > 20 || retryRef.current.cancelled) return;
+        retryRef.current.timer = window.setTimeout(initializeAutocomplete, 500);
     };
 
     // Initialize Autocomplete when the "City Name" step is active
@@ -56,9 +66,12 @@ const Search = () => {
             // Only initialize for the "City Name" step (Step 2, assuming 1-based indexing)
             initializeAutocomplete();
         }
-
-        // Clean up listeners when the step changes or component unmounts
         return () => {
+            retryRef.current.cancelled = true;
+            if (retryRef.current.timer) {
+                window.clearTimeout(retryRef.current.timer);
+                retryRef.current.timer = null;
+            }
             if (autocompleteRef.current && window.google) {
                 window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
                 autocompleteRef.current = null;

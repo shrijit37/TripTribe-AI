@@ -12,7 +12,13 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  width: 100vh;
+  /* Not width:100vh. That was almost certainly meant as min-height, and on a
+     portrait phone it makes the container 780px wide inside a 320px viewport.
+     flex:1 1 0% above was masking it by shrinking the box, but the width also
+     contributes to the scrollable area, which is what pushed the /search page
+     2px past the viewport at 320px. The row should fill the column it is in. */
+  width: 100%;
+  max-width: 100%;
  
 }
 

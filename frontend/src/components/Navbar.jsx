@@ -31,23 +31,22 @@ const Navbar = () => {
   }
   return (
     <>
-      <nav className="flex justify-between items-center lg:w-[92%] w-full mx-auto my-4 px-2">
-        <div className="">
-          <div
-            className="text-5xl font-poppin cursor-pointer"
-            onClick={() => {
-              navigate("/");
-            }}
-          >
-            TripTribe
-          </div>
-        </div>
-        <div className="flex justify-between ">
-          <button
-            className="btn btn-primary mx-5"
-            onClick={() => navigate("/search")}
-          >
-            Try it! 💫
+      <nav className="tt-nav">
+        <button
+          type="button"
+          className="tt-nav__mark"
+          onClick={() => navigate("/")}
+          aria-label="TripTribe, home"
+        >
+          <span className="tt-nav__wordmark">TripTribe</span>
+          <span className="tt-nav__ref" aria-hidden="true">
+            TT/ROUTE
+          </span>
+        </button>
+
+        <div className="tt-nav__actions">
+          <button type="button" className="tt-nav__link" onClick={() => navigate("/search")}>
+            Plan a trip
           </button>
           {userInfo.userInfo ? (
             <>
@@ -86,12 +85,13 @@ const Navbar = () => {
                       <div className="text-3xl justify-center">
                         {userInfo.userInfo.fname}
                       </div>
-                      <div
-                        className="badge badge-outline badge-error justify-center mt-1 btn h-2"
+                      <button
+                        type="button"
+                        className="tt-nav__link tt-nav__link--quiet"
                         onClick={logoutHandler}
                       >
-                        Sign-out
-                      </div>
+                        Sign out
+                      </button>
                     </div>
                     <br />
                     <hr />
@@ -125,10 +125,11 @@ const Navbar = () => {
             </>
           ) : (
             <button
-              className="btn"
+              type="button"
+              className="tt-nav__link tt-nav__link--quiet"
               onClick={() => document.getElementById("my_modal_4").showModal()}
             >
-              Sign-in
+              Sign in
             </button>
           )}
           <dialog id="my_modal_4" className="modal">

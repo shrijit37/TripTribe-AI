@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-11T00:00:00.000Z",
+  "title": "Design System: TripTribe",
+  "extensions": {
+    "colorMeta": {
+      "stock-paper": {
+        "role": "neutral",
+        "displayName": "Stock, Paper",
+        "canonical": "#e7e6e0",
+        "purpose": "The page ground and the map sheet. Warm, never white.",
+        "tonalRamp": ["#0c0b08", "#22221d", "#3b3b36", "#565550", "#73726c", "#908f8a", "#afaea8", "#cfcec8", "#f0efe9"]
+      },
+      "stock-lift": {
+        "role": "neutral",
+        "displayName": "Stock, Lifted",
+        "canonical": "#efeee9",
+        "purpose": "The slip sheet — the one raised surface that carries the form.",
+        "tonalRamp": ["#0c0b08", "#22221e", "#3b3b37", "#565551", "#72726d", "#908f8b", "#afaea9", "#cfcec9", "#efeee9"]
+      },
+      "stock-press": {
+        "role": "neutral",
+        "displayName": "Stock, Pressed",
+        "canonical": "#dedcd4",
+        "purpose": "Footer ground and scrollbar track. The darkest ground the ink scale must survive.",
+        "tonalRamp": ["#0d0b06", "#23221c", "#3c3b34", "#57554f", "#73726a", "#918f88", "#b0aea6", "#d0cec6", "#f1efe6"]
+      },
+      "band-1": {
+        "role": "neutral",
+        "displayName": "Hypsometric Band 1",
+        "canonical": "#e3e4dc",
+        "purpose": "Outermost contour tint on the map. A value axis, never a component fill.",
+        "tonalRamp": ["#0c0b08", "#22221d", "#3b3b36", "#565550", "#73726c", "#908f8a", "#afaea8", "#cfcec8", "#f0efe9"]
+      },
+      "band-2": {
+        "role": "neutral",
+        "displayName": "Hypsometric Band 2",
+        "canonical": "#d7d9cf",
+        "purpose": "Second contour tint, innermost-but-one.",
+        "tonalRamp": ["#0c0b08", "#22221d", "#3b3b36", "#565550", "#73726c", "#908f8a", "#afaea8", "#cfcec8", "#f0efe9"]
+      },
+      "band-3": {
+        "role": "neutral",
+        "displayName": "Hypsometric Band 3",
+        "canonical": "#c9cdc1",
+        "purpose": "Third contour tint.",
+        "tonalRamp": ["#0c0b08", "#22221d", "#3b3b36", "#565550", "#73726c", "#908f8a", "#afaea8", "#cfcec8", "#f0efe9"]
+      },
+      "band-4": {
+        "role": "neutral",
+        "displayName": "Hypsometric Band 4",
+        "canonical": "#b9bfb1",
+        "purpose": "Innermost, darkest contour tint. The ground ink-map is measured against.",
+        "tonalRamp": ["#0c0b08", "#22221d", "#3b3b36", "#565550", "#73726c", "#908f8a", "#afaea8", "#cfcec8", "#f0efe9"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#14181c",
+        "purpose": "Body and heading text, the 2px section rule, contour hairlines at 22% alpha. 14.27:1 on paper.",
+        "tonalRamp": ["#080c0f", "#1e2226", "#373b40", "#51565b", "#6d7277", "#8b9095", "#a9afb4", "#c9ced4", "#e9eff5"]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink, Soft",
+        "canonical": "#3d454c",
+        "purpose": "Reading matter that recedes: ledes, item bodies, map caption, footer note. 7.10:1 on pressed stock.",
+        "tonalRamp": ["#060c11", "#1b2329", "#343c42", "#4e565e", "#6a737a", "#879098", "#a6afb8", "#c5cfd8", "#e6f0f9"]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Ink, Faint",
+        "canonical": "#525a61",
+        "purpose": "Labels, hints, references, legal line, placeholders. 5.11:1 on pressed stock — the tier that sets this system's measured floor.",
+        "tonalRamp": ["#060c11", "#1c2329", "#343c42", "#4e565d", "#6a737a", "#889098", "#a6afb7", "#c6cfd7", "#e6f0f8"]
+      },
+      "ink-map": {
+        "role": "neutral",
+        "displayName": "Ink, Map",
+        "canonical": "#394146",
+        "purpose": "Map marginalia only — spot heights, north arrow, scale bar. 5.52:1 on the darkest band, where ink-faint would fall to 3.72:1.",
+        "tonalRamp": ["#060c10", "#1b2327", "#343c41", "#4e575c", "#6a7379", "#889196", "#a6b0b5", "#c6cfd6", "#e6f0f7"]
+      },
+      "prussian": {
+        "role": "primary",
+        "displayName": "Prussian",
+        "canonical": "#1d4e8c",
+        "purpose": "The route line, the primary action, the focus ring, the rupee affix, step numerals. The only saturated ink on the page.",
+        "tonalRamp": ["#00003a", "#001d57", "#043975", "#245594", "#4173b4", "#5e91d4", "#7cb0f6", "#9bd1ff", "#bbf2ff"]
+      },
+      "prussian-deep": {
+        "role": "primary",
+        "displayName": "Prussian, Deep",
+        "canonical": "#163c6d",
+        "purpose": "Hover/press partner of prussian. 11.05:1 against white label text.",
+        "tonalRamp": ["#000432", "#001f4e", "#143a6b", "#305689", "#4b73a8", "#6891c9", "#86b0ea", "#a5d1ff", "#c5f2ff"]
+      },
+      "prussian-wash": {
+        "role": "primary",
+        "displayName": "Prussian Wash",
+        "canonical": "rgba(29, 78, 140, 0.1)",
+        "purpose": "Underline of the colophon contact address, which goes solid prussian on hover."
+      },
+      "vermilion": {
+        "role": "tertiary",
+        "displayName": "Vermilion",
+        "canonical": "#b8341a",
+        "purpose": "Reserved for a value the product cannot accept: field error text, its 6px bullet, and the invalid input rule. 5.10:1 on lifted stock; fails on pressed stock.",
+        "tonalRamp": ["#390000", "#5b0000", "#7d0000", "#9f1700", "#c23d24", "#e55e44", "#ff7f63", "#ff9f82", "#ffc0a1"]
+      }
+    },
+    "inkAlpha": {
+      "rule": "rgba(20, 24, 28, 0.16)",
+      "ruleStrong": "rgba(20, 24, 28, 0.34)",
+      "ruleHair": "rgba(20, 24, 28, 0.09)",
+      "purpose": "All separation in this world is ink at low alpha, never a border in a solid colour and never a fill."
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display — Transit Signage",
+        "purpose": "Barlow Semi Condensed 700, negative tracking. The thesis line only. One per page, never centred."
+      },
+      "headline": {
+        "displayName": "Headline — Section Rule",
+        "purpose": "Barlow Semi Condensed 600, capped by a 2px ink rule. Section headings and the closing statement."
+      },
+      "title": {
+        "displayName": "Title — Ledger Item",
+        "purpose": "Barlow Semi Condensed 600. Names of what comes back and of each step in the run."
+      },
+      "action": {
+        "displayName": "Action — Button Label",
+        "purpose": "Barlow Semi Condensed 600 at 1rem. Buttons and nav links only."
+      },
+      "body-large": {
+        "displayName": "Body Large — Lede",
+        "purpose": "Barlow 400, 66ch maximum. The paragraph under the display line."
+      },
+      "body": {
+        "displayName": "Body — Reading Matter",
+        "purpose": "Barlow 400 at 1rem/1.6, 58–68ch. Everything a visitor reads as prose."
+      },
+      "label": {
+        "displayName": "Label — Reference Mark",
+        "purpose": "Martian Mono 600, uppercase, +0.14em to +0.18em. Field labels, TT/ROUTE, ORIGIN, step numerals."
+      },
+      "data": {
+        "displayName": "Figure — Measured Value",
+        "purpose": "Martian Mono 600 with tabular-nums. Days and budget inputs and the rupee affix."
+      },
+      "data-caption": {
+        "displayName": "Data Caption — Marginalia",
+        "purpose": "Martian Mono 400, wide tracking. Map marginalia, hints, legal, contact."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet",
+        "value": "0 1px 2px rgba(20, 24, 28, 0.06), 0 12px 32px -12px rgba(20, 24, 28, 0.22)",
+        "purpose": "The only shadow in the world, used on exactly two surfaces: the map sheet and the slip sheet. A sheet resting on a surface, never a state indicator."
+      },
+      {
+        "name": "fold-catch",
+        "value": "linear-gradient(to bottom, rgba(20, 24, 28, 0.1), rgba(20, 24, 28, 0))",
+        "purpose": "14px gradient below the seam's cut edge, reading as light catching the fold where the fixed photograph meets the paper."
+      },
+      {
+        "name": "join-soft",
+        "value": "feGaussianBlur stdDeviation 0.5",
+        "purpose": "Applied to the contour band group so the tint stack reads as a printed join rather than stacked vectors."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.16, 0.84, 0.44, 1)",
+        "purpose": "The single easing curve in the world. Every state transition and both map animations use it."
+      },
+      {
+        "name": "route-draw",
+        "value": "1.4s cubic-bezier(0.16, 0.84, 0.44, 1) both",
+        "purpose": "The prussian route strokes itself in from dashoffset 1 to 0 (pathLength=1) when a destination is named, then holds still."
+      },
+      {
+        "name": "terminus-land",
+        "value": "0.5s cubic-bezier(0.16, 0.84, 0.44, 1) both",
+        "purpose": "The terminus marker scales from 0.6 and fades in, transform-box: fill-box so the origin is the marker's own centre."
+      },
+      {
+        "name": "state-transition",
+        "value": "0.22s – 0.25s cubic-bezier(0.16, 0.84, 0.44, 1)",
+        "purpose": "Buttons, nav links, input rules, hover lifts and the arrow slide. 0.22s for colour and rule colour, 0.25s for button transform."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "Cancels route-draw and terminus-land and sets scroll-behavior to auto. The preference is also read in JS because a CSS media query cannot reach a scripted smooth scroll."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "ledger",
+        "value": "900px",
+        "purpose": "The ruled-ledger breakpoint. Below it every grid reflows to one column; at and above it the thesis splits 0.85/1.15, the form becomes three ruled columns with vertical hairlines, and the included and flow lists become three columns with left rules. Refined to 0.8/1.2 at 1280px."
+      },
+      {
+        "name": "wide",
+        "value": "1280px",
+        "purpose": "Thesis column ratio refinement and the Tailwind xl step."
+      }
+    ],
+    "metrics": {
+      "rail": "1320px",
+      "gutter": "clamp(1.25rem, 4vw, 4.5rem)",
+      "rhythm": "clamp(4.5rem, 9vw, 8.5rem)",
+      "seamHeight": "clamp(22px, 3.4vw, 44px)",
+      "seamViewBox": "0 0 1000 34, preserveAspectRatio none",
+      "mapViewBox": "0 0 660 340",
+      "bandGeometry": "scale = 118 + index * 44, centre (330, 186), squash 0.66, 40 steps, one shared phase 0.7, Catmull-Rom to cubic Bezier",
+      "mapRoute": "stroke-width 3, round cap and join, pathLength 1",
+      "contrastFloor": "4.5:1 measured against the darkest ground in play: pressed stock for text on paper, band 4 for anything drawn inside the map"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The loudest object on the page, and one of only three places prussian is spent.",
+      "html": "<button class=\"ds-btn\"><span>Generate the route</span><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M5 12h13m0 0-5-5m5 5-5 5\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.7rem; font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1rem; letter-spacing: 0.01em; color: #fff; background: var(--tt-prussian); border: 1px solid var(--tt-prussian); border-radius: 0; padding: 0.85rem 1.5rem; cursor: pointer; transition: background-color 0.25s var(--tt-ease), border-color 0.25s var(--tt-ease), transform 0.25s var(--tt-ease); }\n.ds-btn:hover:not(:disabled) { background: var(--tt-prussian-deep); border-color: var(--tt-prussian-deep); transform: translateY(-1px); }\n.ds-btn:hover:not(:disabled) svg { transform: translateX(3px); }\n.ds-btn:active:not(:disabled) { transform: translateY(0); }\n.ds-btn:disabled { background: transparent; color: var(--tt-ink-faint); border-color: var(--tt-rule-strong); cursor: not-allowed; }\n.ds-btn svg { transition: transform 0.25s var(--tt-ease); }"
+    },
+    {
+      "name": "Quiet Nav Link",
+      "kind": "button",
+      "refersTo": "nav-link-quiet",
+      "description": "The sign-in affordance in the running head: ink label inside a hairline box, never a filled button.",
+      "html": "<button class=\"ds-navlink ds-navlink--quiet\">Sign in</button>",
+      "css": ".ds-navlink { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 0.95rem; letter-spacing: 0.01em; color: #fff; background: var(--tt-prussian); border: 1px solid var(--tt-prussian); border-radius: 0; padding: 0.5rem clamp(0.75rem, 2vw, 1.1rem); white-space: nowrap; cursor: pointer; transition: background-color 0.22s var(--tt-ease), border-color 0.22s var(--tt-ease); }\n.ds-navlink--quiet { color: var(--tt-ink); background: transparent; border-color: var(--tt-rule-strong); }\n.ds-navlink--quiet:hover { color: var(--tt-ink); background: transparent; border-color: var(--tt-ink); }"
+    },
+    {
+      "name": "Ruled Field",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "A field with no box: mono uppercase label above, and a 1px ink rule as the only boundary.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field__label\" for=\"ds-days\">Days</label><input class=\"ds-field__input ds-field__input--fig\" id=\"ds-days\" type=\"number\" min=\"1\" max=\"60\" value=\"\" placeholder=\"4\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; min-width: 0; padding: 1.4rem 1.5rem 1.25rem 0; border-bottom: 1px solid var(--tt-rule-hair); }\n.ds-field__label { font-family: 'Martian Mono', ui-monospace, monospace; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tt-ink-faint); margin-bottom: 0.6rem; }\n.ds-field__input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--tt-ink); border-radius: 0; padding: 0.25rem 0 0.5rem; color: var(--tt-ink); font-family: 'Martian Mono', ui-monospace, monospace; font-size: clamp(1.15rem, 1.8vw, 1.5rem); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.25; transition: border-color 0.22s var(--tt-ease); }\n.ds-field__input::placeholder { color: var(--tt-ink-faint); opacity: 1; }\n.ds-field__input:focus { outline: none; border-bottom-color: var(--tt-prussian); border-bottom-width: 2px; }\n.ds-field__input:focus-visible { outline: none; box-shadow: 0 2px 0 0 var(--tt-prussian); }\n.ds-field__input[aria-invalid='true'] { border-bottom-color: var(--tt-vermilion); border-bottom-width: 2px; }\n.ds-field__input::-webkit-inner-spin-button, .ds-field__input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }"
+    },
+    {
+      "name": "Field Error",
+      "kind": "custom",
+      "description": "The only place vermilion exists: a named constraint and its 6px square bullet, announced as an alert.",
+      "html": "<p class=\"ds-error\" role=\"alert\">At least ₹1,000.</p>",
+      "css": ".ds-error { display: flex; align-items: baseline; gap: 0.4rem; font-size: 0.78rem; line-height: 1.4; color: var(--tt-vermilion); margin: 0.55rem 0 0; }\n.ds-error::before { content: ''; flex: none; width: 6px; height: 6px; background: var(--tt-vermilion); transform: translateY(-1px); }"
+    },
+    {
+      "name": "Slip Sheet",
+      "kind": "card",
+      "refersTo": "slip-sheet",
+      "description": "The one lifted surface that carries the form — a slip set into the supplement, ruled at the head.",
+      "html": "<section class=\"ds-slip\"><div class=\"ds-slip__head\"><h3 class=\"ds-slip__title\">Plan a trip</h3><p class=\"ds-slip__ref\"><span>TT</span><span class=\"ds-slip__slash\">/</span><span>ROUTE</span></p></div></section>",
+      "css": ".ds-slip { background: var(--tt-paper-lift); border: 1px solid var(--tt-rule-strong); box-shadow: var(--tt-lift); padding: clamp(1.5rem, 3.5vw, 3rem); }\n.ds-slip__head { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; padding-bottom: 1.1rem; border-bottom: 1px solid var(--tt-rule-strong); }\n.ds-slip__title { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: clamp(1.5rem, 2.6vw, 2.1rem); letter-spacing: -0.015em; line-height: 1; margin: 0; }\n.ds-slip__ref { display: flex; gap: 0.35rem; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.16em; color: var(--tt-ink-faint); margin: 0; }\n.ds-slip__slash { color: var(--tt-prussian); }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "A transit sign capped by a 2px ink rule. The mono reference, when present, sits beside it on the baseline — never above it as a kicker.",
+      "html": "<h2 class=\"ds-section\">How it works</h2>",
+      "css": ".ds-section { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: clamp(1.75rem, 3.4vw, 2.6rem); line-height: 1.05; letter-spacing: -0.018em; margin: 0; padding-top: 1.4rem; border-top: 2px solid var(--tt-ink); }"
+    },
+    {
+      "name": "Display Thesis",
+      "kind": "custom",
+      "description": "The page's one display line: condensed signage, balanced, capped at 14ch so it never runs long.",
+      "html": "<h1 class=\"ds-display\">A trip is a route,<br />not a list.</h1>",
+      "css": ".ds-display { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: clamp(2.75rem, 7.2vw, 5.5rem); line-height: 0.96; letter-spacing: -0.028em; text-wrap: balance; margin: 0; max-width: 14ch; }"
+    },
+    {
+      "name": "Ledger Row",
+      "kind": "card",
+      "description": "A list item in a ruled ledger — no fill, no radius, no shadow. Separation is a hairline, and at 900px it turns vertical.",
+      "html": "<article class=\"ds-ledger\"><span class=\"ds-ledger__icon\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M4 19c3.5 0 3.5-4 7-4s3.5-4 7-4\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><circle cx=\"4\" cy=\"19\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.6\"/><circle cx=\"20\" cy=\"11\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg></span><h3 class=\"ds-ledger__name\">A route, in order</h3><p class=\"ds-ledger__body\">Day by day, the stops are sequenced so one leads into the next rather than sending you back across the city.</p></article>",
+      "css": ".ds-ledger { padding: 2rem 0; border-bottom: 1px solid var(--tt-rule); }\n.ds-ledger__icon { display: inline-flex; color: var(--tt-prussian); margin-bottom: 1.1rem; }\n.ds-ledger__name { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: clamp(1.3rem, 2vw, 1.6rem); letter-spacing: -0.012em; line-height: 1.15; margin: 0 0 0.6rem; }\n.ds-ledger__body { font-size: 1rem; line-height: 1.6; color: var(--tt-ink-soft); margin: 0; max-width: 68ch; }"
+    },
+    {
+      "name": "Numbered Run",
+      "kind": "custom",
+      "description": "The three steps, numbered in prussian mono, ordered to match the fields above them on the page.",
+      "html": "<ol class=\"ds-run\"><li class=\"ds-run__step\"><span class=\"ds-run__n\">01</span><h3 class=\"ds-run__name\">Name the destination</h3><p class=\"ds-run__body\">Tell us where you are going. The city sets the route, and the route sets everything downstream of it.</p></li></ol>",
+      "css": ".ds-run { list-style: none; padding: 0; margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0; border-top: 1px solid var(--tt-rule); }\n.ds-run__step { padding: 2rem 0; border-bottom: 1px solid var(--tt-rule); }\n.ds-run__n { display: block; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.16em; color: var(--tt-prussian); margin-bottom: 0.9rem; }\n.ds-run__name { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: clamp(1.25rem, 2vw, 1.55rem); letter-spacing: -0.012em; line-height: 1.15; margin: 0 0 0.6rem; }\n.ds-run__body { font-size: 1rem; line-height: 1.6; color: var(--tt-ink-soft); margin: 0; max-width: 68ch; }"
+    },
+    {
+      "name": "Contour Map Sheet",
+      "kind": "custom",
+      "description": "The signature component: four nested tint bands, one prussian route, marginalia in map ink, and a terminus that lands when a destination is named.",
+      "html": "<figure class=\"ds-map\"><svg class=\"ds-map__svg\" viewBox=\"0 0 660 340\" role=\"img\" aria-labelledby=\"ds-map-caption\" preserveAspectRatio=\"xMidYMid meet\"><rect width=\"660\" height=\"340\" fill=\"var(--tt-paper)\"/><g filter=\"url(#ds-soft)\"><ellipse cx=\"330\" cy=\"186\" rx=\"162\" ry=\"107\" fill=\"var(--tt-band-1)\"/><ellipse cx=\"330\" cy=\"186\" rx=\"118\" ry=\"78\" fill=\"var(--tt-band-2)\"/><ellipse cx=\"330\" cy=\"186\" rx=\"74\" ry=\"49\" fill=\"var(--tt-band-3)\"/><ellipse cx=\"330\" cy=\"186\" rx=\"30\" ry=\"20\" fill=\"var(--tt-band-4)\"/></g><g fill=\"none\" stroke=\"var(--tt-ink)\" stroke-opacity=\"0.22\" stroke-width=\"0.75\"><ellipse cx=\"330\" cy=\"186\" rx=\"162\" ry=\"107\"/><ellipse cx=\"330\" cy=\"186\" rx=\"118\" ry=\"78\"/><ellipse cx=\"330\" cy=\"186\" rx=\"74\" ry=\"49\"/><ellipse cx=\"330\" cy=\"186\" rx=\"30\" ry=\"20\"/></g><g fill=\"var(--tt-ink-map)\" font-family=\"var(--tt-face-data)\" font-size=\"7.5\" letter-spacing=\"0.06em\"><text x=\"299\" y=\"223\">214</text><text x=\"347\" y=\"250\">347</text><text x=\"218\" y=\"139\">482</text><text x=\"440\" y=\"295\">611</text></g><path d=\"M 62 288 L 204 238 L 340 178 L 478 126 L 528 104\" fill=\"none\" stroke=\"var(--tt-prussian)\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><g><circle cx=\"62\" cy=\"288\" r=\"9\" fill=\"var(--tt-paper)\"/><circle cx=\"62\" cy=\"288\" r=\"6.5\" fill=\"none\" stroke=\"var(--tt-ink)\" stroke-width=\"1.5\"/><circle cx=\"62\" cy=\"288\" r=\"2.5\" fill=\"var(--tt-ink)\"/><text x=\"78\" y=\"292\" fill=\"var(--tt-ink)\" font-family=\"var(--tt-face-data)\" font-size=\"8\" letter-spacing=\"0.1em\">ORIGIN</text></g><g><circle cx=\"528\" cy=\"104\" r=\"13\" fill=\"var(--tt-prussian)\" fill-opacity=\"0.12\"/><circle cx=\"528\" cy=\"104\" r=\"6\" fill=\"var(--tt-prussian)\"/><circle cx=\"528\" cy=\"104\" r=\"2\" fill=\"var(--tt-paper)\"/><text x=\"514\" y=\"86\" text-anchor=\"middle\" fill=\"var(--tt-prussian-deep)\" font-family=\"var(--tt-face-data)\" font-size=\"8.5\" letter-spacing=\"0.1em\">LISBON</text></g><g fill=\"var(--tt-ink-map)\" font-family=\"var(--tt-face-data)\" font-size=\"7.5\" letter-spacing=\"0.12em\"><text x=\"16\" y=\"26\">N</text><text x=\"16\" y=\"66\">SCALE 1:50k</text></g></svg><figcaption class=\"ds-map__caption\" id=\"ds-map-caption\"><strong>Lisbon</strong> plotted as a route, not a list of places. Set the days and the budget and the terminus moves — further along, and further up.</figcaption></figure>",
+      "css": ".ds-map { margin: 0; }\n.ds-map__svg { display: block; width: 100%; height: auto; border: 1px solid var(--tt-rule); box-shadow: var(--tt-lift); background: var(--tt-paper); }\n.ds-map__caption { font-size: 0.875rem; line-height: 1.55; color: var(--tt-ink-soft); margin-top: 1rem; padding-left: 0.85rem; border-left: 1px solid var(--tt-rule-strong); max-width: 58ch; }\n.ds-map__caption strong { font-weight: 600; color: var(--tt-ink); }"
+    },
+    {
+      "name": "Running Head",
+      "kind": "nav",
+      "refersTo": "nav-link-primary",
+      "description": "The supplement's running head: wordmark with a baseline-aligned reference mark, actions right, no fill and no shadow.",
+      "html": "<nav class=\"ds-nav\"><button type=\"button\" class=\"ds-nav__mark\" aria-label=\"TripTribe, home\"><span class=\"ds-nav__wordmark\">TripTribe</span><span class=\"ds-nav__ref\" aria-hidden=\"true\">TT/ROUTE</span></button><div class=\"ds-nav__actions\"><button type=\"button\" class=\"ds-navlink\">Plan a trip</button><button type=\"button\" class=\"ds-navlink ds-navlink--quiet\">Sign in</button></div></nav>",
+      "css": ".ds-nav { width: 100%; max-width: var(--tt-rail); margin-inline: auto; padding: 1.4rem var(--tt-gutter) 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }\n.ds-nav__mark { display: flex; align-items: baseline; gap: 0.75rem; background: none; border: 0; padding: 0; cursor: pointer; color: var(--tt-ink); }\n.ds-nav__wordmark { font-family: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: clamp(1.4rem, 5vw, 1.75rem); letter-spacing: -0.022em; line-height: 1; white-space: nowrap; }\n.ds-nav__ref { font-family: 'Martian Mono', ui-monospace, monospace; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.18em; color: var(--tt-ink-faint); }\n.ds-nav__actions { display: flex; align-items: center; gap: clamp(0.5rem, 2vw, 1.25rem); flex: none; }"
+    },
+    {
+      "name": "Colophon",
+      "kind": "custom",
+      "description": "The footer on pressed stock. The estimates disclaimer is mandatory copy, not filler.",
+      "html": "<footer class=\"ds-footer\"><div class=\"ds-footer__inner\"><div class=\"ds-footer__mark\"><span class=\"ds-nav__wordmark\">TripTribe</span><span class=\"ds-footer__ref\" aria-hidden=\"true\">TT/ROUTE</span></div><a class=\"ds-footer__contact\" href=\"mailto:shrijit@triptribe.info\">shrijit@triptribe.info</a><p class=\"ds-footer__note\">Itineraries, hotel shortlists and prices are generated estimates. Check availability and fares with the operator before you book.</p></div></footer>",
+      "css": ".ds-footer { background: var(--tt-paper-press); border-top: 1px solid var(--tt-rule-strong); }\n.ds-footer__inner { padding-block: clamp(2.25rem, 4vw, 3.25rem); display: flex; flex-direction: column; gap: 1rem; }\n.ds-footer__mark { display: flex; align-items: baseline; gap: 0.75rem; }\n.ds-footer__ref { font-family: 'Martian Mono', ui-monospace, monospace; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.18em; color: var(--tt-ink-faint); }\n.ds-footer__contact { font-family: 'Martian Mono', ui-monospace, monospace; font-size: 0.82rem; color: var(--tt-prussian); text-decoration: none; border-bottom: 1px solid var(--tt-prussian-wash); align-self: flex-start; transition: border-color 0.22s var(--tt-ease); }\n.ds-footer__contact:hover { border-bottom-color: var(--tt-prussian); }\n.ds-footer__note { font-size: 0.8rem; line-height: 1.55; color: var(--tt-ink-soft); margin: 0; max-width: 68ch; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Transit Supplement",
+    "overview": "A trip is a service that issued a printed route insert. This page is that insert: uncoated map stock, hypsometric contour bands, hairline rule work, and exactly two functional inks. The category default for an AI trip planner is a full-bleed photograph over a rounded card grid of benefits with a pill CTA. This surface refuses to summarise the trip at all. Below the photograph — which is a fixed element of this build — the first thing on the page is the routing device the product actually produces: a contour map with a single prussian line threading from a marked origin to a marked terminus, redrawn live from the three form fields below it.\n\nThe restraint is load-bearing, not timid. Neutrals are not grey; they are tinted from the stock itself, so the page reads as one material under one light. Prussian is the only saturated ink the visitor will see, and it is spent in exactly three places: the route line, the primary action, and the reference marks that mean \"this is data\". Vermilion is not an accent at all. It appears only where the product is refusing a value the visitor typed. When vermilion is on screen, something is wrong, and it is recoverable.\n\nDepth comes from paper, not from UI convention: tonal layering, hairline rules, and a single sheet resting on a surface. Corners are square throughout, because paper has none. Type does the work that a card grid would otherwise do.",
+    "keyCharacteristics": [
+      "Two functional inks on one tinted stock; vermilion means \"rejected value\", never decoration.",
+      "Hairline rule work separates everything; shadow is used twice and only to say \"sheet on table\".",
+      "Square corners, tabular figures, uppercase mono labels at wide tracking.",
+      "The map is a component with a thesis, not an illustration beside the copy.",
+      "Every browser surface — selection, focus, scrollbars, underline offsets, spin buttons — is themed."
+    ],
+    "rules": [
+      {
+        "name": "The Two-Ink Rule",
+        "section": "colors",
+        "body": "The page may be saturated in exactly two inks. Prussian is what the product does; vermilion is what it refuses. If a third saturated colour appears, the screen has stopped meaning anything."
+      },
+      {
+        "name": "The Verdict Rule",
+        "section": "colors",
+        "body": "Vermilion is never an accent, never a hover, never a \"highlight your plan\" cue. If nothing is wrong with the visitor's input, vermilion does not exist."
+      },
+      {
+        "name": "The Darkest-Ground Rule",
+        "section": "colors",
+        "body": "Any new ink tier must clear 4.5:1 against the darkest ground it can land on — currently pressed stock for text on paper, and band 4 for anything drawn inside the map."
+      },
+      {
+        "name": "The Flat Print Rule",
+        "section": "colors",
+        "body": "Separation is drawn with ink at low alpha (hair 9%, rule 16%, strong rule 34%) rather than with borders, fills or shadow."
+      },
+      {
+        "name": "The Measuring-Face Rule",
+        "section": "typography",
+        "body": "Martian Mono is used for measurement, codes and figures, never as a costume. A sentence a visitor has to read as prose is set in Barlow."
+      },
+      {
+        "name": "The Transit Signage Rule",
+        "section": "typography",
+        "body": "Anything acting as a sign — a headline, a name, a button — is set in Barlow Semi Condensed, upright, with negative tracking tightening as size grows. Never letterspaced positive in the display face."
+      },
+      {
+        "name": "The Sign, Not the Kicker Rule",
+        "section": "typography",
+        "body": "Reference marks in this world are baseline-aligned beside the heading they belong to, in the column head — never stacked above a heading as a lead-in line."
+      },
+      {
+        "name": "The Shadow-Budget Rule",
+        "section": "elevation",
+        "body": "Two surfaces in the entire world are lifted. If a third element needs to be lifted, it needs a material reason, not a preference."
+      },
+      {
+        "name": "The Soft-Join Rule",
+        "section": "elevation",
+        "body": "Depth in a drawing comes from tonal stacking and hairline edges. No blur-heavy glows, no glass, no backdrop filters."
+      }
+    ],
+    "dos": [
+      "Do tint neutrals from the stock. Three grounds only: paper, lift, press.",
+      "Do spend prussian on exactly three things: the route line, the primary action, and reference/data marks.",
+      "Do separate with hairlines — 1px ink at 9%, 16% or 34% — and reserve the 2px ink rule for capping a heading or the closing statement.",
+      "Do keep corners at 0px and set figures in Martian Mono with tabular-nums.",
+      "Do measure new ink against the darkest ground it lands on, and against band 4 for anything drawn inside the map.",
+      "Do draw icons at 24×24 with a single 1.6px stroke and round caps, inline, aria-hidden.",
+      "Do let the map stay driven by real state. Every spot height must sit on equal-or-darker ground than the figure below it; every terminus must move for every legal input.",
+      "Do keep the disclaimer that prices and availability are estimates, on every surface that shows a plan."
+    ],
+    "donts": [
+      "Don't use vermilion for anything that is not a rejected value, or on any ground other than the lifted slip stock — it fails the contrast floor on pressed stock.",
+      "Don't invent proof. No testimonials, ratings, user counts, press or usage numbers, on this surface or the next one.",
+      "Don't use emoji as iconography, gradient text, glassmorphism, or a third saturated ink.",
+      "Don't add a radius token. Square is the form language; the focus ring's 1px is the only radius in the world.",
+      "Don't add a second shadow, or convert a ledger row into a filled card to create separation the rules already provide.",
+      "Don't restyle or extend the GridDistortion hero block. It is fixed by owner instruction — same component, same props, same wrapper div. Treat it as a boundary, not a precedent: the seam around it is part of this world, the block inside it is not.",
+      "Don't assume this world has reached the rest of the product. daisyUI and Tailwind are still installed and still style /search and /result, plus the account drawer, avatar, menu and sign-in dialog inside Navbar.jsx. Those surfaces do not follow these tokens and must not be treated as examples of the system."
+    ]
+  }
+}

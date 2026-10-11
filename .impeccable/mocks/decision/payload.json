@@ -1,0 +1,108 @@
+{
+  "title": "Choose the visual world",
+  "question": "The roll assigned The Transit Supplement. Keep it, take an alternate, or re-roll. The hero photograph is fixed in every option.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Transit Supplement",
+      "kicker": "THE ROLL",
+      "lineage": "the folded route insert and timetable supplement issued with an intercity service",
+      "thesis": "A trip is a service with a printed supplement. Its map shows a route with a direction of travel; its columns show when to move and where to eat. The category default stacks a photo hero over a card grid of benefits; this refuses to summarise the trip at all and instead shows the routing device the product actually produces.",
+      "palette": ["#e3e2dc", "#b6bcb3", "#14181c", "#1d4e8c", "#d63a1c"],
+      "materials": ["uncoated map stock", "hypsometric contour bands", "two-ink overprint"],
+      "viewport": "The fixed grayscale destination photograph fills the first viewport. Below it the light paper supplement begins at full bleed with a hard seam: nested contour bands, one prussian route line drawn with a marked origin and terminus, and the three-input form set into the supplement's own ruled columns as the primary action.",
+      "risk": "A ruled technical page can read cold if the contour work is decorative rather than load-bearing.",
+      "raised": [
+        { "from": "Versailles axial vistas", "raise": "Depth and direction of travel — the route reads as movement along an axis from an origin to a terminus, never as a table row." },
+        { "from": "paper folds, one curved crease", "raise": "One fold, one silhouette — the photograph meets the paper across a single hard seam; nothing accumulates at the join." },
+        { "from": "polar ice press", "raise": "Single-ink discipline on paper, and the trip is a dated, numbered run." },
+        { "from": "civic bureau prospectus", "raise": "Exactly one saturated ink spent on the route line and the primary action, nothing else." },
+        { "from": "teletext service", "raise": "The column lattice is sacred — it scales rather than reflows, and every colour on the page means exactly one thing." }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "The Working Timetable",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "the ruled working timetable posted for a service",
+      "thesis": "Constraint made legible. Every hour of the trip is accounted for in a ruled grid, because the product's real promise is that nothing on a day is wasted or double-backed.",
+      "palette": ["#eceae4", "#14181c", "#8a1f1b"],
+      "materials": ["rule work", "tabular figures"],
+      "viewport": "Below the photograph, a full-bleed ruled time grid with the route drawn as a line threading fixed hour slots.",
+      "risk": "The most familiar landing-page shape in this category. Named plainly: a grid of benefits is one column away from this, and it will read as a generic travel page if the time slots are not genuinely load-bearing.",
+      "comp": ".impeccable/mocks/decision/model-pick.webp"
+    },
+    {
+      "id": "challenger-teletext",
+      "label": "Teletext Service",
+      "verdict": "competitive",
+      "lineage": "broadcast teletext magazines",
+      "thesis": "The catalogue as a broadcast index: numbered pages, not sections. Holds the audience axis — a fixed cell lattice is exactly how a planner thinks about a day.",
+      "palette": ["#0000c0", "#ffff00", "#00c000", "#ffffff"],
+      "materials": ["block mosaic", "phosphor glow"],
+      "viewport": "A numbered page index; each day is a page address, keyed directly.",
+      "case": "Fuses cleanly and the lattice discipline is worth keeping. Loses on product clarity: a phosphor grid says broadcast, and a trip is not broadcast.",
+      "risk": "Reads retro-novelty the moment the grid is not strictly held.",
+      "hero": "https://impeccable.style/worlds/cards/broadcast-programming-teletext-service-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/broadcast-programming-teletext-service.webp"
+    },
+    {
+      "id": "challenger-icepress",
+      "label": "One Ink, One Sheet",
+      "verdict": "competitive",
+      "lineage": "a hand-set newspaper printed by lamplight where a second chance does not exist",
+      "thesis": "Everything in one ink on damp rag paper, and the compositor's errors left standing because there is no time to fix them. The single-ink discipline is the strongest of the round.",
+      "palette": ["#1b1a17", "#e8e2d2"],
+      "materials": ["rag paper", "hand-pulled plates"],
+      "viewport": "One dated sheet, the trip set as that day's single pulling.",
+      "case": "Holds the audience axis through the feeling of a deadline and no second chance, which is the organiser's real scene. Loses product clarity: one ink cannot carry a route line, a budget and a primary action.",
+      "risk": "Reads nostalgic the moment the type is set timidly.",
+      "hero": "https://impeccable.style/worlds/cards/graphic-worlds-publishing-expedition-ice-press-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/graphic-worlds-publishing-expedition-ice-press.webp"
+    },
+    {
+      "id": "challenger-versailles",
+      "label": "Axial Vistas",
+      "verdict": "declined",
+      "lineage": "the clipped geometry and forced perspective of a formal garden",
+      "thesis": "A route read as movement along a single enforced axis, breaking only into concealed rooms.",
+      "palette": ["#3f5138", "#cfc4a6", "#8a7a4e"],
+      "materials": ["topiary", "raked gravel"],
+      "case": "Fuses the direction of travel beautifully but the garden's symmetry fights an itinerary, which is irregular by nature.",
+      "kept": "Direction of travel along an axis, raised onto the assigned direction."
+    },
+    {
+      "id": "challenger-fold",
+      "label": "One Crease",
+      "verdict": "declined",
+      "lineage": "a circular sheet raised into a shell by a single compass arc",
+      "thesis": "One structural fold line where a flat sheet becomes rigid, drawn with a compass.",
+      "palette": ["#efe9dc", "#2a2724"],
+      "materials": ["cotton paper", "graphite shadow"],
+      "case": "The fold is the best idea for meeting the fixed photograph and nothing else on the page earns it.",
+      "kept": "One fold, one silhouette, raised onto the assigned direction."
+    },
+    {
+      "id": "challenger-civic",
+      "label": "Civic Bureau",
+      "verdict": "declined",
+      "lineage": "a late-modern municipal prospectus, almost all bone-white, all colour in one ribbon",
+      "thesis": "One continuous rendered ribbon of colour across an empty plate, and one violet button.",
+      "palette": ["#F7F7FA", "#1B1547", "#6B5CE7"],
+      "materials": ["bone plate", "rendered ribbon"],
+      "case": "The single-saturation discipline is worth taking, the bone-white plate is the generic-product-page rut in another costume, and the ribbon is decoration with nothing to route.",
+      "kept": "One saturated ink, spent only where it earns it. Raised onto the assigned direction."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "What this category ships, executed impeccably: white ground, product photography, a feature grid and a single call to action.",
+    "palette": ["#ffffff", "#111827", "#2563eb"],
+    "materials": ["clean grid", "product photography"],
+    "viewport": "The arrangement a visitor expects, at full craft.",
+    "risk": "Indistinguishable from the competition by design."
+  },
+  "steer": true
+}

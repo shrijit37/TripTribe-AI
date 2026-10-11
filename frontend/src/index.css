@@ -2,15 +2,1169 @@
 @tailwind components;
 @tailwind utilities;
 
-html{
-  scroll-behavior: smooth;
+/* ==========================================================================
+   TripTribe — "The Transit Supplement"
+   Uncoated map stock, hypsometric contours, two functional inks.
+   Palette strategy: Restrained — neutrals drawn from the stock itself, plus
+   prussian (route + primary action). Vermilion is functional only: it means
+   "this budget does not work", and never decoration.
+   ========================================================================== */
 
+/* --- Lettering ---------------------------------------------------------
+   Barlow Semi Condensed is transit lettering: platform boards, departure
+   signage, the condensed face printed on a route supplement.
+   Barlow carries reading matter. Martian Mono is reserved for measurement,
+   codes and figures — real data, never costume.
+   Self-hosted; the display face never falls back to a platform system face. */
+
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/barlow-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/barlow-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/barlow-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/barlow-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/barlow-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/barlow-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/barlow-sc-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/barlow-sc-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/barlow-sc-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/barlow-sc-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/barlow-sc-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/barlow-sc-700-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/martian-mono-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/martian-mono-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/martian-mono-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/martian-mono-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* --- Stock: the uncoated supplement paper this page is printed on ----- */
+  --tt-paper: #e7e6e0;
+  --tt-paper-lift: #efeee9;
+  --tt-paper-press: #dedcd4;
+
+  /* --- Hypsometric tint scale: contour bands, lightest to darkest ------- */
+  --tt-band-1: #e3e4dc;
+  --tt-band-2: #d7d9cf;
+  --tt-band-3: #c9cdc1;
+  --tt-band-4: #b9bfb1;
+
+  /* --- Ink --------------------------------------------------------------
+   Three tiers, measured against the darkest paper ground they sit on
+   (--tt-paper-press): soft 7.1:1, faint 5.1:1, both clear the 4.5 floor. */
+  --tt-ink: #14181c;
+  --tt-ink-soft: #3d454c;
+  --tt-ink-faint: #525a61;
+
+  /* Map marginalia sits on the contour tints rather than on bare paper, so
+     it carries its own ink: 5.5:1 on the darkest band. */
+  --tt-ink-map: #394146;
+
+  /* --- Rule work: hairlines and column dividers -------------------------- */
+  --tt-rule: rgba(20, 24, 28, 0.16);
+  --tt-rule-strong: rgba(20, 24, 28, 0.34);
+  --tt-rule-hair: rgba(20, 24, 28, 0.09);
+
+  /* --- Prussian: the route, and the primary action. Nothing else. ------- */
+  --tt-prussian: #1d4e8c;
+  --tt-prussian-deep: #163c6d;
+  --tt-prussian-wash: rgba(29, 78, 140, 0.1);
+
+  /* --- Vermilion: functional only — a budget that does not work --------- */
+  --tt-vermilion: #b8341a;
+  --tt-vermilion-wash: rgba(184, 52, 26, 0.1);
+
+  /* --- Lettering --------------------------------------------------------- */
+  --tt-face-display: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
+  --tt-face-text: 'Barlow', system-ui, sans-serif;
+  --tt-face-data: 'Martian Mono', ui-monospace, monospace;
+
+  /* --- One spacing rhythm. More space above a heading than below it. ----- */
+  --tt-rhythm: clamp(4.5rem, 9vw, 8.5rem);
+  --tt-gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --tt-rail: 1320px;
+
+  /* --- Depth: offset plus blur. Never a zero-blur block shadow. --------- */
+  --tt-lift: 0 1px 2px rgba(20, 24, 28, 0.06), 0 12px 32px -12px rgba(20, 24, 28, 0.22);
+
+
+
+  --tt-ease: cubic-bezier(0.16, 0.84, 0.44, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* The page ground belongs to the document, not only to <body>. When anything
+   does overflow horizontally the overscroll area is painted from the root
+   background, and daisyUI's `:root, [data-theme]` rule sets that to its theme
+   base colour — a hard strip down the side of the paper stock.
+   A bare `:root` matches daisy's own selector specificity (0,1,0) and follows
+   it in source order, so the page wins without `!important`. `:where()` would
+   zero the specificity down to (0,0,1) and lose. */
+:root {
+  background: var(--tt-paper);
+}
+
+/* --- The 404: the fuzzy canvas is sized to its own text --------------------
+   FuzzyText draws at the measured width of the string plus 100px of margin, so
+   "404 : Not Found" is wider than a phone and pushed the document sideways.
+   The canvas is scaled down to fit its column; its intrinsic buffer size is
+   untouched, so it still draws at full resolution, just smaller. */
+.tt-notfound {
+  overflow: hidden;
+}
+
+.tt-notfound canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+body {
+  background: var(--tt-paper);
+  color: var(--tt-ink);
+  font-family: var(--tt-face-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+
+  /* Browser surfaces nobody designs, carrying the design anyway. */
+  ::selection {
+    background: var(--tt-prussian);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--tt-prussian);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  /* Scrollbar ruled like a column divider rather than left to the OS. */
+  html {
+    scrollbar-color: var(--tt-ink-faint) var(--tt-paper-press);
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--tt-paper-press);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--tt-ink-faint);
+    border: 3px solid var(--tt-paper-press);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--tt-ink-soft);
+  }
+
+  /* Underline offset and thickness belong to the page, not the UA. */
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: from-font;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+}
+
+/* ==========================================================================
+   The page
+   ========================================================================== */
+
+.tt-page {
+  overflow-x: hidden;
+}
+
+.tt-rail {
+  width: 100%;
+  max-width: var(--tt-rail);
+  margin-inline: auto;
+  padding-inline: var(--tt-gutter);
+}
+
+/* --- The photograph, as a tipped-in plate -------------------------------
+   The GridDistortion component and its props are untouched; only the page
+   around it is ours. It used to float full-bleed at 1440px with rounded
+   corners while every other object sat on the 1320px rail — the one element
+   outside the column system, in the one shape the world does not use. Now it
+   is a captioned figure in the supplement: on the rail, hard-edged, and
+   sized as a plate rather than a billboard. */
+
+.tt-hero {
+  background: var(--tt-paper);
+}
+
+.tt-hero__rail {
+  padding-top: clamp(1rem, 2.5vw, 2rem);
+}
+
+/* <figure> carries a default margin that would break the rail alignment. */
+.tt-hero__figure {
+  margin: 0;
+}
+
+/* The plate itself. 0px corners, a hairline edge, and the same restraint
+   the rest of the page uses for a printed image. */
+.tt-hero__plate {
+  position: relative;
+  width: 100%;
+  height: clamp(240px, 34vh, 420px);
+  overflow: hidden;
+  border: 1px solid var(--tt-rule-strong);
+  box-shadow: var(--tt-lift);
+  background: var(--tt-paper-press);
+}
+
+/* The caption strip, printed beneath the plate like a figure reference. */
+.tt-hero__caption {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem 1.5rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0.7rem 0 0;
+  border-top: 1px solid var(--tt-rule-hair);
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-hero__plate-ref {
+  color: var(--tt-prussian);
+}
+
+/* The note reads as a continuation of its own caption rather than being
+   pushed to the far margin, where it looked like an unrelated stray line. */
+.tt-hero__note {
+  font-family: var(--tt-face-text);
+  font-weight: 400;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tt-ink-soft);
+  max-width: 60ch;
+}
+
+/* --- Thesis -------------------------------------------------------------- */
+
+.tt-thesis {
+  padding-block: clamp(2rem, 4vw, 3.5rem) var(--tt-rhythm);
+}
+
+.tt-thesis__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: start;
+}
+
+.tt-display {
+  font-family: var(--tt-face-display);
+  font-weight: 700;
+  font-size: clamp(2.75rem, 7.2vw, 5.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+  margin: 0;
+  max-width: 14ch;
+}
+
+.tt-lede {
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+  line-height: 1.62;
+  color: var(--tt-ink-soft);
+  max-width: 66ch;
+  margin-top: 1.6rem;
+}
+
+.tt-note {
+  font-family: var(--tt-face-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+  margin-top: 1.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--tt-rule);
+  max-width: 66ch;
+}
+
+/* --- The map -------------------------------------------------------------- */
+
+.tt-map {
+  margin: 0;
+}
+
+.tt-map__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--tt-rule);
+  box-shadow: var(--tt-lift);
+  background: var(--tt-paper);
+}
+
+.tt-map__caption {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--tt-ink-soft);
+  margin-top: 1rem;
+  padding-left: 0.85rem;
+  border-left: 1px solid var(--tt-rule-strong);
+  max-width: 58ch;
+}
+
+.tt-map__caption strong {
+  font-weight: 600;
+  color: var(--tt-ink);
+}
+
+/* The route draws itself in once, on entry, then holds still. */
+.tt-map__route {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.tt-map__route--drawn {
+  animation: tt-route-draw 1.4s var(--tt-ease) both;
+}
+
+@keyframes tt-route-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.tt-map__terminus {
+  animation: tt-terminus-land 0.5s var(--tt-ease) both;
+}
+
+@keyframes tt-terminus-land {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tt-map__terminus {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-map__route--drawn,
+  .tt-map__terminus {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* --- Section headings ----------------------------------------------------- */
+
+.tt-section {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  margin: 0;
+  padding-top: 1.4rem;
+  border-top: 2px solid var(--tt-ink);
+}
+
+/* --- The slip: the action, in the form's own vocabulary ------------------- */
+
+.tt-slip {
+  padding-bottom: var(--tt-rhythm);
+}
+
+.tt-slip__sheet {
+  background: var(--tt-paper-lift);
+  border: 1px solid var(--tt-rule-strong);
+  box-shadow: var(--tt-lift);
+  padding: clamp(1.5rem, 3.5vw, 3rem);
+}
+
+.tt-slip__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--tt-rule-strong);
+}
+
+.tt-slip__title {
+  font-family: var(--tt-face-display);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  letter-spacing: -0.015em;
+  margin: 0;
+  line-height: 1;
+}
+
+.tt-slip__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.tt-slip__slash {
+  color: var(--tt-prussian);
+}
+
+/* --- Form: ruled columns --------------------------------------------------- */
+
+.tt-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--tt-rule-hair);
+}
+
+.tt-field {
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 1.5rem 1.25rem 0;
+  border-bottom: 1px solid var(--tt-rule-hair);
+  min-width: 0;
+}
+
+.tt-field__label {
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+  margin-bottom: 0.6rem;
+}
+
+.tt-field__input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--tt-ink);
+  padding: 0.25rem 0 0.5rem;
+  color: var(--tt-ink);
+  font-family: var(--tt-face-text);
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.25;
+  transition: border-color 0.22s var(--tt-ease);
+}
+
+.tt-field__input::placeholder {
+  color: var(--tt-ink-faint);
+  opacity: 1;
+}
+
+.tt-field__input:focus {
+  outline: none;
+  border-bottom-color: var(--tt-prussian);
+  border-bottom-width: 2px;
+}
+
+/* The focus ring lives on the rule, in the world's own vocabulary. */
+.tt-field__input:focus-visible {
+  outline: none;
+  box-shadow: 0 2px 0 0 var(--tt-prussian);
+}
+
+.tt-field__input--city {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Figures are set in the measuring face, and always tabular. */
+.tt-field__input--fig {
+  font-family: var(--tt-face-data);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.tt-field__hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--tt-ink-faint);
+  margin: 0.55rem 0 0;
+}
+
+/* Vermilion enters the palette here and only here: a value the product
+   cannot accept, named and recoverable. */
+.tt-field__error {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--tt-vermilion);
+  margin: 0.55rem 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.tt-field__error::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--tt-vermilion);
+  transform: translateY(-1px);
+}
+
+.tt-field__input[aria-invalid='true'] {
+  border-bottom-color: var(--tt-vermilion);
+  border-bottom-width: 2px;
+}
+
+.tt-field__affix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tt-field__currency {
+  font-family: var(--tt-face-data);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  color: var(--tt-prussian);
+  margin-right: 0.4rem;
+  line-height: 1;
+}
+
+.tt-field__input--budget {
+  padding-left: 0;
+}
+
+.tt-form__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding-top: 1.5rem;
+}
+
+.tt-form__need {
+  font-size: 0.82rem;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* --- Buttons: prussian, the one place colour is spent ---------------------- */
+
+.tt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: var(--tt-prussian);
+  border: 1px solid var(--tt-prussian);
+  padding: 0.85rem 1.5rem;
+  cursor: pointer;
+  transition:
+    background-color 0.25s var(--tt-ease),
+    border-color 0.25s var(--tt-ease),
+    transform 0.25s var(--tt-ease);
+}
+
+.tt-btn:hover:not(:disabled) {
+  background: var(--tt-prussian-deep);
+  border-color: var(--tt-prussian-deep);
+  transform: translateY(-1px);
+}
+
+.tt-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.tt-btn:disabled {
+  background: transparent;
+  color: var(--tt-ink-faint);
+  border-color: var(--tt-rule-strong);
+  cursor: not-allowed;
+}
+
+.tt-btn svg {
+  transition: transform 0.25s var(--tt-ease);
+}
+
+.tt-btn:hover:not(:disabled) svg {
+  transform: translateX(3px);
+}
+
+/* --- What comes back -------------------------------------------------------- */
+
+.tt-included {
+  padding-bottom: var(--tt-rhythm);
+}
+
+.tt-included__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-top: clamp(1.75rem, 3.5vw, 2.75rem);
+  border-top: 1px solid var(--tt-rule);
+}
+
+.tt-included__item {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+  position: relative;
+}
+
+.tt-included__icon {
+  display: inline-flex;
+  color: var(--tt-prussian);
+  margin-bottom: 1.1rem;
+}
+
+.tt-included__name {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  letter-spacing: -0.012em;
+  line-height: 1.15;
+  margin: 0 0 0.6rem;
+}
+
+.tt-included__body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  max-width: 68ch;
+}
+
+/* --- How it works: a printed run -------------------------------------------- */
+
+.tt-flow {
+  padding-bottom: var(--tt-rhythm);
+}
+
+.tt-flow__run {
+  list-style: none;
+  padding: 0;
+  margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--tt-rule);
+}
+
+.tt-flow__step {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-flow__n {
+  display: block;
+  font-family: var(--tt-face-data);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--tt-prussian);
+  margin-bottom: 0.9rem;
+}
+
+.tt-flow__name {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  letter-spacing: -0.012em;
+  line-height: 1.15;
+  margin: 0 0 0.6rem;
+}
+
+.tt-flow__body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  max-width: 68ch;
+}
+
+/* --- Close ------------------------------------------------------------------- */
+
+.tt-close {
+  padding-bottom: clamp(4rem, 8vw, 7rem);
+}
+
+.tt-close__inner {
+  border-top: 2px solid var(--tt-ink);
+  padding-top: clamp(2rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.tt-close__line {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+  max-width: 22ch;
+}
+
+.tt-close__fine {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  max-width: 62ch;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--tt-rule-hair);
+  width: 100%;
+}
+
+/* --- Navigation: the supplement's running head ---------------------------- */
+
+.tt-nav {
+  width: 100%;
+  max-width: var(--tt-rail);
+  margin-inline: auto;
+  padding: 1.4rem var(--tt-gutter) 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  /* min-width:0 lets the flex row shrink below its content floor instead of
+     widening the document. Without it the wordmark's nowrap plus the
+     non-shrinking action group push scrollWidth to 389px on a 360px phone,
+     and the overflow renders as an empty strip down the right side. */
+  min-width: 0;
+}
+
+.tt-nav__mark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--tt-ink);
+}
+
+.tt-nav__wordmark {
+  font-family: var(--tt-face-display);
+  font-weight: 700;
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  letter-spacing: -0.022em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.tt-nav__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--tt-ink-faint);
+}
+
+/* Below ~380px the printed reference beside the wordmark costs more width than
+   it earns: it is a 60px margin note on the narrowest phones, and the masthead
+   is still identified by the wordmark alone. */
+@media (max-width: 380px) {
+  .tt-nav__ref {
+    display: none;
+  }
+}
+
+.tt-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 2vw, 1.25rem);
+  /* Not flex:none. The action group is the widest fixed piece of the bar and
+     on a 320px phone the two labels plus gutters already exceed the screen,
+     so it has to be allowed to compress for the bar to stay on the rail. */
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tt-nav__link {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: var(--tt-prussian);
+  border: 1px solid var(--tt-prussian);
+  padding: 0.5rem clamp(0.75rem, 2vw, 1.1rem);
+  cursor: pointer;
+  /* A two-word label must never break across three lines in a narrow bar. */
+  white-space: nowrap;
+  transition:
+    background-color 0.22s var(--tt-ease),
+    border-color 0.22s var(--tt-ease);
+}
+
+.tt-nav__link:hover {
+  background: var(--tt-prussian-deep);
+  border-color: var(--tt-prussian-deep);
+}
+
+.tt-nav__link--quiet {
+  color: var(--tt-ink);
+  background: transparent;
+  border-color: var(--tt-rule-strong);
+}
+
+.tt-nav__link--quiet:hover {
+  color: var(--tt-ink);
+  background: transparent;
+  border-color: var(--tt-ink);
+}
+
+/* --- Footer: the colophon ------------------------------------------------- */
+
+.tt-footer {
+  background: var(--tt-paper-press);
+  border-top: 1px solid var(--tt-rule-strong);
+}
+
+.tt-footer__inner {
+  padding-block: clamp(2.25rem, 4vw, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tt-footer__mark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.tt-footer__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--tt-ink-faint);
+}
+
+.tt-footer__note {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  max-width: 68ch;
+}
+
+.tt-footer__contact {
+  font-family: var(--tt-face-data);
+  font-size: 0.82rem;
+  color: var(--tt-prussian);
+  text-decoration: none;
+  border-bottom: 1px solid var(--tt-prussian-wash);
+  align-self: flex-start;
+  transition: border-color 0.22s var(--tt-ease);
+}
+
+.tt-footer__contact:hover {
+  border-bottom-color: var(--tt-prussian);
+}
+
+.tt-footer__legal {
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--tt-rule-hair);
+}
+
+@media (min-width: 900px) {
+  .tt-footer__inner {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+  }
+
+  .tt-footer__note {
+    order: 3;
+    flex: 1 1 100%;
+  }
+
+  .tt-footer__legal {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* ==========================================================================
+   Wider viewports: the sacred column lattice, set in rule
+   ========================================================================== */
+
+@media (min-width: 900px) {
+  .tt-thesis__grid {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: clamp(2.5rem, 4vw, 4rem);
+    align-items: start;
+  }
+
+  .tt-map__svg {
+    margin-top: 0.5rem;
+  }
+
+  .tt-form {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.7fr) minmax(0, 1fr);
+    column-gap: 0;
+    border-top: 0;
+  }
+
+  .tt-field {
+    padding: 1.4rem 1.75rem 1.25rem 0;
+    border-bottom: 0;
+    border-right: 1px solid var(--tt-rule-hair);
+  }
+
+  .tt-field + .tt-field {
+    padding-left: 1.75rem;
+  }
+
+  .tt-field:last-of-type {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .tt-form__action {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.75rem;
+    margin-top: 0;
+    border-top: 1px solid var(--tt-rule-hair);
+  }
+
+  .tt-form__need {
+    margin: 0;
+    text-align: right;
+  }
+
+  .tt-included__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tt-included__item {
+    padding: 2.25rem clamp(1.25rem, 2vw, 2rem) 2.25rem 0;
+    border-bottom: 0;
+  }
+
+  .tt-included__item + .tt-included__item {
+    padding-left: clamp(1.25rem, 2vw, 2rem);
+    border-left: 1px solid var(--tt-rule);
+  }
+
+  .tt-flow__run {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tt-flow__step {
+    padding: 2.25rem clamp(1.25rem, 2vw, 2rem) 2.25rem 0;
+    border-bottom: 0;
+  }
+
+  .tt-flow__step + .tt-flow__step {
+    padding-left: clamp(1.25rem, 2vw, 2rem);
+    border-left: 1px solid var(--tt-rule);
+  }
+}
+
+@media (min-width: 1280px) {
+  .tt-thesis__grid {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   }
 }
