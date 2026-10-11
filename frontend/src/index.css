@@ -192,6 +192,10 @@
   --tt-band-3: #c9cdc1;
   --tt-band-4: #b9bfb1;
 
+  /* The form's lobe: the lightest contour tint, so the turnstile's two sides
+     are two grounds rather than one ground with a line drawn on it. */
+  --tt-coast-fill: #e3e4dc;
+
   /* --- Ink --------------------------------------------------------------
    Three tiers, measured against the darkest paper ground they sit on
    (--tt-paper-press): soft 7.1:1, faint 5.1:1, both clear the 4.5 floor. */
@@ -1166,5 +1170,837 @@ body {
 @media (min-width: 1280px) {
   .tt-thesis__grid {
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+}
+
+/* ==========================================================================
+   The turnstile — sign in, sign up, and the account behind them
+
+   The form is a gate. One raised sheet of stock sits on the lobe that carries
+   the form; the bare margin beside it carries what an account actually holds.
+   One irregular coastline cut does the dividing, the same seam device the
+   landing uses under its photograph, now load-bearing as layout rather than
+   decoration. Prussian is spent on three things only: the terminus disc on the
+   segment rule, the primary Continue, and reference marks. Vermilion stays on
+   the lifted slip and still means only one thing — a value the product refuses.
+   ========================================================================== */
+
+/* The segment rule: sign in and sign-up are two spans of one 2px ink rule, not
+   a tab strip and not a link pair. The disc marks which span you are standing
+   at — the route map's terminus, reduced to the one mark that says you are here. */
+.tt-segment {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-segment__tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0.7rem 0 0.75rem;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 1.7vw, 1.35rem);
+  line-height: 1;
+  letter-spacing: -0.012em;
+  color: var(--tt-ink-faint);
+  transition: color 0.25s var(--tt-ease);
+}
+
+.tt-segment__tab + .tt-segment__tab {
+  padding-left: 1.1rem;
+  border-left: 1px solid var(--tt-rule);
+}
+
+.tt-segment__tab:hover {
+  color: var(--tt-ink);
+}
+
+.tt-segment__tab[aria-selected='true'] {
+  color: var(--tt-ink);
+}
+
+/* The reference mark beside the label is mono and tracked — data, not signage.
+   It is hidden from assistive tech: the tab's own label carries the meaning. */
+.tt-segment__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  margin-left: 0.5rem;
+  color: var(--tt-ink-faint);
+  vertical-align: 0.15em;
+}
+
+.tt-segment__tab[aria-selected='true'] .tt-segment__ref {
+  color: var(--tt-prussian);
+}
+
+/* The terminus. Sits on the rule, centred over the span you are standing at, and
+   slides across the rule to the other one. It carries the route map's own
+   terminus: a 12%-opacity prussian halo, a solid disc, and a stock-coloured
+   centre punched through it.
+
+   The travel is `left`, not `translateX`: a percentage in a transform resolves
+   against the disc's own 12px box, so `calc(50% - 6px)` computed to zero and the
+   disc never left the first span. `left` resolves against the rule.
+
+   It centres on the span, not on the span's left edge. At the left edge it sat
+   43px off its own label in sign-in and landed exactly on the boundary between
+   the two spans in register — which says where the rule begins, not where the
+   visitor is standing. */
+.tt-segment__disc {
+  position: absolute;
+  top: -7px;
+  left: 25%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--tt-prussian);
+  transition: left 0.35s var(--tt-ease);
+  pointer-events: none;
+}
+
+/* The halo, as the map's terminus carries it. Without it the disc reads as a
+   flat washer sitting on a rule rather than a marker landed on it. */
+.tt-segment__disc::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  background: var(--tt-prussian);
+  opacity: 0.12;
+}
+
+.tt-segment__disc::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--tt-paper-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-segment__disc {
+    transition: none;
+  }
+}
+
+/* Registered on the rule itself: the disc is placed by the mode, so the travel
+   is one property and one easing, not a transform written per render. */
+.tt-segment[data-mode='signin'] .tt-segment__disc {
+  left: 25%;
+}
+
+.tt-segment[data-mode='signup'] .tt-segment__disc {
+  left: 75%;
+}
+
+/* --- The sheet: the one raised surface on this page --------------------- */
+/* The sheet's own padding is measured so register mode — four rows against
+   sign-in's two — still resolves inside a 900px fold. Register added roughly 130px
+   to the same stack and pushed the primary action, the one thing that must not be
+   pushed, past the bottom of a laptop viewport. */
+.tt-gate {
+  background: var(--tt-paper-lift);
+  border: 1px solid var(--tt-rule-strong);
+  box-shadow: var(--tt-lift);
+  padding: clamp(1.35rem, 2.6vw, 2.1rem);
+}
+
+.tt-gate__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.95rem;
+  margin-bottom: 1.15rem;
+  border-bottom: 1px solid var(--tt-rule-strong);
+}
+
+.tt-gate__title {
+  font-family: var(--tt-face-display);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.tt-gate__ref {
+  display: flex;
+  gap: 0.35rem;
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  margin: 0;
+  color: var(--tt-ink-faint);
+}
+
+.tt-gate__slash {
+  color: var(--tt-prussian);
+}
+
+/* Providers sit above the credentials, as the alternative they are. */
+.tt-providers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1.15rem;
+}
+
+.tt-provider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: var(--tt-ink);
+  background: transparent;
+  border: 1px solid var(--tt-rule-strong);
+  padding: 0.62rem 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.25s var(--tt-ease),
+    background-color 0.25s var(--tt-ease);
+}
+
+.tt-provider:hover:not(:disabled) {
+  border-color: var(--tt-ink);
+  background: var(--tt-paper-press);
+}
+
+.tt-provider:disabled {
+  color: var(--tt-ink-faint);
+  cursor: not-allowed;
+}
+
+.tt-providers__or {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--tt-face-data);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+  margin: 1.05rem 0;
+}
+
+.tt-providers__or::before,
+.tt-providers__or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--tt-rule-hair);
+}
+
+/* --- Fields: one label and one value per ruled row ----------------------- */
+.tt-rows {
+  border-top: 1px solid var(--tt-rule-hair);
+}
+
+.tt-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.15rem;
+  padding: 0.95rem 0 0.85rem;
+  border-bottom: 1px solid var(--tt-rule-hair);
+}
+
+.tt-row__label {
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-row__input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--tt-ink);
+  padding: 0.3rem 0 0.55rem;
+  color: var(--tt-ink);
+  font-family: var(--tt-face-text);
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.25;
+  transition: border-color 0.22s var(--tt-ease);
+}
+
+.tt-row__input::placeholder {
+  color: var(--tt-ink-faint);
+  opacity: 1;
+}
+
+.tt-row__input:focus {
+  outline: none;
+  border-bottom-color: var(--tt-prussian);
+  border-bottom-width: 2px;
+}
+
+.tt-row__input:focus-visible {
+  outline: none;
+  box-shadow: 0 2px 0 0 var(--tt-prussian);
+}
+
+.tt-row__input[aria-invalid='true'] {
+  border-bottom-color: var(--tt-vermilion);
+  border-bottom-width: 2px;
+}
+
+/* A password is a value a person measures by length, so it is set in the
+   measuring face like every other figure on this page. */
+.tt-row__input--secret {
+  font-family: var(--tt-face-data);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tt-row__input--name {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tt-row__error {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--tt-vermilion);
+  margin: 0.5rem 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.tt-row__error::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--tt-vermilion);
+  transform: translateY(-1px);
+}
+
+.tt-row__error--sheet {
+  margin: 1.25rem 0 0;
+  padding: 0.85rem 0 0 0.9rem;
+  border-top: 0;
+  border-left: 1px solid var(--tt-vermilion);
+}
+
+/* --- The action --------------------------------------------------------- */
+.tt-gate__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding-top: 1.2rem;
+}
+
+.tt-gate__need {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  max-width: 46ch;
+}
+
+/* The sent state: verification mail is the auth service's, and this says so
+   rather than promising a delivered plan. */
+.tt-gate__sent {
+  padding: 0 0 0.25rem;
+}
+
+.tt-gate__sent-title {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  margin: 0 0 0.7rem;
+}
+
+.tt-gate__sent-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--tt-ink-soft);
+  margin: 0 0 1.1rem;
+  max-width: 46ch;
+}
+
+.tt-gate__sent-to {
+  font-family: var(--tt-face-data);
+  font-size: 0.82rem;
+  color: var(--tt-prussian);
+  letter-spacing: 0.01em;
+  word-break: break-all;
+}
+
+/* --- The turnstile spread ------------------------------------------------- */
+.tt-turnstile {
+  padding-block: clamp(1.5rem, 3vw, 2.5rem) var(--tt-rhythm);
+}
+
+.tt-turnstile__spread {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: start;
+}
+
+.tt-turnstile__lobe {
+  position: relative;
+  min-width: 0;
+}
+
+/* The cut. A channel of low ground between the two lobes, hatched the way the
+   map hatches water, with the coastline drawn as its edge. In the narrow layout
+   it lies down, 56px tall, between the form and the margin. The lobes keep the
+   paper stock, so the channel is the only change of ground on the page.
+
+   The hatch sits at 12%, above the map's 7%: the map's water reads at 340px tall
+   and this one has to read at 56. */
+.tt-turnstile__coast {
+  min-width: 0;
+  height: 56px;
+}
+
+.tt-coast {
+  width: 100%;
+  height: 100%;
+  background-color: var(--tt-paper);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(20, 24, 28, 0.12) 0 0.6px,
+    transparent 0.6px 7px
+  );
+  background-size: 7px 7px;
+}
+
+.tt-coast__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tt-coast__edge--narrow {
+  display: block;
+}
+
+.tt-coast__edge--wide {
+  display: none;
+}
+
+/* The margin: what an account actually holds, stated as fact. No proof, no
+   usage numbers, no invented claims — PRODUCT.md confirms zero proof assets. */
+.tt-margin__title {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  margin: 0 0 0.7rem;
+  padding-top: 1.3rem;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-margin__body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  max-width: 46ch;
+}
+
+.tt-margin__list {
+  list-style: none;
+  padding: 0;
+  margin: clamp(1.6rem, 3vw, 2.25rem) 0 0;
+  border-top: 1px solid var(--tt-rule);
+}
+
+.tt-margin__item {
+  display: flex;
+  gap: 0.9rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-margin__icon {
+  flex: none;
+  color: var(--tt-prussian);
+  margin-top: 0.1rem;
+}
+
+.tt-margin__name {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  letter-spacing: -0.008em;
+  margin: 0 0 0.3rem;
+}
+
+.tt-margin__text {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  max-width: 44ch;
+}
+
+.tt-margin__fine {
+  font-family: var(--tt-face-data);
+  font-size: 0.7rem;
+  line-height: 1.55;
+  letter-spacing: 0.06em;
+  color: var(--tt-ink-faint);
+  margin: clamp(1.6rem, 3vw, 2.25rem) 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--tt-rule-hair);
+  max-width: 46ch;
+}
+
+/* The back-link is a quiet nav link in the action face, not a blue body link. */
+.tt-turnstile__back {
+  margin-top: 1.5rem;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  color: var(--tt-ink-faint);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.22s var(--tt-ease);
+}
+
+.tt-turnstile__back:hover {
+  color: var(--tt-ink);
+}
+
+.tt-turnstile__back svg {
+  transition: transform 0.22s var(--tt-ease);
+}
+
+.tt-turnstile__back:hover svg {
+  transform: translateX(-3px);
+}
+
+/* ==========================================================================
+   The account drawer — pressed stock, one hairline edge, no fill overlay
+   ========================================================================== */
+
+.tt-account {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 60;
+  width: min(380px, 100vw);
+  background: var(--tt-paper-press);
+  /* No shadow. The world has exactly one and only the sheet may cast it; this
+     panel separates on its own 1px rule-strong edge, which is the same device
+     every other divided surface in the supplement uses. */
+  border-left: 1px solid var(--tt-rule-strong);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.32s var(--tt-ease),
+    visibility 0.32s;
+}
+
+.tt-account[data-open='true'] {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-account {
+    transition: none;
+  }
+}
+
+/* The scrim is ink at low alpha, not a blurred glass sheet. */
+.tt-account__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(20, 24, 28, 0.24);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.32s var(--tt-ease),
+    visibility 0.32s;
+}
+
+.tt-account__scrim[data-open='true'] {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tt-account__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.4rem 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--tt-rule-strong);
+}
+
+.tt-account__id {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+/* The initial, as a reference mark and not as an avatar: a square of stock ruled
+   on three sides, the letter set in the measuring face. A prussian disc here was
+   both a fourth spend of the one ink the world allows three of, and the only
+   rounded corner outside the 1px focus ring. */
+.tt-account__initial {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  background: var(--tt-paper);
+  border: 1px solid var(--tt-rule-strong);
+  border-right: 0;
+  color: var(--tt-ink);
+  font-family: var(--tt-face-data);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.tt-account__name {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-account__email {
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--tt-ink-faint);
+  margin: 0.3rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-account__close {
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--tt-rule-strong);
+  color: var(--tt-ink);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.22s var(--tt-ease);
+}
+
+.tt-account__close:hover {
+  border-color: var(--tt-ink);
+}
+
+.tt-account__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.tt-account__ref {
+  display: flex;
+  gap: 0.35rem;
+  font-family: var(--tt-face-data);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  margin: 0 0 0.4rem;
+  color: var(--tt-ink-faint);
+}
+
+.tt-account__slash {
+  color: var(--tt-prussian);
+}
+
+.tt-account__head2 {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  line-height: 1.15;
+  letter-spacing: -0.008em;
+  margin: 0 0 1rem;
+}
+
+.tt-trips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--tt-rule);
+}
+
+.tt-trip {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--tt-rule);
+  padding: 1.1rem 0;
+  cursor: pointer;
+  transition: padding-left 0.22s var(--tt-ease);
+}
+
+.tt-trip:hover {
+  padding-left: 0.5rem;
+}
+
+.tt-trip__city {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: -0.008em;
+  color: var(--tt-ink);
+}
+
+.tt-trip__when {
+  font-family: var(--tt-face-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--tt-ink-faint);
+  white-space: nowrap;
+}
+
+.tt-trips__empty {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-trips__note {
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  color: var(--tt-ink-faint);
+  margin: 1.1rem 0 0;
+}
+
+.tt-account__foot {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--tt-rule-strong);
+}
+
+@media (min-width: 900px) {
+  /* The sacred column lattice, at last, doing what it was promised to do: three
+     ruled columns with the coast as the middle one, not a reflow. */
+  .tt-turnstile__spread {
+    grid-template-columns: minmax(0, 1.15fr) 88px minmax(0, 0.85fr);
+    align-items: stretch;
+  }
+
+  /* The cut stands up: 88px of column carrying the same divide, running down the
+     full height of the spread, so its swell stays a fraction of the taller lobe
+     at any viewport instead of flattening to a straight rule. */
+  .tt-turnstile__coast {
+    height: auto;
+  }
+
+  .tt-coast__edge--wide {
+    display: block;
+  }
+
+  .tt-coast__edge--narrow {
+    display: none;
+  }
+
+  /* The sheet carries the form, and the sheet is the one lifted ground in the
+     world. The lobes take no fill of their own — the hatched channel between
+     them is the cut, and both sides stay on bare stock, as the landing's own
+     margins do. */
+  .tt-turnstile__lobe--form {
+    padding: clamp(1.25rem, 2.4vw, 2rem) clamp(1.25rem, 2.4vw, 2rem) 0 0;
+  }
+
+  .tt-turnstile__lobe--margin {
+    padding: clamp(1.25rem, 2.4vw, 2rem) 0 clamp(1.25rem, 2.4vw, 2rem)
+      clamp(1.25rem, 2.4vw, 2rem);
+  }
+
+  .tt-row {
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: baseline;
+  }
+
+  .tt-row__label {
+    padding-top: 0.45rem;
+  }
+
+  .tt-row__error {
+    grid-column: 1 / -1;
+  }
+
+  .tt-gate__action {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .tt-gate__need {
+    margin: 0;
+    text-align: right;
+    max-width: 34ch;
+  }
+
+  .tt-turnstile__back {
+    margin-top: 1.75rem;
   }
 }

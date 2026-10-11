@@ -126,13 +126,15 @@ components:
 
 # Design System: TripTribe
 
-> **Scope.** This document describes the world as built on the landing surface (`/`) — the
-> files `frontend/src/index.css`, `frontend/src/pages/Hero.jsx`,
-> `frontend/src/components/ContourRoute.jsx`, `frontend/src/components/Navbar.jsx` and
+> **Scope.** This document describes the world as built on the landing surface (`/`) and
+> the auth surface (`/auth` plus the account drawer) — the files
+> `frontend/src/index.css`, `frontend/src/pages/Hero.jsx`,
+> `frontend/src/components/ContourRoute.jsx`, `frontend/src/components/Navbar.jsx`,
+> `frontend/src/pages/Auth.jsx`, `frontend/src/components/Coastline.jsx`,
+> `frontend/src/components/AccountDrawer.jsx` and
 > `frontend/src/components/Footer.jsx`. It is a scan of shipped code, not an intention.
-> Two surfaces are **outside** this world and are recorded as such under *Layout* and
-> *Do's and Don'ts*: `/search` and `/result`, plus the account drawer and sign-in dialog
-> inside `Navbar.jsx`.
+> Two surfaces are still **outside** this world and are recorded as such under *Layout*
+> and *Do's and Don'ts*: `/search` and `/result`.
 
 ## Overview
 
@@ -213,6 +215,13 @@ functional red. There is no second accent and no gradient anywhere in the system
 - **The Two-Ink Rule.** The page may be saturated in exactly two inks. Prussian is what the
   product does; vermilion is what it refuses. If a third saturated colour appears, the screen
   has stopped meaning anything.
+- **The Foreign-Mark Exemption.** The Two-Ink Rule governs colour we choose. A third
+  party's mark — the Google and GitHub logos on the auth provider buttons — is the one
+  exception, and it is exempt only as a logo: recognisable at no other size, in no other
+  colour, and degraded to grey the moment it stops being the mark. It carries no state,
+  no hover, no emphasis, and never appears anywhere else in the world. Everything
+  around it stays on the world's own two inks, and if a third party were ever drawn in
+  anything but its official mark, the exemption does not reach it.
 - **The Verdict Rule.** Vermilion is never an accent, never a hover, never a "highlight your
   plan" cue. If nothing is wrong with the visitor's input, vermilion does not exist.
 - **The Darkest-Ground Rule.** Any new ink tier must clear 4.5:1 against the darkest ground
@@ -410,6 +419,45 @@ the estimate disclaimer, and a bare year. At ≥900px these become a row with th
 dropped to its own full-width line. **The disclaimer is not optional copy** — PRODUCT.md
 requires estimates to stay labelled as estimates.
 
+### Auth (`/auth`) — the turnstile
+
+The credential gate is a gate: one raised sheet of stock on a lobe that carries the form,
+with the account's purpose in the bare margin beside it, divided by one irregular
+coastline cut. Operate-mode: the screen reads as a form before it reads as a world.
+
+- **Spread:** above 900px, three ruled columns — form lobe `1.15fr`, coast `88px`, purpose
+  margin `0.85fr`. Below 900px it stacks and the coast lies down as a 56px band. The
+  lobes take no fill; the hatched channel between them is the cut, and both sides stay on
+  bare stock.
+- **The coast:** hatch at 12% ink over paper (the map hatches water at 7%; this one has to
+  read at 56px), with a 1.5px ink edge stroke at 34%. Both paths are authored in the same
+  `0 0 100 900` user space and CSS shows one orientation or the other, because
+  `preserveAspectRatio="none"` scales each axis independently — the amplitude had to be
+  re-authored per orientation to land as real undulation in an 88×990 box and a 390×56 one.
+- **The segment rule:** sign in and register are two spans of one 2px ink rule with a 1px
+  hairline at the boundary — not a tab strip, not a link pair. ARIA tabs with roving
+  tabindex and arrow keys. **The terminus disc** sits on the rule centred over the active
+  span (25% / 75%), travelling on `left` over 0.35s, and carries the map's own terminus: a
+  12%-opacity prussian halo, a solid disc, and a stock-coloured centre. It travels on
+  `left` rather than `transform` because a percentage in a transform resolves against the
+  disc's own 12px box and computes to zero.
+- **Fields:** ruled rows, one mono label at 0.14em and one value, on the lifted slip. The
+  name field is set in the display face because a name is a name; passwords are set in
+  Martian Mono because a secret is a value a person measures by length. Vermilion is
+  confined to this sheet.
+- **Provider marks:** Google's and GitHub's own fills, under the Foreign-Mark Exemption.
+
+### Account drawer
+
+Pressed stock, right-hand panel, one hairline edge, an ink scrim at 24% rather than a
+blur, and **no shadow** — the world allows one and only the sheet casts it. The identity
+mark is a square of stock ruled on three sides with the initial in mono ink, not an avatar.
+It claims Tab while open, moves focus in on open, returns focus to the opener on close, and
+its async body is one `role="status"` region. Four states, each distinct in copy and
+intent: pending, the trips ledger with relative dates and the estimates disclaimer, an
+empty list that reads as an invitation, and an API failure naming the failing service with
+a working retry.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -442,8 +490,13 @@ requires estimates to stay labelled as estimates.
   Treat it as a boundary, not a precedent: the *seam around it* is part of this world, the
   block inside it is not.
 - **Don't** assume this world has reached the rest of the product. It has not.
-  `daisyUI` and Tailwind are still installed and still style `/search` and `/result` (plus
-  the account drawer, avatar, menu and sign-in dialog inside `Navbar.jsx`, which use daisyUI
-  components inside this world's running head). Those surfaces do not follow these tokens and
-  must not be treated as examples of the system. The first surface to migrate them inherits
-  a documented world, not an enforced one.
+  `daisyUI` and Tailwind are still installed and still style `/search` and `/result`.
+  Those surfaces do not follow these tokens and must not be treated as examples of the
+  system. The first surface to migrate them inherits a documented world, not an
+  enforced one.
+- **Don't** spend the third shadow, or a fourth use of prussian, on a panel. The account
+  drawer separates on its own hairline edge and carries its identity as a square of stock
+  in ink — prussian stays on the route, the primary action, and reference marks.
+- **Don't** claim an account capability the product does not have. Email hand-off is
+  intended and unbuilt; there is no mail transport in the repository. The auth margin
+  states what an address does today and nothing more.
