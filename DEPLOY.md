@@ -111,7 +111,7 @@ Two Infisical projects (README):
 | Project | ID | Holds |
 |---|---|---|
 | frontend project (pinned by `.infisical.json`, read in CI) | `9541bd35-aa6f-4719-b663-ec7ec99b8073`, env `prod`, domain `https://secrets.shrijit.tech` | `VITE_GOOGLE_PLACES_API_KEY`, `VITE_GOOGLE_CUSTOM_SEARCH_API_KEY` |
-| `shrijit-esdk`, prod env | `1a39a192-cf29-4ec9-812f-94c35cce34f2` | `TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`, `TRIPTRIBE_GOOGLE_*`, `TRIPTRIBE_RESEND_*` |
+| `shrijit-esdk`, prod env | `1a39a192-cf29-4ec9-812f-94c35cce34f2` | `TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`, `TRIPTRIBE_GOOGLE_PLACES_API_KEY`, `TRIPTRIBE_GOOGLE_SEARCH_KEY`, `TRIPTRIBE_JWT_SECRET` (dead) |
 
 Vault key → env var the app reads (the deploy job renames on write;
 `scripts/infisical-env.sh` applies the same renames locally):
@@ -123,36 +123,60 @@ Vault key → env var the app reads (the deploy job renames on write;
 | `TRIPTRIBE_OPENAI_BASE_URL` / `_MODEL` | `OPENAI_BASE_URL` / `OPENAI_MODEL` | `src/server/domain/narrate.ts` |
 | `TRIPTRIBE_GOOGLE_PLACES_API_KEY` | `GOOGLE_PLACES_API_KEY` **and** `GOOGLE_ROUTES_API_KEY` | `src/server/domain/places/` |
 | `TRIPTRIBE_GOOGLE_SEARCH_KEY` | `GOOGLE_CUSTOM_SEARCH_API_KEY` | `src/app/api/plan/image/route.ts` |
-| `TRIPTRIBE_RESEND_API_KEY` / `_FROM` | `RESEND_API_KEY` / `RESEND_FROM` | `src/server/domain/mail.ts` |
+| — (not written) | `RESEND_API_KEY` / `RESEND_FROM` | `src/server/domain/mail.ts`, which degrades without them |
 | `VITE_GOOGLE_PLACES_API_KEY` | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` (build arg, **literal value**) | `src/lib/maps.ts` |
 | — (not a secret) | `AUTH_URL`, `PORT`, `APP_VERSION` | written literally by the deploy job |
 
-**How values reach the container.** Two distinct paths, and conflating them is
-the bug this doc exists to prevent:
+**How values reach the container.** Two paths, and conflating them is the bug
+this doc exists to prevent:
 
-- **Server-side keys: vault references, not values.** The deploy job builds
-  each env line as the *string* `${{vault.infisical-prod.<KEY>}}` and posts it
-  via `application.saveEnvironment`; Dokploy resolves the refs through its own
-  Infisical sync. The job's `DOL='$'` assignment is deliberate — it splits the
-  `${{` so GitHub's expression parser does not try to evaluate it, and the
-  literal reference text reaches Dokploy intact. CI never sees these values.
-- **The Places autocomplete key: a literal value.** It is exported to the job's
-  environment by `Infisical/secrets-action` and interpolated into
+- **Server-side keys: values, read from the vault by the deploy job.** The job
+  reads `shrijit-esdk` prod with `Infisical/secrets-action` (`export-type: env`),
+  builds the env block out of those values with `printf`, and POSTs *resolved
+  values* to `application.saveEnvironment`. Before the POST it refuses to
+  continue if any value the template needs is empty — an empty value means the
+  key is not in the vault, and overwriting the app env with a hole is how a
+  healthy-looking container ends up unable to reach its database.
+- **The Places autocomplete key: a literal value, inlined at build time.** It
+  is exported to the `build` job's environment from the *frontend* project and
+  interpolated into
   `build-args: NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}`.
   Why: `NEXT_PUBLIC_*` is inlined into the client bundle by
-  `frontend/Dockerfile` at build time, and a `{{vault.*}}` ref cannot be baked
-  into a bundle — the browser would send the literal ref string to Google.
+  `frontend/Dockerfile` at build time, so it cannot be read from the container's
+  env at all.
 
-Every other key is read at request time inside the container, so a missing key
-degrades only its own capability. A build-time ARG would freeze "missing" into
-the image.
+**Vault references do not work here, and that is worth knowing.** The deploy
+job used to write each env line as the literal string
+`${{vault.infisical-prod.<KEY>}}` and let Dokploy resolve it. Both halves of
+that failed:
+
+- Dokploy aborts at `Initializing deployment` with
+  `Infisical: secret "TRIPTRIBE_RESEND_API_KEY" not found in environment "prod"`
+  when a reference cannot be resolved. The deployment never starts, the old
+  container keeps serving, and the workflow still reports three successful
+  calls — three deploys in a row behaved exactly this way (`395b1df`,
+  `522c265`, `7a4de4c`).
+- When the references *do* resolve, they still reach the container verbatim:
+  a rolled container held `MONGO_URI=${vault.infisical-prod.TRIPTRIBE_MONGO_URI}}`
+  as its value and answered `checks.mongo: "down"`.
+
+So: **write values, not references.** Check with
+`docker inspect` (or `/proc/1/environ` in the container) that a key is the
+value, not a string containing `${vault`.
+
+Every server-side key is read at request time inside the container, so a missing
+key degrades only its own capability. A build-time ARG would freeze "missing"
+into the image.
 
 ### Rotating a key
 
-- **Server-side key** (Mongo, OpenAI, Places/Routes, Search, Resend): edit it in
-  Infisical, then make CI re-assert the env. `application.saveEnvironment` is
-  re-run on every push to `main`, and it re-asserts the whole block rather than
+- **Server-side key** (Mongo, OpenAI, Places/Routes, Search): edit it in
+  `shrijit-esdk` prod, then make CI re-assert the env. `application.saveEnvironment`
+  is re-run on every push to `main` and re-asserts the whole block rather than
   a diff — Infisical's own sync wipes the app env, which is why the step exists.
+  To rotate without shipping code, apply the same block by hand through the
+  Dokploy UI or `application.saveEnvironment` and redeploy; the next push
+  re-derives the identical block from the vault.
 - **`VITE_GOOGLE_PLACES_API_KEY`**: same edit, but it is a build arg, so it needs
   an image rebuild. Push (or re-run) a build; a bare env re-assert is not enough.
 - **`AUTH_URL`, `NEXT_PUBLIC_SITE_URL`, `PORT`, `APP_VERSION`**: set inline in
@@ -169,7 +193,7 @@ credentials, not app secrets.
 
 | Name | Kind | Used for |
 |---|---|---|
-| `INFISICAL_CLIENT_ID` | secret | machine identity for the frontend-project fetch in `build` |
+| `INFISICAL_CLIENT_ID` | secret | machine identity for both vault fetches — the frontend project in `build`, `shrijit-esdk` in `deploy-prod` |
 | `INFISICAL_CLIENT_SECRET` | secret | same |
 | `DOKPLOY_API_KEY` | secret | `x-api-key` on all three Dokploy calls |
 | `GHCR_PULL_TOKEN` | secret | Dokploy pulling from GHCR — **long-lived**, never `GITHUB_TOKEN`, which expires after the job and silently breaks every later pull |
@@ -194,6 +218,8 @@ stays `push`) rather than dispatching by hand.
 
 | Symptom | Cause |
 |---|---|
+| Every Dokploy call reports success, the health gate fails, and no new container exists | The deployment aborted at `Initializing deployment` — read `deployment.readLogs` for the application. `Infisical: secret "X" not found in environment "prod"` means the app env named a key the vault does not have; the old container keeps serving and the run still looks green. This is what `395b1df`, `522c265` and `7a4de4c` all were. |
+| `/api/health` answers, but `checks.mongo: "down"` | The container holds a literal `${vault.infisical-prod.…}` string instead of a URI. Write values, not references — see *How values reach the container*. |
 | `services did not converge on $SHA`, while `/health` answers 200 with a stale `version` | `saveDockerProvider` returned 200 without applying. Real occurrence (`TripTribe-AI-usl`, cutover `395b1df`, run `38171315352`): image pushed, digest `sha256:a4fd85d5…`, both Dokploy calls "successful", container never rolled. `/health` returned the *old* shape `{"status":"ok","service":"triptribe-web","version":"081534e8…","checks":{"assets":"up"}}` and `/api/health` returned Express's `Cannot GET /api/health` — proof the previous image was still live. Production stayed on the last good image and the gate failed loudly instead of reporting a false green. |
 | Old image, but `/api/health` 404s with `Cannot GET /api/health` | Same condition seen from the other side: the retired Express backend is still fronting `/api/*` through the old `rewrites()` rule. `api.triptribe.shrijit.tech` is deliberately no longer deployed; its hostname stops resolving once the old web image is replaced. |
 | Every request 502s, `/api/health` never answers | The container bound Next's default 3000 while Dokploy routed to 80. `frontend/Dockerfile` sets `PORT=80` and `HOSTNAME=0.0.0.0` for exactly this reason. |

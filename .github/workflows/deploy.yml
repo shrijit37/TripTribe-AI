@@ -101,7 +101,22 @@ jobs:
       DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
       GHCR_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
       SHA: ${{ needs.build.outputs.sha }}
+      APP_ID: ${{ vars.DOKPLOY_WEB_APP_ID }}
     steps:
+      # `shrijit-esdk`, not the frontend project the build job reads: the
+      # app's own keys live here (README, `scripts/infisical-env.sh`). Reading
+      # the frontend project instead would silently point the server at the
+      # autocomplete key instead of the Places key.
+      - name: Fetch app keys from Infisical (shrijit-esdk, prod)
+        uses: Infisical/secrets-action@v1.0.18
+        with:
+          method: universal
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          project-id: 1a39a192-cf29-4ec9-812f-94c35cce34f2
+          env-slug: prod
+          domain: https://secrets.shrijit.tech
+          export-type: env
       # Dokploy authenticates GHCR pulls with a long-lived pull token kept
       # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
       # it expires after the job and silently breaks every later pull.
@@ -114,23 +129,59 @@ jobs:
       # there. The public session endpoint is the only correct value now that
       # the backend and the web app are one process.
       #
-      # `RESEND_*` are new: the email hand-off degrades to "not available right
-      # now" without them, which is why they are optional rather than required.
+      # `RESEND_*` are deliberately absent: they do not exist in Infisical prod,
+      # and a reference Dokploy cannot resolve aborts the deployment. The email
+      # hand-off is documented as degrading without them, so the app degrades
+      # instead of the deploy.
+      # One application, one environment block.
+      #
+      # `AUTH_URL` used to point at `http://app-copy-mobile-transmitter-zblo2d:8080`
+      # — the name of a scratch application, not the auth service — so every
+      # authenticated request looked for a session at an address that was not
+      # there. The public session endpoint is the only correct value now that
+      # the backend and the web app are one process.
+      #
+      # Values are resolved here rather than left as `${vault.infisical-prod.X}}`
+      # references. Two separate faults came out of those references: Dokploy
+      # aborts at `Initializing deployment` on a key missing from prod (three
+      # deploys in a row — 395b1df, 522c265, 7a4de4c — returned success here and
+      # then left the old container serving), and when they *do* resolve the
+      # reference reached the container verbatim, so MONGO_URI arrived as a URI
+      # nobody can dial.
+      #
+      # `RESEND_*` are deliberately absent: those keys do not exist in any
+      # environment, and the email hand-off is documented as degrading without
+      # them, so the app degrades instead of the deploy.
       - name: Re-assert Dokploy env (Infisical sync wipes app env)
         run: |
-          DOL='$'
-          REF="${DOL}{{vault.infisical-prod."
           post_env() {
             curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
               -H 'Content-Type: application/json' -d @- \
               "$DOKPLOY_URL/api/application.saveEnvironment" >/dev/null
           }
-          jq -n --arg ref "$REF" \
-            --arg id "${{ vars.DOKPLOY_WEB_APP_ID }}" \
-            '{applicationId: $id,
-              env: ("PORT=80\nAUTH_URL=https://auth.shrijit.tech\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nOPENAI_BASE_URL=" + $ref + "TRIPTRIBE_OPENAI_BASE_URL}}\nOPENAI_MODEL=" + $ref + "TRIPTRIBE_OPENAI_MODEL}}\nGOOGLE_PLACES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}\nGOOGLE_ROUTES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}\nRESEND_API_KEY=" + $ref + "TRIPTRIBE_RESEND_API_KEY}}\nRESEND_FROM=" + $ref + "TRIPTRIBE_RESEND_FROM}}\nAPP_VERSION=$SHA"),
-              buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env
-          echo "dokploy env re-asserted"
+          # printf, not jq: jq -n on a string prints a JSON-quoted string, so
+          # the guard below would be reading escaped `\n` and a leading quote
+          # instead of the env text that gets POSTed.
+          ENV=$(printf 'PORT=80\nAUTH_URL=https://auth.shrijit.tech\nMONGO_URI=%s\nOPENAI_KEY=%s\nOPENAI_BASE_URL=%s\nOPENAI_MODEL=%s\nGOOGLE_PLACES_API_KEY=%s\nGOOGLE_ROUTES_API_KEY=%s\nGOOGLE_CUSTOM_SEARCH_API_KEY=%s\nAPP_VERSION=%s' \
+            "${TRIPTRIBE_MONGO_URI:-}" "${TRIPTRIBE_OPENAI_KEY:-}" \
+            "${TRIPTRIBE_OPENAI_BASE_URL:-}" "${TRIPTRIBE_OPENAI_MODEL:-}" \
+            "${TRIPTRIBE_GOOGLE_PLACES_API_KEY:-}" "${TRIPTRIBE_GOOGLE_PLACES_API_KEY:-}" \
+            "${TRIPTRIBE_GOOGLE_SEARCH_KEY:-}" "$SHA")
+          # Guarded before the write, and against the string about to be POSTed:
+          # an empty value means Infisical prod does not have the key, an
+          # unresolved reference means this step regressed to the form that
+          # shipped a container which could not reach its database. Either one
+          # wipes the app env on a *successful* deploy, so refuse instead.
+          printf '%s\n' "$ENV" | grep -qE '^[A-Z_0-9]+=' \
+            || { echo "env template is empty or malformed" >&2; exit 1; }
+          if printf '%s\n' "$ENV" | grep -qE '^[A-Z_0-9]+=$|\$\{'; then
+            echo "Infisical prod has no value for a key the template needs — refusing to overwrite the app env" >&2
+            exit 1
+          fi
+          jq -n --arg id "$APP_ID" --arg env "$ENV" \
+            '{applicationId: $id, env: $env,
+              buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env || exit 1
+
       - name: Point Dokploy at the SHA image and redeploy
         run: |
           curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \

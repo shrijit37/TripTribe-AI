@@ -20,7 +20,14 @@ Places/Routes, signup and session from the shared Better Auth service on
 | web | `triptribe-web-acbq9o` | https://triptribe.shrijit.tech | `GET /api/health` |
 
 Image: `ghcr.io/shrijit37/triptribe-ai-web:<sha>`, multi-arch, built on GH
-Actions. Secrets from Infisical (`TRIPTRIBE_MONGO_URI`, vault `infisical-prod`).
+Actions. Secrets from Infisical: `shrijit-esdk` prod (`1a39a192-…`) for the
+app's own keys (`TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`,
+`TRIPTRIBE_GOOGLE_*`), the frontend project for the build-time
+`VITE_GOOGLE_PLACES_API_KEY`. The deploy job reads the vault and posts
+**values**; `${{vault.infisical-prod.…}}` references do not reach the container
+and a reference Dokploy cannot resolve aborts the deployment at
+`Initializing deployment` while every API call still reports success
+(`TripTribe-AI-usl`).
 
 Two services used to exist, and having two is what caused most of the
 operational defects this change set out to fix:
