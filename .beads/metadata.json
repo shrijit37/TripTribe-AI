@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "TripTribe_AI",
+  "project_id": "c8cd2f78-6247-4a71-82a8-d2a7ed13e31f"
+}
