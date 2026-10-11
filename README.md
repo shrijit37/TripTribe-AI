@@ -201,24 +201,21 @@ will not connect from here).
 
 ## Deployment
 
-Push to `main`: CI typechecks, lints, tests and builds, then builds one
-multi-arch image to `ghcr.io/shrijit37/triptribe-ai-web:<sha>`, and the deploy
-job re-asserts the Dokploy env (Infisical's own sync wipes it) and redeploys
-the one app. See `STATE.md` for the live topology.
+See [DEPLOY.md](DEPLOY.md) for the procedure: the three CI jobs, the Dokploy
+calls, the health contract and gate, the secret wiring, and every gate failure
+this app has actually hit. `STATE.md` has the live topology.
 
-The deploy gate waits for `/api/health` to report **this** SHA as its
-`version`. Checking health alone is not enough: the previous container keeps
-serving while the new one starts, so the first poll succeeds against the old
-build. That is how the frontend migration once shipped a green run while the
-web app was 502-ing.
+In short: push to `main`. CI builds one multi-arch image
+(`ghcr.io/shrijit37/triptribe-ai-web:<sha>`), re-asserts the Dokploy env
+(Infisical's own sync wipes it), redeploys the one app, and waits for
+`/api/health` to report **this** SHA as its `version` — health alone is not
+enough, because the previous container keeps serving while the new one starts.
 
-Every key comes from Infisical — none from GH secrets. The `build` job pulls
-the frontend project with `Infisical/secrets-action` using the
-`INFISICAL_CLIENT_ID` / `INFISICAL_CLIENT_SECRET` machine identity, and the
-the server-side keys reach Dokploy through the vault's own sync. GH secrets hold
-only the deploy credentials (`DOKPLOY_*`, `GHCR_PULL_TOKEN`). If you add a
-key, add it to Infisical and never to a GH secret: a duplicated key drifts,
-and a GH secret set but empty bakes an empty value into the image.
+Every key comes from Infisical — none from GH secrets. GH secrets hold only the
+deploy credentials (`INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET`,
+`DOKPLOY_API_KEY`, `GHCR_PULL_TOKEN`). If you add a key, add it to Infisical
+and never to a GH secret: a duplicated key drifts, and a GH secret set but empty
+bakes an empty value into the image.
 
 ## Troubleshooting
 
