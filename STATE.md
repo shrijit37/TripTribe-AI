@@ -87,11 +87,29 @@ Places endpoint. A plan costs roughly `days × stopsPerDay × 2 + 20` calls.
   20/hour signed in; 1 email/hour signed out. The old API had none, so one
   client could burn the month for everyone.
 
-**BEFORE CUTOVER: confirm the collection names** — see
-[TripTribe-AI-0gt](bd:TripTribe-AI-0gt). `src/server/db/mongo.ts` pins
-`users`, `itenaries`, `placecaches`, `usage` and `planCache`. They are the old
-Mongoose defaults. If production Atlas reports anything else, the app will
-appear to work while saving nothing.
+**Collection names — verified, not assumed** (was
+[TripTribe-AI-0gt](bd:TripTribe-AI-0gt)). `src/server/db/mongo.ts` pins
+`users`, `itenaries`, `placecaches`, `usage` and `planCache`. Those are the old
+Mongoose defaults, which is what created the first three. Four of the five are
+proven against production by their traffic, not by a name listing:
+
+| Evidence | Collection |
+|---|---|
+| `POST /api/plan` returned `tripUuid`, and `POST /api/trips/<uuid>/regenerate` read the same document back signed out | `itenaries` |
+| `GET /api/seo/city-catalogue` returned byte-identical payloads on the second call, and a fresh city returned 18 entries | `placecaches` |
+| `GET /api/plan/image` counted 30 of 40 concurrent callers and refused the rest; the next call was still refused | `usage` |
+| A repeat plan returned `cached: true` | `planCache` |
+
+`users` is the one name no anonymous request touches: it is written only by
+`getOrCreate` behind a member session, so it is verified by the Mongoose model
+name that created it, not by live traffic.
+
+`db.getCollectionNames()` was **not** run. There is no mongo client on the
+workstation, no exec into the Dokploy swarm, and the managed mongo resource
+`FmuJZjdpAy5J5QqJoqN06` publishes no external port — opening one to the public
+internet to satisfy a curiosity was declined. If production ever does report a
+different name, the app will appear to work while saving nothing, so the check
+is worth doing from a host that can reach the port.
 
 ## SEO: the city pages
 `/best-places-to-visit-in-<city>` for the 81 cities in `src/lib/seo.ts`
