@@ -263,6 +263,16 @@ const AccountDrawer = ({ open, onClose, name, email }: AccountDrawerProps) => {
         </div>
 
         <div className="tt-account__foot">
+          <button
+            type="button"
+            className="tt-nav__link tt-nav__link--quiet"
+            onClick={() => {
+              onClose();
+              router.push("/account");
+            }}
+          >
+            Manage account
+          </button>
           <button type="button" className="tt-nav__link tt-nav__link--quiet" onClick={signOut}>
             Sign out
           </button>

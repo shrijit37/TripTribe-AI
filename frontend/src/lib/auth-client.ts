@@ -29,3 +29,58 @@ export const signInWithProvider = (provider: string) =>
     provider,
     callbackURL: window.location.origin,
   });
+
+/**
+ * Password reset + email verification, same transport as sign-in.
+ * Endpoint names follow Better Auth (`/request-password-reset`,
+ * `/reset-password`, `/send-verification-email`, `/verify-email`); the
+ * redirect targets stay same-origin so a token never leaves triptribe.
+ */
+export const requestPasswordReset = (email: string) =>
+  call<unknown>("/api/auth/request-password-reset", {
+    email,
+    redirectTo: `${window.location.origin}/auth/reset`,
+  });
+
+export const resetPassword = (newPassword: string, token: string) =>
+  call<unknown>("/api/auth/reset-password", { newPassword, token });
+
+export const sendVerificationEmail = (email: string) =>
+  call<unknown>("/api/auth/send-verification-email", {
+    email,
+    callbackURL: `${window.location.origin}/auth/verify`,
+  });
+
+export const verifyEmail = (token: string) =>
+  call<unknown>(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+
+export const changePassword = (newPassword: string, currentPassword: string) =>
+  call<unknown>("/api/auth/change-password", {
+    newPassword,
+    currentPassword,
+    revokeOtherSessions: true,
+  });
+
+export const updateAuthUser = (name: string) =>
+  call<unknown>("/api/auth/update-user", { name });
+
+/**
+ * Hard-delete the Better Auth identity. Disabled by default on the auth
+ * service — when it answers 404/403 the caller falls back to deleting only
+ * TripTribe's own copy (`DELETE /api/profile`). Never throws a raw 404 at
+ * the UI: the message names the fallback.
+ */
+export const deleteAuthUser = async (): Promise<{ authDeleted: boolean }> => {
+  try {
+    await call<unknown>("/api/auth/delete-user", {});
+    return { authDeleted: true };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      /not found|forbidden|not enabled/i.test(error.message)
+    ) {
+      return { authDeleted: false };
+    }
+    throw error;
+  }
+};

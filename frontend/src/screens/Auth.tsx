@@ -6,7 +6,11 @@ import type { FormEvent, KeyboardEvent } from "react";
 import AuthProviders from "@/components/AuthProviders";
 import Coastline from "@/components/Coastline";
 import { useAuth } from "@/context/AuthProvider";
-import { signInWithEmail, signUpWithEmail } from "@/lib/auth-client";
+import {
+  sendVerificationEmail,
+  signInWithEmail,
+  signUpWithEmail,
+} from "@/lib/auth-client";
 
 /* ─────────────────────────────────────────────────────────────────────────
    Icons — drawn at 24×24, one stroke weight, round caps. No glyph standing
@@ -126,6 +130,8 @@ const Auth = () => {
   const [invalid, setInvalid] = useState<Field | null>(null);
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState("");
+  const [resendNote, setResendNote] = useState("");
+  const [resending, setResending] = useState(false);
 
   const tabRefs = useRef<Record<Mode, HTMLButtonElement | null>>({
     signin: null,
@@ -145,6 +151,7 @@ const Auth = () => {
     setError("");
     setInvalid(null);
     setSentTo("");
+    setResendNote("");
     tabRefs.current[next]?.focus();
   };
 
@@ -418,6 +425,45 @@ const Auth = () => {
                         </p>
                       )}
 
+                      {/* Unverified sign-in is recoverable here, not on another
+                          page: the address is already in the field, so resend
+                          from it rather than asking for it twice. */}
+                      {!isSignUp &&
+                        error.toLowerCase().includes("verify") && (
+                          <div className="tt-gate__action">
+                            <button
+                              type="button"
+                              className="tt-nav__link tt-nav__link--quiet"
+                              disabled={resending || !EMAIL_RE.test(email.trim())}
+                              onClick={async () => {
+                                setResending(true);
+                                setResendNote("");
+                                try {
+                                  await sendVerificationEmail(email.trim().toLowerCase());
+                                  setResendNote(
+                                    `Verification link re-sent to ${email.trim()}. Open it, then sign in.`
+                                  );
+                                } catch (err) {
+                                  setResendNote(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Could not re-send that link right now."
+                                  );
+                                } finally {
+                                  setResending(false);
+                                }
+                              }}
+                            >
+                              {resending ? "Re-sending…" : "Re-send verification link"}
+                            </button>
+                            {resendNote && (
+                              <p className="tt-gate__need" role="status">
+                                {resendNote}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                       <div className="tt-gate__action">
                         <button type="submit" className="tt-btn" disabled={busy}>
                           {isSignUp ? "Register" : "Continue"}
@@ -428,6 +474,13 @@ const Auth = () => {
                             ? "A name is optional. The email and password are not."
                             : "Use the same email and password you registered with."}
                         </p>
+                        {!isSignUp && (
+                          <p className="tt-gate__need">
+                            <a href="/auth/reset">Forgot your password?</a>
+                            {" · "}
+                            <a href="/auth/verify">Verify your email</a>
+                          </p>
+                        )}
                       </div>
                     </form>
                   )}

@@ -197,3 +197,17 @@ export interface AuthSession {
   user?: UserInfo | null;
   session?: unknown;
 }
+
+/**
+ * The app's own profile — the port of Express `GET /profile`.
+ * `authId`/`email` are read-only (session cookie); the rest is editable in
+ * `/account` and stored by `PUT /api/profile`.
+ */
+export interface UserProfile {
+  authId: string;
+  email: string;
+  fname: string;
+  lname: string;
+  userInterest: string[];
+  userAddress: string;
+}

@@ -169,3 +169,60 @@ export async function regenerateDay(
     return null;
   }
 }
+
+/**
+ * The app's own profile (`GET /api/profile`) — the port of Express
+ * `GET /profile`. Identity comes from the session cookie; the body is the
+ * editable copy TripTribe keeps. Returns `null` when signed out or unreachable,
+ * so callers keep "signed out" and "broken" apart the way `fetchTrips` does.
+ */
+import type { UserProfile } from "./types";
+
+export async function fetchProfile(): Promise<UserProfile | null> {
+  try {
+    const res = await fetch("/api/profile", { credentials: "same-origin" });
+    if (!res.ok) return null;
+    return (await res.json()) as UserProfile;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateProfile(
+  patch: Partial<Pick<UserProfile, "fname" | "lname" | "userInterest" | "userAddress">>,
+): Promise<{ ok: boolean; profile?: UserProfile; message: string }> {
+  try {
+    const res = await fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    const body = (await res.json().catch(() => null)) as (UserProfile & {
+      error?: string;
+    }) | null;
+    if (!res.ok) {
+      return {
+        ok: false,
+        message:
+          (body as { error?: string } | null)?.error ??
+          "Could not save your profile",
+      };
+    }
+    return { ok: true, profile: body as UserProfile, message: "Saved" };
+  } catch {
+    return { ok: false, message: "Could not save your profile" };
+  }
+}
+
+/** Delete TripTribe's own copy (profile + trips). Auth identity first. */
+export async function deleteProfile(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/profile", {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
