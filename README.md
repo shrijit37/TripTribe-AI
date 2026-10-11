@@ -111,9 +111,11 @@ will not connect from here).
   and silently broke autocomplete while everything else looked fine. Check
   the key with a Geocoding call before blaming the app; see Troubleshooting.
 - **Frontend build-time values.** `VITE_*` are baked into the bundle by
-  `frontend/Dockerfile` at CI build time, using GH secrets
-  (`TRIBE_GOOGLE_PLACES_API_KEY`). Locally they come from the Infisical
-  frontend project, so a GH-secret-only key will differ from prod.
+  `frontend/Dockerfile` at CI build time, so changing a key requires a
+  rebuild. Both CI and local read the same Infisical frontend project
+  (`9541bd35-…`), so local and prod agree; `VITE_AUTH_API_URL` and
+  `VITE_ITENARY_API_URL` are non-secret build args set inline in
+  `deploy.yml` and must be kept in step with `frontend/.env.example`.
 
 ## Deployment
 
@@ -121,6 +123,14 @@ Push to `main`: CI lints and builds both packages, builds multi-arch images
 to `ghcr.io/shrijit37/triptribe-ai-{api,web}:<sha>`, then the deploy job
 re-asserts the Dokploy env (Infisical's own sync wipes it) and redeploys both
 apps. See `STATE.md` for the live topology.
+
+Every key comes from Infisical — none from GH secrets. The `build` job pulls
+the frontend project with `Infisical/secrets-action` using the
+`INFISICAL_CLIENT_ID` / `INFISICAL_CLIENT_SECRET` machine identity, and the
+backend's keys reach Dokploy through the vault's own sync. GH secrets hold
+only the deploy credentials (`DOKPLOY_*`, `GHCR_PULL_TOKEN`). If you add a
+key, add it to Infisical and never to a GH secret: a duplicated key drifts,
+and a GH secret set but empty bakes an empty value into the image.
 
 ## Troubleshooting
 
