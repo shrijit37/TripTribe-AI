@@ -9,6 +9,7 @@ import health from "./routes/health.js";
 import test from "./routes/test.js"
 import itenaryRoute from "./routes/itenaryRoute.js"
 import userRoute from "./routes/userRoute.js"
+import seoRoute from "./routes/seoRoute.js"
 //database
 import connectDb from "./config/db.js";
 import saveItenary from "./controllers/saveItenary.js";
@@ -42,3 +43,4 @@ app.use("/health", health);
 app.use("/api/test", test)
 app.use("/api/itenary", itenaryRoute)
 app.use("/api/users", userRoute)
+app.use("/api/seo", seoRoute)

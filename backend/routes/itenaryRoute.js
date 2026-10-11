@@ -3,27 +3,38 @@ import getResponse from "../controllers/gptResponse.js";
 import saveItenary from "../controllers/saveItenary.js";
 import DataModel from "../models/itenaryModel.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { parsePlanRequest } from "../config/schema.js";
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
-        const { days, cityName, budget, email } = req.body;
-        console.log("API is working");
-        console.log(days, cityName, budget, email);
+        const parsed = parsePlanRequest(req.body);
+        if (!parsed.ok) {
+            // 400, not 500: the caller sent something unusable, and the field
+            // list is shaped for a form to render per-field messages.
+            return res.status(400).json({
+                error: "Invalid itinerary request",
+                details: parsed.errors,
+            });
+        }
+        // The controller takes the whole parsed request — it owns the solver
+        // inputs that are not on the public contract yet (country, travellers,
+        // pace, travel mode, start date) and applies the product defaults.
+        const response = await getResponse(parsed.value);
 
-        const response = await getResponse(days, cityName, budget);
-
-        // console.log(response)
-        await saveItenary(response, cityName, email);
-        res.json(response); // Send the actual response
+        await saveItenary(response, parsed.value.cityName, parsed.value.email);
+        res.json(response);
     } catch (error) {
         console.error("Error fetching response:", error);
-        if (error instanceof SyntaxError) {
-            res.status(500).json({ error: "Invalid JSON response from OpenAI" });
-        } else {
-            res.status(500).json({ error: "Internal Server Error" });
-        }
+        // The controller annotates solver failures with the status the caller
+        // deserves — 400 for a bad city or day count, 503 when the upstream
+        // Places/Routes key is missing, 500 for anything genuinely ours.
+        const status = error.status ?? 500;
+        res.status(status).json({
+            error: status === 400 ? "Could not plan that trip" : "Internal Server Error",
+            ...(status === 400 ? { code: error.code ?? "BAD_INPUT" } : {}),
+        });
     }
 });
 

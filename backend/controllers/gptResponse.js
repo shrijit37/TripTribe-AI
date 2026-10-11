@@ -1,78 +1,104 @@
-import OpenAI from "openai";
+/**
+ * The itinerary controller.
+ *
+ * This used to be the whole product: one prompt, one model call, whatever it
+ * said back. It is now the *seam* between three parts that each do one job:
+ *
+ *   solver/pipeline.js   decides every fact — which places, which day, what
+ *                        order, what clock time, what cost. Deterministic.
+ *   services/narrate.js  writes prose on top of those facts. Optional; can
+ *                        only name places it was handed, and its failure
+ *                        costs the itinerary nothing.
+ *   services/compose.js  shapes the result into the payload the frontend
+ *                        has always rendered.
+ *
+ * The ordering matters: narration runs *after* the plan exists, so a slow or
+ * missing model degrades to a factually complete itinerary with empty
+ * descriptions — never to a fabricated one.
+ */
 import asyncHandler from "express-async-handler";
 import dotenv from "dotenv";
-import getPrompt from "../config/prompt.js";
+import { solveItinerary } from "../solver/pipeline.js";
+import { narrate } from "../services/narrate.js";
+import { composeResponse } from "../services/compose.js";
 
 dotenv.config();
 
-// Lazy client: constructing OpenAI at import time throws when no key is
-// configured (SDK v7+) and would crash the whole boot. AI features fail
-// at request time instead; everything else keeps working.
-//
-// Any OpenAI-compatible gateway works — OPENAI_BASE_URL and OPENAI_MODEL
-// override the defaults. The SDK is used unchanged; only the endpoint and
-// model are configurable.
-const getClient = () => new OpenAI({
-    baseURL: process.env.OPENAI_BASE_URL || "https://openrouter.ai/api/v1",
-    apiKey: process.env.OPENAI_KEY,
+// Solver inputs that are not part of the public request contract yet. Chosen
+// here rather than defaulted inside the solver so the controller owns the
+// product decisions and the solver stays a pure function of its arguments.
+const DEFAULTS = Object.freeze({
+    country: process.env.PLANNER_DEFAULT_COUNTRY || "",
+    headcount: 2,
+    stopsPerDay: 4,
+    travelMode: "WALK",
 });
 
-
-
-// Function to clean the response text from markdown or any other formatting
-const cleanJsonResponse = (text) => {
-  // Remove markdown code block syntax if present
-  let cleaned = text.replace(/```(json)?|```/g, '');
-  // Remove control characters (excluding tab, linefeed, carriage return) to prevent JSON parsing issues, preserving Unicode/UTF-8
-  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-  // Trim whitespace
-  cleaned = cleaned.trim();
-  
-  return cleaned;
+/**
+ * Map a solver error code to the HTTP status the caller deserves.
+ *
+ * A city that does not resolve and a malformed day count are both the
+ * caller's problem (400). A missing Places key or an upstream failure is
+ * ours (503), and saying so keeps the frontend from blaming the user's input.
+ */
+const statusFor = (error) => {
+    switch (error?.code) {
+        case "BAD_INPUT":
+        case "CITY_NOT_FOUND":
+        case "EMPTY_POOL":
+            return 400;
+        case "PLACES_NOT_CONFIGURED":
+        case "ROUTES_NOT_CONFIGURED":
+            return 503;
+        default:
+            return 500;
+    }
 };
 
-// to be passed no of days, cityName, budget 
-const getResponse = asyncHandler(async (days, cityName, budget, retryCount = 0) => {
-  if (retryCount >= 3) {
-    throw new Error("Failed to generate a valid JSON itinerary response after 3 retries.");
-  }
-  try {
-    const completion = await getClient().chat.completions.create({
-        model: process.env.OPENAI_MODEL || "google/gemini-2.0-flash-lite-001",
-        messages: [
-          { 
-            role: "system", 
-            content: "You are a professional travel planner with extensive experience in creating detailed itineraries for various destinations around the world. You specialize in designing personalized travel plans that maximize enjoyment while considering budget, proximity of attractions, and dining options." 
-          },
-          {
-            role: "user",
-            content: getPrompt(days, cityName, budget),
-          }
-        ]
-    });
-    
-    if (!completion.choices[0].message.content) {
-      console.log("Empty response from OpenAI, retrying...");
-      return await getResponse(days, cityName, budget, retryCount + 1);
-    }
-    
-    // Clean the response before parsing
-    const content = completion.choices[0].message.content;
-    const cleanedContent = cleanJsonResponse(content);
-    
+/**
+ * Generate an itinerary.
+ *
+ * `input` is the parsed request: `{ days, cityName, budget, email, country?,
+ * headcount?, stopsPerDay?, travelMode?, startDate? }`. Returns the composed
+ * payload. Throws an Error carrying `status` for the route to surface.
+ */
+const getResponse = asyncHandler(async (input) => {
+    const {
+        days,
+        cityName,
+        budget,
+        country = DEFAULTS.country,
+        headcount = DEFAULTS.headcount,
+        stopsPerDay = DEFAULTS.stopsPerDay,
+        travelMode = DEFAULTS.travelMode,
+        startDate = null,
+    } = input;
+
+    let solverPlan;
     try {
-      // Attempt to parse the cleaned content
-      return JSON.parse(cleanedContent);
-    } catch (parseError) {
-      console.error("Error parsing JSON:", parseError);
-      console.log("Problematic content:", cleanedContent);
-      // If parsing fails, retry the API call
-      return await getResponse(days, cityName, budget, retryCount + 1);
+        solverPlan = await solveItinerary({
+            city: cityName,
+            country,
+            days,
+            budget,
+            headcount,
+            stopsPerDay,
+            travelMode,
+            startDate,
+        });
+    } catch (error) {
+        // Annotate for the route; rethrow so the caller's 400/503/500 is
+        // decided by the failure kind, not by a generic 500.
+        error.status = statusFor(error);
+        throw error;
     }
-  } catch (error) {
-    console.error("Error calling OpenAI API:", error);
-    throw error;
-  }
+
+    // Narration is best-effort by contract. narrate() resolves with an empty
+    // narration on any failure, so this await cannot reject and the plan
+    // below is always returned.
+    const narratedPlan = await narrate(solverPlan);
+
+    return composeResponse(solverPlan, narratedPlan);
 });
 
 export default getResponse;
