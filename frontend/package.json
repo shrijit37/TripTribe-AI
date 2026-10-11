@@ -4,39 +4,36 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.13.0",
-    "axios": "^1.20.0",
-    "daisyui": "^4.12.23",
     "framer-motion": "^11.18.2",
-    "ogl": "^1.0.11",
+    "next": "16.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-helmet": "^6.1.0",
     "react-redux": "^9.3.0",
-    "react-router": "^7.18.4",
-    "react-router-dom": "^7.18.4",
     "react-toastify": "^11.1.0",
     "three": "^0.173.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@tailwindcss/postcss": "^4.1.14",
+    "@types/google.maps": "^3.58.1",
+    "@types/node": "^24.7.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "autoprefixer": "^10.4.20",
+    "@types/three": "^0.186.0",
+    "daisyui": "^5.1.0",
     "eslint": "^9.19.0",
-    "eslint-plugin-react": "^7.37.4",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.18",
+    "eslint-config-next": "16.4.0",
     "globals": "^15.14.0",
     "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
-    "vite": "^8.3.4"
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.9.2"
   }
 }

@@ -1,6 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 is configured in CSS; daisyUI keeps the three themes the app
+   shipped on. The rest of this file is hand-written — the design system uses
+   no @apply, so nothing below depends on Tailwind's utilities being on. */
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark, black;
+}
 
 /* ==========================================================================
    TripTribe — "The Transit Supplement"
@@ -2002,5 +2006,296 @@ body {
 
   .tt-turnstile__back {
     margin-top: 1.75rem;
+  }
+}
+
+/* ==========================================================================
+   The public city pages — /best-places-to-visit-in-<city> and /cities.
+
+   These are the pages that exist to be read by a crawler and a person who
+   arrived from a search. They are set in the same system as everything else:
+   uncoated stock, prussian for the ranked list, hairline rules, and the
+   measuring face for anything numeric. A rating is data, so it is set as
+   data.
+   ========================================================================== */
+
+.tt-article {
+  width: 100%;
+  max-width: var(--tt-rail);
+  margin-inline: auto;
+  padding: 0 var(--tt-gutter) clamp(4rem, 8vw, 7rem);
+}
+
+.tt-article__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1.5rem 0 0;
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-article__crumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tt-article__crumbs a:hover {
+  color: var(--tt-prussian);
+  text-decoration: underline;
+}
+
+.tt-article__head {
+  padding: clamp(2.5rem, 5vw, 4.5rem) 0 0;
+  border-bottom: 2px solid var(--tt-ink);
+  padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.tt-article__head h1 {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+  margin: 0 0 1.25rem;
+}
+
+.tt-article__lede {
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.6;
+  color: var(--tt-ink-soft);
+  margin: 0;
+  max-width: 68ch;
+}
+
+.tt-article__cta {
+  display: inline-block;
+  margin-top: 1.25rem;
+  padding: 0.85rem 1.6rem;
+  background: var(--tt-prussian);
+  color: var(--tt-paper);
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  border: 1px solid var(--tt-prussian-deep);
+  transition: background 160ms var(--tt-ease);
+}
+
+.tt-article__cta:hover {
+  background: var(--tt-prussian-deep);
+}
+
+/* The ranked list. An <ol> because the order is the answer: this page exists
+   for "best places", and a reader who never sees the design must still get a
+   list, in order, from the HTML alone. */
+.tt-places {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: none;
+}
+
+.tt-place {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem) 0;
+  border-bottom: 1px solid var(--tt-rule-hair);
+}
+
+.tt-place__rank {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.tt-place__num {
+  font-family: var(--tt-face-data);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--tt-prussian);
+  min-width: 2.25rem;
+}
+
+.tt-place__category {
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-place__name {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+  line-height: 1.12;
+  letter-spacing: -0.016em;
+  margin: 0;
+}
+
+/* A rating is a measurement, so it is set in the measuring face. */
+.tt-place__rating {
+  margin: 0;
+  font-family: var(--tt-face-data);
+  font-size: 0.82rem;
+  color: var(--tt-ink-soft);
+}
+
+.tt-place__rating strong {
+  font-weight: 700;
+  color: var(--tt-prussian-deep);
+}
+
+.tt-place__address,
+.tt-place__hours {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--tt-ink-faint);
+}
+
+.tt-article__cta-block {
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background: var(--tt-prussian-wash);
+  border: 1px solid var(--tt-rule);
+}
+
+.tt-article__cta-block h2 {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  letter-spacing: -0.018em;
+  margin: 0 0 0.9rem;
+}
+
+.tt-article__cta-block p {
+  margin: 0;
+  max-width: 66ch;
+  font-size: 1rem;
+  line-height: 1.62;
+  color: var(--tt-ink-soft);
+}
+
+.tt-article__faq {
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+}
+
+.tt-article__faq h2 {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 1.5rem;
+}
+
+.tt-faq {
+  border-top: 1px solid var(--tt-rule);
+  padding: 1.4rem 0;
+}
+
+.tt-faq h3 {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+}
+
+.tt-faq p {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 0.98rem;
+  line-height: 1.62;
+  color: var(--tt-ink-soft);
+}
+
+.tt-article__foot {
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--tt-rule-hair);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.tt-article__foot p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--tt-ink-faint);
+}
+
+.tt-article__foot a {
+  font-family: var(--tt-face-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tt-prussian);
+}
+
+/* The city index: a dense, scannable grid. Internal links are half the job of
+   this page — every city URL needs a crawlable path to it. */
+.tt-city-grid {
+  list-style: none;
+  margin: clamp(2rem, 4vw, 3rem) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: 0;
+  border-top: 1px solid var(--tt-rule);
+}
+
+.tt-city-grid li {
+  border-bottom: 1px solid var(--tt-rule-hair);
+}
+
+.tt-city-grid a {
+  display: block;
+  padding: 0.95rem 0.25rem;
+  font-family: var(--tt-face-display);
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: var(--tt-ink);
+  text-decoration: none;
+  transition: color 140ms var(--tt-ease), padding-left 140ms var(--tt-ease);
+}
+
+.tt-city-grid a:hover {
+  color: var(--tt-prussian);
+  padding-left: 0.6rem;
+}
+
+@media (min-width: 760px) {
+  .tt-place {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "rank rating"
+      "name rating"
+      "addr hours";
+    column-gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: start;
+  }
+
+  .tt-place__rank { grid-area: rank; }
+  .tt-place__name { grid-area: name; }
+  .tt-place__address { grid-area: addr; }
+  .tt-place__hours { grid-area: hours; text-align: right; }
+  .tt-place__rating {
+    grid-area: rating;
+    text-align: right;
+    padding-top: 0.35rem;
   }
 }

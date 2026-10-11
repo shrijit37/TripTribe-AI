@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Next.js build output. `next-env.d.ts` is generated and IS committed — tsc
+# needs it before the first build has run.
+.next
+out
+*.tsbuildinfo
+next-env.d.ts.bak
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

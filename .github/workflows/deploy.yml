@@ -28,16 +28,32 @@ jobs:
           cache-dependency-path: |
             backend/package-lock.json
             frontend/package-lock.json
-      - name: Backend — install + syntax check
+      - name: Backend — install + syntax check + tests
         run: |
           npm ci --ignore-scripts
+          # Parse every changed module, not just the entrypoint: a syntax
+          # error in a file index.js never imports would otherwise ship.
           node --check index.js
           node --check routes/health.js
+          node --check routes/itenaryRoute.js
           node --check controllers/gptResponse.js
+          node --check config/schema.js
+          node --check services/narrate.js
+          node --check services/compose.js
+          node --check solver/pipeline.js
+          node --check routes/seoRoute.js
+          node --check services/catalogue.js
+          node --check models/placeCacheModel.js
+          # Full deterministic suite — request contract, services and solver.
+          # No API keys required, so it runs on every PR.
+          node --test tests/schema.test.js tests/services.test.js tests/solver.test.js
         working-directory: backend
-      - name: Frontend — lint + build
+      - name: Frontend — typecheck + lint + build
         run: |
           npm ci --ignore-scripts
+          # `strict` plus `noUncheckedIndexedAccess`: the type errors the build
+          # would catch anyway, reported before it costs a full compile.
+          npm run typecheck
           npm run lint
           npm run build
         working-directory: frontend
@@ -65,7 +81,7 @@ jobs:
       # Infisical is the single source of truth for every key. The frontend
       # key lives in the frontend project (pinned by .infisical.json);
       # GH secrets must not duplicate it, or the two silently drift.
-      - name: Fetch VITE_* keys from Infisical
+      - name: Fetch frontend keys from Infisical
         uses: Infisical/secrets-action@v1.0.18
         with:
           method: universal
@@ -93,17 +109,19 @@ jobs:
           push: true
           cache-from: type=gha,scope=triptribe-web
           cache-to: type=gha,mode=max,scope=triptribe-web
-          # Proxy target + version are baked at build time (nginx has no
-          # runtime env). Internal swarm DNS (no public hairpin: container
-          # egress to the public IP is unreliable). App names are stable;
-          # if the api app is ever recreated, update this + STATE.md.
+          # The catalogue URL and proxy target are read at request time on the
+          # server, so they stay out of the client bundle. Internal swarm DNS
+          # (no public hairpin: container egress to the public IP is
+          # unreliable). App names are stable; if the api app is recreated,
+          # update this + STATE.md.
           build-args: |
             APP_VERSION=${{ github.sha }}
             BACKEND_URL=http://triptribe-api-y59lny:8080
-            VITE_AUTH_API_URL=/api/users
-            VITE_ITENARY_API_URL=/api/itenary
-            VITE_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}
-            VITE_AUTH_URL=https://auth.shrijit.tech
+            CATALOGUE_API_URL=http://triptribe-api-y59lny:8080/api/seo/city-catalogue
+            NEXT_PUBLIC_ITENARY_API_URL=/api/itenary
+            NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}
+            NEXT_PUBLIC_AUTH_URL=https://auth.shrijit.tech
+            NEXT_PUBLIC_SITE_URL=https://triptribe.shrijit.tech
           tags: ghcr.io/${{ env.OWNER }}/triptribe-ai-web:${{ github.sha }}
 
   deploy-prod:
@@ -130,7 +148,7 @@ jobs:
           jq -n --arg ref "$REF" \
             --arg id "${{ vars.DOKPLOY_API_APP_ID }}" \
             '{applicationId: $id,
-              env: ("PORT=8080\nAUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}\nOPENAI_BASE_URL=" + $ref + "TRIPTRIBE_OPENAI_BASE_URL}}\nOPENAI_MODEL=" + $ref + "TRIPTRIBE_OPENAI_MODEL}}"),
+              env: ("PORT=8080\nAUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}\nOPENAI_BASE_URL=" + $ref + "TRIPTRIBE_OPENAI_BASE_URL}}\nOPENAI_MODEL=" + $ref + "TRIPTRIBE_OPENAI_MODEL}}\nGOOGLE_PLACES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}\nGOOGLE_ROUTES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}"),
               buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env
           echo "dokploy env re-asserted"
       - name: Point Dokploy at SHA images and redeploy

@@ -23,6 +23,11 @@
 #   TRIPTRIBE_AUTH_URL              auth base URL for local runs
 #   --vault-mongo                   use the prod vault MONGO_URI (only
 #                                   reachable from inside the prod swarm)
+#
+# Mappings this script adds for the grounded itinerary pipeline:
+#   GOOGLE_PLACES_API_KEY         <- TRIPTRIBE_GOOGLE_PLACES_API_KEY
+#   GOOGLE_ROUTES_API_KEY         <- TRIPTRIBE_GOOGLE_PLACES_API_KEY (same key)
+#                                   reachable from inside the prod swarm)
 
 TRIPTRIBE_INFISICAL_PROJECT_ID="${TRIPTRIBE_INFISICAL_PROJECT_ID:-1a39a192-cf29-4ec9-812f-94c35cce34f2}"
 TRIPTRIBE_INFISICAL_ENV="${TRIPTRIBE_INFISICAL_ENV:-prod}"
@@ -72,6 +77,11 @@ OPENAI_KEY="$(__triptribe_get TRIPTRIBE_OPENAI_KEY)"
 GOOGLE_CUSTOM_SEARCH_API_KEY="$(__triptribe_get TRIPTRIBE_GOOGLE_SEARCH_KEY)"
 OPENAI_BASE_URL="$(__triptribe_get TRIPTRIBE_OPENAI_BASE_URL)"
 OPENAI_MODEL="$(__triptribe_get TRIPTRIBE_OPENAI_MODEL)"
+# Grounded pipeline. The same key serves Places and Routes: it is created with
+# `--api-target=service=places.googleapis.com --api-target=service=routes.googleapis.com`
+# so one restricted server key covers discovery, enrichment and day ordering.
+GOOGLE_PLACES_API_KEY="$(__triptribe_get TRIPTRIBE_GOOGLE_PLACES_API_KEY)"
+GOOGLE_ROUTES_API_KEY="$GOOGLE_PLACES_API_KEY"
 
 # A missing vault key must fail loudly: an empty MONGO_URI leaves mongoose
 # hanging on connect and an empty OPENAI_KEY fails only at request time, so
@@ -102,6 +112,15 @@ __triptribe_require GOOGLE_CUSTOM_SEARCH_API_KEY "$GOOGLE_CUSTOM_SEARCH_API_KEY"
 __triptribe_warn_placeholder OPENAI_KEY "$OPENAI_KEY"
 __triptribe_warn_placeholder GOOGLE_CUSTOM_SEARCH_API_KEY "$GOOGLE_CUSTOM_SEARCH_API_KEY"
 
+# Grounding is a required feature, but not a required boot. A missing key
+# leaves the API up and only itinerary generation unconfigured, which matches
+# how the app degrades in production — so warn rather than exit.
+if [ -z "$GOOGLE_PLACES_API_KEY" ]; then
+  echo "infisical-env: TRIPTRIBE_GOOGLE_PLACES_API_KEY is missing — grounded" \
+    "itinerary generation will report 'not configured' at request time" >&2
+fi
+__triptribe_warn_placeholder GOOGLE_PLACES_API_KEY "$GOOGLE_PLACES_API_KEY"
+
 # A gateway changes endpoint and model together; either both are present or
 # neither is, so a half-configured pair never silently falls back to
 # OpenRouter while looking configured.
@@ -119,7 +138,8 @@ NODE_ENV="${NODE_ENV:-development}"
 APP_VERSION="${APP_VERSION:-local}"
 
 export MONGO_URI OPENAI_KEY GOOGLE_CUSTOM_SEARCH_API_KEY OPENAI_BASE_URL \
-  OPENAI_MODEL AUTH_URL PORT NODE_ENV APP_VERSION
+  OPENAI_MODEL AUTH_URL PORT NODE_ENV APP_VERSION \
+  GOOGLE_PLACES_API_KEY GOOGLE_ROUTES_API_KEY
 
 unset __triptribe_secrets __triptribe_get __triptribe_use_vault_mongo __triptribe_arg \
   __triptribe_require __triptribe_warn_placeholder
