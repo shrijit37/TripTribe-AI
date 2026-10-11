@@ -133,7 +133,11 @@ jobs:
             "https://secrets.shrijit.tech/api/v3/secrets/raw?workspaceId=$WORKSPACE&envSlug=prod&secretPath=/&recursive=false")
           count=$(printf '%s' "$payload" | jq -r '[.secrets[] | select(.secretKey | startswith("TRIPTRIBE_"))] | length')
           [ "$count" -gt 0 ] || { echo "esdk prod returned no TRIPTRIBE_* keys" >&2; exit 1; }
-          printf '%s' "$payload" | jq -r '.secrets[] | select(.secretKey | startswith("TRIPTRIBE_")) | "::add-mask::\(.secretValue)", "\(.secretKey)=\(.secretValue)"' >> "$GITHUB_ENV"
+          # `::add-mask::` is a workflow command and goes to stdout; putting it
+          # in $GITHUB_ENV makes the runner parse it as KEY=value and fail the
+          # step with "Unable to process file command 'env'".
+          printf '%s' "$payload" | jq -r '.secrets[] | select(.secretKey | startswith("TRIPTRIBE_")) | "::add-mask::\(.secretValue)"'
+          printf '%s' "$payload" | jq -r '.secrets[] | select(.secretKey | startswith("TRIPTRIBE_")) | "\(.secretKey)=\(.secretValue)"' >> "$GITHUB_ENV"
           echo "fetched $count TRIPTRIBE_* keys from esdk prod"
       # Dokploy authenticates GHCR pulls with a long-lived pull token kept
       # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
