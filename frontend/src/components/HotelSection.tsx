@@ -56,6 +56,14 @@ const HotelSection = ({
                                 <p className="tt-stay__where">{hotel.location}</p>
                             ) : null}
                         </div>
+                        <a
+                            className="tt-stay__link"
+                            href={`https://www.google.com/travel/hotels?q=${encodeURIComponent(`${hotel.hotelName} ${plan.city?.name ?? ""}`.trim())}`}
+                            target="_blank"
+                            rel="nofollow noopener"
+                        >
+                            Check live price · opens Google Hotels
+                        </a>
                         <span className="tt-stay__figures">
                             {hotel.rating ? (
                                 <span className="tt-stay__figure">
@@ -75,6 +83,7 @@ const HotelSection = ({
                     </li>
                 ))}
             </ol>
+            <p className="tw-disclosure">Live prices open on Google Hotels in a new tab. Figures above are estimates worked from your total; TripTribe may earn a fee on outward stay links.</p>
         </div>
     );
 };

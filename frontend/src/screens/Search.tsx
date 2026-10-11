@@ -82,8 +82,7 @@ const CARRIED: { id: string; body: ReactNode }[] = [
     id: "hotels",
     body: (
       <>
-        <strong>Hotels inside the budget</strong> you entered, each one marked
-        as an estimate rather than a quote.
+        <strong>Stay stubs with live-price checks</strong> inside the budget you entered, each marked as an estimate with a live-price link.
       </>
     ),
   },
@@ -91,8 +90,7 @@ const CARRIED: { id: string; body: ReactNode }[] = [
     id: "ledger",
     body: (
       <>
-        <strong>The cost ledger</strong> — your total, and how it breaks down
-        across stay, food, activity and movement.
+        <strong>The fare ledger</strong> — your total, and how it splits across stay, food, activity and movement.
       </>
     ),
   },
@@ -132,8 +130,30 @@ const CURRENCIES = [
   { value: "SGD", label: "S$ Singapore dollar" },
   { value: "JPY", label: "¥ Yen" },
   { value: "THB", label: "฿ Baht" },
-] as const;
+ ] as const;
 
+const CURRENCY_MARK: Record<string, string> = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  AED: "AED",
+  SGD: "S$",
+  JPY: "¥",
+  THB: "฿",
+};
+
+/** Hint noun per currency, so the entry never calls dollars "rupees". */
+const CURRENCY_PLURAL: Record<string, string> = {
+  INR: "Rupees",
+  USD: "US dollars",
+  EUR: "Euros",
+  GBP: "Pounds",
+  AED: "Dirhams",
+  SGD: "Singapore dollars",
+  JPY: "Yen",
+  THB: "Baht",
+};
 const INTERESTS = [
   "History",
   "Architecture",
@@ -254,7 +274,7 @@ export default function Search() {
       next.city = "Name the city the route runs through.";
     }
     if (!Number.isFinite(budgetNum) || budgetNum < 1000) {
-      next.budget = "At least ₹1,000 — the trip is costed, not guessed at.";
+      next.budget = `At least ${CURRENCY_MARK[currency] ?? currency}${(CURRENCY_MARK[currency] ?? "").length > 1 ? " " : ""}1,000 — the trip is costed, not guessed at.`;
     }
     if (!Number.isInteger(daysNum) || daysNum < 1 || daysNum > 60) {
       next.days = "Between 1 and 60 days.";
@@ -343,11 +363,10 @@ export default function Search() {
         <section className="tt-manifest">
           <div className="tt-manifest__about">
             <h1 className="tt-display tt-manifest__display">
-              Three entries, one sheet.
+              Book the route, not the list.
             </h1>
             <p className="tt-lede tt-manifest__lede">
-              Fill the manifest in order. We sequence the entries along one
-              route and issue a single sheet you can hand to the group.
+              Fill the manifest at the booking counter. We sequence the entries along one route and issue a wallet of day coupons you can hand to the group.
             </p>
           </div>
 
@@ -421,7 +440,7 @@ export default function Search() {
                   </label>
                   <div className="tt-field__affix">
                     <span className="tt-field__currency" aria-hidden="true">
-                      ₹
+                      {CURRENCY_MARK[currency] ?? currency}
                     </span>
                     <input
                       id="tt-search-budget"
@@ -441,7 +460,7 @@ export default function Search() {
                     />
                   </div>
                   <p className="tt-field__hint" id="tt-budget-hint">
-                    Rupees, for the whole trip and everyone on it — not per day.
+                    {CURRENCY_PLURAL[currency] ?? currency}, for the whole trip and everyone on it — not per day.
                   </p>
                   {errors.budget && (
                     <p
@@ -676,8 +695,7 @@ export default function Search() {
               caveat. */}
             <div className="tt-sheet__run">
               <p className="tt-sheet__note">
-                Nothing is booked for you. The sheet is worked out from these
-                three entries and the costs on it are estimates.
+                Nothing is booked for you. The wallet is worked out from these three entries and the costs on it are estimates. Stay stubs link out to live prices; TripTribe may earn a fee on those links — labelled as such on the wallet.
               </p>
               <button className="tt-btn" type="submit">
                 {working ? "Working the route" : "Issue the route"}

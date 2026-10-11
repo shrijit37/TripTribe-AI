@@ -221,7 +221,7 @@ const Result = () => {
         <section className="tt-issue">
           <div className="tt-issue__head">
             <h1 className="tt-display tt-issue__title">{city?.name}</h1>
-            <span className="tt-issue__ref">TT/SHEET</span>
+            <span className="tt-issue__ref">ISSUED WALLET · TT/WALLET</span>
           </div>
           {city?.description ? (
             <p className="tt-lede tt-issue__lede">{city.description}</p>
@@ -244,7 +244,7 @@ const Result = () => {
                     loses its border and runs the full rail. */}
         <section className="tt-sheet tt-sheet--filled">
           <div className="tt-sheet__head">
-            <h2 className="tt-sheet__title">The sheet</h2>
+            <h2 className="tt-sheet__title">Issued wallet</h2>
             <span className="tt-sheet__ref">
               TT/ROUTE <i className="tt-sheet__slash">/</i> FILLED
             </span>
@@ -479,6 +479,12 @@ const Result = () => {
                   </p>
                 )}
 
+                <div className="tw-stub" role="note">
+                  <p className="tt-calc__title">Need wheels?</p>
+                  <p className="tt-calc__note">Get a cab quote below — an external search, never a TripTribe quote.</p>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(`car rental ${city?.name ?? ""}`.trim())}`} target="_blank" rel="nofollow noopener">Get a cab quote · external search</a>
+                  <p className="tw-disclosure">Opens a Google search in a new tab. TripTribe does not set or earn this fare.</p>
+                </div>
                 <div className="tt-calc">
                   <p className="tt-calc__title">Getting there and back</p>
                   <p className="tt-calc__note">
@@ -584,7 +590,7 @@ const Result = () => {
             Hand this to whoever you are travelling with. Nothing on it is
             booked, quoted or held — it is a route and an estimate, and every
             cost on it was worked out from the total entered on the sheet before
-            it.
+            it. Stay stubs link to live prices on Google Hotels; TripTribe may earn a fee on those links.
           </p>
 
           {/* 06 — the hand-off. The sheet exists to be given away, so

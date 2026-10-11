@@ -205,9 +205,10 @@
 
 :root {
   /* --- Stock: the uncoated supplement paper this page is printed on ----- */
-  --tt-paper: #e7e6e0;
-  --tt-paper-lift: #efeee9;
-  --tt-paper-press: #dedcd4;
+  --tt-paper: #faf8f2;
+  --tt-stock: #ffffff;
+  --tt-paper-lift: #ffffff;
+  --tt-paper-press: #ece7d9;
 
   /* --- Hypsometric tint scale: contour bands, lightest to darkest ------- */
   --tt-band-1: #e3e4dc;
@@ -236,12 +237,13 @@
   --tt-rule-hair: rgba(20, 24, 28, 0.09);
 
   /* --- Prussian: the route, and the primary action. Nothing else. ------- */
-  --tt-prussian: #1d4e8c;
-  --tt-prussian-deep: #163c6d;
+  --tt-prussian: #12305e;
+  --tt-prussian-deep: #0c2347;
   --tt-prussian-wash: rgba(29, 78, 140, 0.1);
 
   /* --- Vermilion: functional only — a budget that does not work --------- */
   --tt-vermilion: #b8341a;
+  --tt-fare: #7a1f2b;
   --tt-vermilion-wash: rgba(184, 52, 26, 0.1);
 
   /* --- Lettering --------------------------------------------------------- */
@@ -3661,3 +3663,17 @@ body {
   outline: none;
   box-shadow: 0 0 0 2px var(--tt-prussian);
 }
+
+/* --- Ticket wallet: coupon stock, perforation, stubs (square, no gradients) */
+.tt-sheet { background: #fff; border-radius: 0; }
+.tt-day { background: #fff !important; border-bottom: 0 !important; border-top: 2px dashed rgba(20,24,28,.35); border-radius: 0; }
+.tt-day:first-child { border-top: 0; }
+.tt-day__head { display: flex; align-items: center; }
+.tt-day__no { background: var(--tt-prussian); color: #fff; padding: .3rem .7rem; letter-spacing: .14em; }
+.tt-balance-line__figure, .tt-calc__figure:not([data-empty="true"]), .tt-split__val { color: var(--tt-fare); }
+.tw-stub { border: 1px solid var(--tt-rule-strong); background: #fff; border-radius: 0; padding: .9rem 1rem; margin-top: 1rem; }
+.tw-stub a { color: var(--tt-prussian); font-weight: 600; }
+.tw-disclosure { font-size: .78rem; line-height: 1.5; color: var(--tt-ink-soft); margin: .8rem 0 0; max-width: 62ch; }
+.tt-stay__link { font-family: var(--tt-face-data); font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tt-prussian); }
+::selection { background: var(--tt-prussian); color: #fff; }
+:focus-visible { outline: 3px solid var(--tt-prussian); outline-offset: 2px; }
