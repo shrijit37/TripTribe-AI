@@ -1,0 +1,62 @@
+name: Canary — Infisical CI access
+# Temporary: proves whether the GH-stored Infisical machine identity can read
+# the frontend project (9541bd35-...) before the deploy workflow depends on it.
+# Reports pass/fail and value LENGTHS only — never secret values.
+# Runs on dispatch against any branch; does not build or deploy.
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: 'Infisical project id'
+        required: false
+        default: '9541bd35-aa6f-4719-b663-ec7ec99b8073'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch from Infisical using GH-stored identity
+        uses: Infisical/secrets-action@v1.0.18
+        id: fetch
+        with:
+          method: universal
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          project-id: ${{ inputs.project_id }}
+          env-slug: prod
+          domain: https://secrets.shrijit.tech
+          export-type: env
+
+      - name: Report which keys resolved (names + lengths only)
+        run: |
+          echo "Infisical fetch exit: ${{ steps.fetch.outcome }}"
+          for v in VITE_GOOGLE_PLACES_API_KEY VITE_GOOGLE_CUSTOM_SEARCH_API_KEY; do
+            val="${!v}"
+            if [ -n "$val" ]; then
+              echo "$v: present (len=${#val})"
+            else
+              echo "$v: EMPTY/MISSING"
+            fi
+          done
+
+      - name: Also probe the backend vault with the same identity
+        run: |
+          export INFISICAL_DOMAIN=https://secrets.shrijit.tech/api
+          TOKEN="$(infisical login --method=universal-auth \
+            --client-id="${{ secrets.INFISICAL_CLIENT_ID }}" \
+            --client-secret="${{ secrets.INFISICAL_CLIENT_SECRET }}" \
+            --silent --plain 2>&1)"
+          if [ "${#TOKEN}" -lt 20 ]; then
+            echo "backend vault: LOGIN FAILED"
+            echo "$TOKEN" | tail -2
+          else
+            n=$(infisical export --projectId=1a39a192-cf29-4ec9-812f-94c35cce34f2 \
+              --env=prod --token="$TOKEN" --format=json --silent 2>&1 \
+              | jq -r 'if type=="array" then length else "ERR" end')
+            echo "backend vault: $n keys visible"
+          fi

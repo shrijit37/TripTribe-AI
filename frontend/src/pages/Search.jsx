@@ -21,58 +21,52 @@ const Search = () => {
 
     const inputRef = useRef(null);
     const autocompleteRef = useRef(null);
-    // Bounds the Places retry loop and cancels it on unmount.
-    const retryRef = useRef({ attempt: 0, timer: null, cancelled: false });
     const [, setCitySelected] = useState(false);
 
     const navigate = useNavigate();
 
     // Function to initialize Google Places Autocomplete
     const initializeAutocomplete = () => {
-        if (window.google && window.google.maps && window.google.maps.places && inputRef.current) {
-            try {
-                const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-                    types: ['(cities)'],
-                    fields: ['name', 'place_id'],
-                });
+        if (!window.google?.maps?.places || !inputRef.current) return;
+        if (autocompleteRef.current) return;
+        try {
+            const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+                types: ['(cities)'],
+                fields: ['name', 'place_id'],
+            });
 
-                // Add listener for when a place is selected
-                autocomplete.addListener('place_changed', () => {
-                    const place = autocomplete.getPlace();
-                    if (place && place.name) {
-                        setCityName(place.name);
-                        setCitySelected(true);
-                    }
-                });
+            // Add listener for when a place is selected
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (place && place.name) {
+                    setCityName(place.name);
+                    setCitySelected(true);
+                }
+            });
 
-                // Store in ref for cleanup
-                autocompleteRef.current = autocomplete;
-            } catch (error) {
-                console.error('Error initializing Places Autocomplete:', error);
-            }
-            return;
+            // Store in ref for cleanup
+            autocompleteRef.current = autocomplete;
+        } catch (error) {
+            console.error('Error initializing Places Autocomplete:', error);
         }
-
-        // Retry while the Maps script is still loading, but bound the retries
-        // and stop on unmount. An unbounded timer here outlives the step.
-        retryRef.current.attempt += 1;
-        if (retryRef.current.attempt > 20 || retryRef.current.cancelled) return;
-        retryRef.current.timer = window.setTimeout(initializeAutocomplete, 500);
     };
 
-    // Initialize Autocomplete when the "City Name" step is active
+    // Initialize Autocomplete when the "City Name" step is active.
+    // Maps readiness is signalled by main.jsx (loading=async defers
+    // execution), so this no longer polls on a timer.
     useEffect(() => {
-        if (currentStep === 2) {
-            // Only initialize for the "City Name" step (Step 2, assuming 1-based indexing)
+        if (currentStep !== 2) return;
+
+        const previous = window.__triptribeMapsReady;
+        window.__triptribeMapsReady = () => {
+            previous?.();
             initializeAutocomplete();
-        }
+        };
+        initializeAutocomplete();
+
         return () => {
-            retryRef.current.cancelled = true;
-            if (retryRef.current.timer) {
-                window.clearTimeout(retryRef.current.timer);
-                retryRef.current.timer = null;
-            }
-            if (autocompleteRef.current && window.google) {
+            window.__triptribeMapsReady = previous;
+            if (autocompleteRef.current && window.google?.maps?.event) {
                 window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
                 autocompleteRef.current = null;
             }

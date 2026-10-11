@@ -99,33 +99,38 @@ const Hero = () => {
   useEffect(() => {
     if (!cityRef.current) return;
     let cancelled = false;
-    let attempts = 0;
 
+    // main.jsx announces maps readiness (loading=async defers execution).
+    // If it is already loaded the ready hook fires immediately; a late
+    // arrival calls through the same path. No polling, no timeout race.
     const init = () => {
       if (cancelled || autocompleteRef.current) return;
-      if (window.google?.maps?.places) {
-        try {
-          const ac = new window.google.maps.places.Autocomplete(cityRef.current, {
-            types: ['(cities)'],
-            fields: ['name', 'place_id'],
-          });
-          ac.addListener('place_changed', () => {
-            const place = ac.getPlace();
-            if (place?.name) setCity(place.name);
-          });
-          autocompleteRef.current = ac;
-        } catch (error) {
-          console.error('Places Autocomplete unavailable:', error);
-        }
-        return;
+      if (!window.google?.maps?.places) return;
+      try {
+        const ac = new window.google.maps.places.Autocomplete(cityRef.current, {
+          types: ['(cities)'],
+          fields: ['name', 'place_id'],
+        });
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace();
+          if (place?.name) setCity(place.name);
+        });
+        autocompleteRef.current = ac;
+      } catch (error) {
+        console.error('Places Autocomplete unavailable:', error);
       }
-      // Bounded retry — never an unbounded timer.
-      if (attempts++ < 20) window.setTimeout(init, 500);
     };
 
+    const previous = window.__triptribeMapsReady;
+    window.__triptribeMapsReady = () => {
+      previous?.();
+      init();
+    };
     init();
+
     return () => {
       cancelled = true;
+      window.__triptribeMapsReady = previous;
       if (autocompleteRef.current && window.google?.maps?.event) {
         window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
         autocompleteRef.current = null;
