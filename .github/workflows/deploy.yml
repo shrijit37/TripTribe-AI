@@ -107,16 +107,34 @@ jobs:
       # app's own keys live here (README, `scripts/infisical-env.sh`). Reading
       # the frontend project instead would silently point the server at the
       # autocomplete key instead of the Places key.
+      #
+      # A read-only service token, not the machine identity the build job uses:
+      # that identity is not a member of esdk, and adding it would hand the
+      # build read access to every other product in the vault. The build job's
+      # frontend fetch is unaffected — that identity still only sees the
+      # frontend project.
+      #
+      # The token is what scopes this fetch, not the URL: this Infisical
+      # version resolves the project from the bearer token, and a service
+      # token is already bound to one project and one environment.
+      # `workspaceId` is here to say which project is meant — read it as a
+      # comment, not as a check. The `TRIPTRIBE_` filter is the check that
+      # matters: the vault holds 53 keys across eight other products, and none
+      # of those values should be in this job's environment even briefly.
+      # (`DOKPLOY_API_KEY` lives in that same vault and is already a repo
+      # secret here, so the token widens nothing this job could not read.)
       - name: Fetch app keys from Infisical (shrijit-esdk, prod)
-        uses: Infisical/secrets-action@v1.0.18
-        with:
-          method: universal
-          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
-          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
-          project-id: 1a39a192-cf29-4ec9-812f-94c35cce34f2
-          env-slug: prod
-          domain: https://secrets.shrijit.tech
-          export-type: env
+        env:
+          INFISICAL_ESDK_TOKEN: ${{ secrets.INFISICAL_ESDK_TOKEN }}
+          WORKSPACE: 1a39a192-cf29-4ec9-812f-94c35cce34f2
+        run: |
+          set -euo pipefail
+          payload=$(curl -fsS -H "Authorization: Bearer $INFISICAL_ESDK_TOKEN" \
+            "https://secrets.shrijit.tech/api/v3/secrets/raw?workspaceId=$WORKSPACE&envSlug=prod&secretPath=/&recursive=false")
+          count=$(printf '%s' "$payload" | jq -r '[.secrets[] | select(.secretKey | startswith("TRIPTRIBE_"))] | length')
+          [ "$count" -gt 0 ] || { echo "esdk prod returned no TRIPTRIBE_* keys" >&2; exit 1; }
+          printf '%s' "$payload" | jq -r '.secrets[] | select(.secretKey | startswith("TRIPTRIBE_")) | "::add-mask::\(.secretValue)", "\(.secretKey)=\(.secretValue)"' >> "$GITHUB_ENV"
+          echo "fetched $count TRIPTRIBE_* keys from esdk prod"
       # Dokploy authenticates GHCR pulls with a long-lived pull token kept
       # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
       # it expires after the job and silently breaks every later pull.

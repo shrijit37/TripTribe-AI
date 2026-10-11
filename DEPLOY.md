@@ -131,7 +131,9 @@ Vault key → env var the app reads (the deploy job renames on write;
 this doc exists to prevent:
 
 - **Server-side keys: values, read from the vault by the deploy job.** The job
-  reads `shrijit-esdk` prod with `Infisical/secrets-action` (`export-type: env`),
+  reads `shrijit-esdk` prod with a read-only service token
+  (`INFISICAL_ESDK_TOKEN`, prod only — see the table below), keeps only the
+  `TRIPTRIBE_` keys out of a 53-key vault shared with eight other products,
   builds the env block out of those values with `printf`, and POSTs *resolved
   values* to `application.saveEnvironment`. Before the POST it refuses to
   continue if any value the template needs is empty — an empty value means the
@@ -182,8 +184,17 @@ into the image.
 - **`AUTH_URL`, `NEXT_PUBLIC_SITE_URL`, `PORT`, `APP_VERSION`**: set inline in
   `.github/workflows/deploy.yml` / `frontend/Dockerfile`. Keep them in step with
   `frontend/.env.example`.
-
 `TRIPTRIBE_JWT_SECRET` exists in the vault and nothing reads it — leftover from
+the pre-Better-Auth setup. Safe to remove.
+
+**Service tokens to delete.** `Infisical/secrets-action@v1.0.18` cannot take a
+service token, so `deploy-prod` fetches with `curl` — which did. Several
+read-only `shrijit-esdk` prod tokens named `github-actions-deploy-prod` and
+`probe-parse` were minted on 2026-10-12 while wiring this up; only one of the
+former is the live `INFISICAL_ESDK_TOKEN` secret, and the CLI has no
+list-or-revoke command, so the rest have to go through the Infisical UI
+(project → Service Tokens). Keep exactly one `github-actions-deploy-prod`; the
+value in GitHub is the one to preserve, so compare before deleting.
 the pre-Better-Auth setup. Safe to remove.
 
 ## Repo configuration
@@ -191,8 +202,9 @@ the pre-Better-Auth setup. Safe to remove.
 Settings (Settings → Secrets and variables → Actions). These are deploy
 credentials, not app secrets.
 
-| Name | Kind | Used for |
-|---|---|---|
+| `INFISICAL_CLIENT_ID` | secret | machine identity for the **frontend project** fetch in `build` — it is not a member of `shrijit-esdk` and must not be |
+| `INFISICAL_CLIENT_SECRET` | secret | same |
+| `INFISICAL_ESDK_TOKEN` | secret | read-only service token, `shrijit-esdk` prod only, for the `deploy-prod` fetch. `Infisical/secrets-action@v1.0.18` cannot take a service token (universal/oidc/aws-iam only), so the step curls `/api/v3/secrets/raw` itself and filters to `TRIPTRIBE_*`. |
 | `INFISICAL_CLIENT_ID` | secret | machine identity for both vault fetches — the frontend project in `build`, `shrijit-esdk` in `deploy-prod` |
 | `INFISICAL_CLIENT_SECRET` | secret | same |
 | `DOKPLOY_API_KEY` | secret | `x-api-key` on all three Dokploy calls |
@@ -220,6 +232,7 @@ stays `push`) rather than dispatching by hand.
 |---|---|
 | Every Dokploy call reports success, the health gate fails, and no new container exists | The deployment aborted at `Initializing deployment` — read `deployment.readLogs` for the application. `Infisical: secret "X" not found in environment "prod"` means the app env named a key the vault does not have; the old container keeps serving and the run still looks green. This is what `395b1df`, `522c265` and `7a4de4c` all were. |
 | `/api/health` answers, but `checks.mongo: "down"` | The container holds a literal `${vault.infisical-prod.…}` string instead of a URI. Write values, not references — see *How values reach the container*. |
+| `deploy-prod` fails at *Fetch app keys* with `403 ProjectMembershipNotFound` | The identity it authenticated with is not a member of the `shrijit-esdk` project. `INFISICAL_CLIENT_ID` is deliberately not: granting it esdk would give the `build` job every other product's secrets. The fetch uses `INFISICAL_ESDK_TOKEN`; if that secret is empty or revoked, mint a new read-only prod service token and `gh secret set INFISICAL_ESDK_TOKEN`. |
 | `services did not converge on $SHA`, while `/health` answers 200 with a stale `version` | `saveDockerProvider` returned 200 without applying. Real occurrence (`TripTribe-AI-usl`, cutover `395b1df`, run `38171315352`): image pushed, digest `sha256:a4fd85d5…`, both Dokploy calls "successful", container never rolled. `/health` returned the *old* shape `{"status":"ok","service":"triptribe-web","version":"081534e8…","checks":{"assets":"up"}}` and `/api/health` returned Express's `Cannot GET /api/health` — proof the previous image was still live. Production stayed on the last good image and the gate failed loudly instead of reporting a false green. |
 | Old image, but `/api/health` 404s with `Cannot GET /api/health` | Same condition seen from the other side: the retired Express backend is still fronting `/api/*` through the old `rewrites()` rule. `api.triptribe.shrijit.tech` is deliberately no longer deployed; its hostname stops resolving once the old web image is replaced. |
 | Every request 502s, `/api/health` never answers | The container bound Next's default 3000 while Dokploy routed to 80. `frontend/Dockerfile` sets `PORT=80` and `HOSTNAME=0.0.0.0` for exactly this reason. |
