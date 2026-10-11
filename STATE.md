@@ -29,6 +29,10 @@ and a reference Dokploy cannot resolve aborts the deployment at
 `Initializing deployment` while every API call still reports success
 (`TripTribe-AI-usl`).
 
+The app's own keys are fetched with a read-only `shrijit-esdk` prod service
+token (`INFISICAL_ESDK_TOKEN`), not with the build job's `INFISICAL_CLIENT_ID`,
+which is deliberately not a member of that project — see `DEPLOY.md`.
+
 Two services used to exist, and having two is what caused most of the
 operational defects this change set out to fix:
 
