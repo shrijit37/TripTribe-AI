@@ -1,34 +1,51 @@
+# One image: the app, the API and the city pages.
+#
+# There was a `backend` service here until the API moved into the Next.js app.
+# It built from `backend/Dockerfile`, which copied `index.js`, `config/`,
+# `controllers/`, `models/`, `routes/` and `middleware/` — and silently omitted
+# `services/` and `solver/`, the two directories `index.js` imports at startup.
+# The result was a container that started, crashed on its first import, and
+# never served a request; nobody noticed because the compose healthcheck probed
+# `/` on the frontend and considered the stack healthy.
+#
+# Both failures were structural: two images, two env contracts, two places for a
+# key to be missing. There is now one of each, and the healthcheck below hits
+# the route that actually reports on the app.
+
 services:
-  frontend:
+  web:
     build: frontend
     restart: unless-stopped
-    depends_on:
-      - backend
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    networks:
-      - triptribe
-
-  backend:
-    build: backend
-    restart: unless-stopped
     environment:
-      PORT: 8080
-      NODE_ENV: production
+      # --- required -------------------------------------------------------
       MONGO_URI: ${MONGO_URI}
-      JWT_SECRET: ${JWT_SECRET}
+      # --- optional: each one degrades only its own capability ------------
+      # app/server/env.ts reports every unsatisfied key at /api/health, so a
+      # missing key is visible without reading the logs.
       OPENAI_KEY: ${OPENAI_KEY}
+      AUTH_URL: ${AUTH_URL:-https://auth.shrijit.tech}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+      GOOGLE_ROUTES_API_KEY: ${GOOGLE_ROUTES_API_KEY}
       GOOGLE_CUSTOM_SEARCH_API_KEY: ${GOOGLE_CUSTOM_SEARCH_API_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM: ${RESEND_FROM:-TripTribe <onboarding@resend.dev>}
+      NEXT_PUBLIC_GOOGLE_PLACES_API_KEY: ${NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
+      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-https://auth.shrijit.tech}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:8080}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      # /api/health, not /. The root path renders a page and can succeed while
+      # Mongo is unreachable — the app is built to answer when the database is
+      # not. The health route is the only endpoint that reports the truth, and
+      # it returns 503 when Mongo is down.
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1:80/api/health || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 20s
     networks:
       - triptribe
 

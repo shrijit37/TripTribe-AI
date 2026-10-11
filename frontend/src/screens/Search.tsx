@@ -29,7 +29,13 @@ import { storeResult, takeSeed } from "@/lib/nav";
    ───────────────────────────────────────────────────────────────────────── */
 
 const IconArrow = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
     <path
       d="M5 12h13m0 0-5-5m5 5-5 5"
       stroke="currentColor"
@@ -67,8 +73,8 @@ const CARRIED: { id: string; body: ReactNode }[] = [
     id: "reach",
     body: (
       <>
-        <strong>How to reach the city</strong> — nearest airport, station and bus
-        stand.
+        <strong>How to reach the city</strong> — nearest airport, station and
+        bus stand.
       </>
     ),
   },
@@ -76,8 +82,8 @@ const CARRIED: { id: string; body: ReactNode }[] = [
     id: "hotels",
     body: (
       <>
-        <strong>Hotels inside the budget</strong> you entered, each one marked as
-        an estimate rather than a quote.
+        <strong>Hotels inside the budget</strong> you entered, each one marked
+        as an estimate rather than a quote.
       </>
     ),
   },
@@ -102,18 +108,67 @@ const CARRIED: { id: string; body: ReactNode }[] = [
 ];
 
 type FieldName = "city" | "budget" | "days";
+
+/** What the server actually reads. Every option here changes the route. */
+const PACES = [
+  { value: "RELAXED", label: "Relaxed — 3 stops a day" },
+  { value: "BALANCED", label: "Balanced — 4 stops a day" },
+  { value: "PACKED", label: "Packed — 6 stops a day" },
+] as const;
+
+const TRAVEL_MODES = [
+  { value: "WALK", label: "On foot" },
+  { value: "TRANSIT", label: "Public transport" },
+  { value: "DRIVE", label: "Car" },
+  { value: "BICYCLE", label: "Bicycle" },
+] as const;
+
+const CURRENCIES = [
+  { value: "INR", label: "₹ Rupee" },
+  { value: "USD", label: "$ US dollar" },
+  { value: "EUR", label: "€ Euro" },
+  { value: "GBP", label: "£ Pound" },
+  { value: "AED", label: "AED Dirham" },
+  { value: "SGD", label: "S$ Singapore dollar" },
+  { value: "JPY", label: "¥ Yen" },
+  { value: "THB", label: "฿ Baht" },
+] as const;
+
+const INTERESTS = [
+  "History",
+  "Architecture",
+  "Art and museums",
+  "Food and street food",
+  "Nature and parks",
+  "Views and photography",
+  "Shopping",
+  "Nightlife",
+  "Local culture",
+  "Religious sites",
+  "Family friendly",
+  "Beaches",
+  "Hiking",
+  "Live music",
+] as const;
 type Errors = Partial<Record<FieldName, string>>;
 
 export default function Search() {
   const router = useRouter();
-  const email =
-    useAppSelector((state) => state.auth).userInfo?.email ?? "";
+  const email = useAppSelector((state) => state.auth).userInfo?.email ?? "";
 
   const [city, setCity] = useState("");
   const [budget, setBudget] = useState("");
   const [days, setDays] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [refusal, setRefusal] = useState("");
+  const [travellers, setTravellers] = useState("2");
+  const [pace, setPace] = useState<(typeof PACES)[number]["value"]>("BALANCED");
+  const [travelMode, setTravelMode] =
+    useState<(typeof TRAVEL_MODES)[number]["value"]>("WALK");
+  const [currency, setCurrency] = useState("INR");
+  const [startDate, setStartDate] = useState("");
+  const [originCity, setOriginCity] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
   const [working, setWorking] = useState(false);
 
   const cityRef = useRef<HTMLInputElement>(null);
@@ -123,7 +178,11 @@ export default function Search() {
 
   const focusField = useCallback((field: FieldName) => {
     const target =
-      field === "city" ? cityRef.current : field === "budget" ? budgetRef.current : daysRef.current;
+      field === "city"
+        ? cityRef.current
+        : field === "budget"
+          ? budgetRef.current
+          : daysRef.current;
     target?.focus();
     target?.setSelectionRange?.(0, target.value.length);
   }, []);
@@ -158,7 +217,9 @@ export default function Search() {
           const place = ac.getPlace();
           if (place?.name) {
             setCity(place.name);
-            setErrors((prev) => (prev.city ? { ...prev, city: undefined } : prev));
+            setErrors((prev) =>
+              prev.city ? { ...prev, city: undefined } : prev,
+            );
           }
         });
         autocompleteRef.current = ac;
@@ -173,7 +234,9 @@ export default function Search() {
       cancelled = true;
       off();
       if (autocompleteRef.current && window.google?.maps?.event) {
-        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        window.google.maps.event.clearInstanceListeners(
+          autocompleteRef.current,
+        );
         autocompleteRef.current = null;
       }
     };
@@ -220,11 +283,22 @@ export default function Search() {
     setWorking(true);
 
     try {
+      // Every field below reaches the solver for the first time. The old
+      // backend parsed none of them and forwarded `headcount: 2`,
+      // `stopsPerDay: 4`, `travelMode: "WALK"`, and `startDate: null`, so this
+      // request now actually means what the form said it meant.
       const response = await postItinerary({
         cityName: city.trim(),
         budget: Number(budget),
         days: Number(days),
         email,
+        travellers: Number(travellers) || 2,
+        pace,
+        travelMode,
+        currency,
+        interests,
+        ...(startDate ? { startDate } : {}),
+        ...(originCity.trim() ? { originCity: originCity.trim() } : {}),
       });
       storeResult(response);
       router.push("/result");
@@ -234,10 +308,13 @@ export default function Search() {
           .map((detail) => detail.message)
           .filter(Boolean)
           .join(" ");
-        setRefusal(said || "The planner refused those entries. Adjust them and issue again.");
+        setRefusal(
+          said ||
+            "The planner refused those entries. Adjust them and issue again.",
+        );
       } else {
         setRefusal(
-          "The route could not be worked out. Nothing was changed — issue it again."
+          "The route could not be worked out. Nothing was changed — issue it again.",
         );
       }
       setWorking(false);
@@ -252,7 +329,9 @@ export default function Search() {
    * the faint ink and with the em dash every other absent figure gets.
    */
   const blank = (field: FieldName) =>
-    Boolean(errors[field]) && `${field === "city" ? city : field === "budget" ? budget : days}`.trim() === "";
+    Boolean(errors[field]) &&
+    `${field === "city" ? city : field === "budget" ? budget : days}`.trim() ===
+      "";
 
   /** The entry always describes its hint; it adds the refusal when there is one. */
   const described = (field: FieldName) =>
@@ -267,178 +346,345 @@ export default function Search() {
               Three entries, one sheet.
             </h1>
             <p className="tt-lede tt-manifest__lede">
-              Fill the manifest in order. We sequence the entries along one route
-              and issue a single sheet you can hand to the group.
+              Fill the manifest in order. We sequence the entries along one
+              route and issue a single sheet you can hand to the group.
             </p>
           </div>
 
-        <form
-          className="tt-sheet"
-          onSubmit={handleSubmit}
-          noValidate
-          aria-labelledby="tt-sheet-title"
-        >
-          <div className="tt-sheet__head">
-            <h2 className="tt-sheet__title" id="tt-sheet-title">
-              The manifest
-            </h2>
-            <p className="tt-sheet__ref">
-              <span>TT/ROUTE</span>
-              <span className="tt-sheet__slash" aria-hidden="true">
-                /
-              </span>
-              <span>MANIFEST</span>
-            </p>
-          </div>
+          <form
+            className="tt-sheet"
+            onSubmit={handleSubmit}
+            noValidate
+            aria-labelledby="tt-sheet-title"
+          >
+            <div className="tt-sheet__head">
+              <h2 className="tt-sheet__title" id="tt-sheet-title">
+                The manifest
+              </h2>
+              <p className="tt-sheet__ref">
+                <span>TT/ROUTE</span>
+                <span className="tt-sheet__slash" aria-hidden="true">
+                  /
+                </span>
+                <span>MANIFEST</span>
+              </p>
+            </div>
 
-          <ol className="tt-entries">
-            <li className="tt-entry">
-              <span className="tt-entry__no" aria-hidden="true">
-                01
-              </span>
-              <div className="tt-entry__main">
-                <label className="tt-entry__label" htmlFor="tt-city">
-                  <span className="tt-entry__ask">The city is</span>
-                  <span className="tt-entry__rule">Place or city</span>
-                </label>
-                <input
-                  id="tt-city"
-                  ref={cityRef}
-                  className="tt-field__input tt-field__input--city"
-                  type="text"
-                  autoComplete="off"
-                  placeholder="Jaipur"
-                  value={city}
-                  aria-invalid={Boolean(errors.city)}
-                    data-blank={blank("city")}
-                  aria-describedby={described("city")}
-                  onChange={(event) => {
-                    setCity(event.target.value);
-                    clearError("city");
-                  }}
-                />
-                <p className="tt-field__hint" id="tt-city-hint">
-                  Start typing; suggestions appear as you go.
-                </p>
-                {errors.city && (
-                  <p
-                    className={`tt-field__error${blank("city") ? " tt-field__error--missing" : ""}`}
-                    id="tt-city-error"
-                  >
-                    {errors.city}
-                  </p>
-                )}
-              </div>
-            </li>
-
-            <li className="tt-entry">
-              <span className="tt-entry__no" aria-hidden="true">
-                02
-              </span>
-              <div className="tt-entry__main">
-                <label className="tt-entry__label" htmlFor="tt-search-budget">
-                  <span className="tt-entry__ask">The trip costs under</span>
-                  <span className="tt-entry__rule">Min 1,000 · step 100</span>
-                </label>
-                <div className="tt-field__affix">
-                  <span className="tt-field__currency" aria-hidden="true">
-                    ₹
-                  </span>
+            <ol className="tt-entries">
+              <li className="tt-entry">
+                <span className="tt-entry__no" aria-hidden="true">
+                  01
+                </span>
+                <div className="tt-entry__main">
+                  <label className="tt-entry__label" htmlFor="tt-city">
+                    <span className="tt-entry__ask">The city is</span>
+                    <span className="tt-entry__rule">Place or city</span>
+                  </label>
                   <input
-                    id="tt-search-budget"
-                    ref={budgetRef}
-                    className="tt-field__input tt-field__input--fig tt-field__input--budget"
+                    id="tt-city"
+                    ref={cityRef}
+                    className="tt-field__input tt-field__input--city"
                     type="text"
-                    inputMode="numeric"
-                    placeholder="24,000"
-                    value={budget}
-                    aria-invalid={Boolean(errors.budget)}
-                    data-blank={blank("budget")}
-                    aria-describedby={described("budget")}
+                    autoComplete="off"
+                    placeholder="Jaipur"
+                    value={city}
+                    aria-invalid={Boolean(errors.city)}
+                    data-blank={blank("city")}
+                    aria-describedby={described("city")}
                     onChange={(event) => {
-                      setBudget(event.target.value);
-                      clearError("budget");
+                      setCity(event.target.value);
+                      clearError("city");
                     }}
                   />
-                </div>
-                <p className="tt-field__hint" id="tt-budget-hint">
-                  Rupees, for the whole trip and everyone on it — not per day.
-                </p>
-                {errors.budget && (
-                  <p
-                    className={`tt-field__error${blank("budget") ? " tt-field__error--missing" : ""}`}
-                    id="tt-budget-error"
-                  >
-                    {errors.budget}
+                  <p className="tt-field__hint" id="tt-city-hint">
+                    Start typing; suggestions appear as you go.
                   </p>
-                )}
-              </div>
-            </li>
+                  {errors.city && (
+                    <p
+                      className={`tt-field__error${blank("city") ? " tt-field__error--missing" : ""}`}
+                      id="tt-city-error"
+                    >
+                      {errors.city}
+                    </p>
+                  )}
+                </div>
+              </li>
 
-            <li className="tt-entry">
-              <span className="tt-entry__no" aria-hidden="true">
-                03
-              </span>
-              <div className="tt-entry__main">
-                <label className="tt-entry__label" htmlFor="tt-search-days">
-                  <span className="tt-entry__ask">You have</span>
-                  <span className="tt-entry__rule">1 to 60</span>
-                </label>
-                <div className="tt-field__affix">
+              <li className="tt-entry">
+                <span className="tt-entry__no" aria-hidden="true">
+                  02
+                </span>
+                <div className="tt-entry__main">
+                  <label className="tt-entry__label" htmlFor="tt-search-budget">
+                    <span className="tt-entry__ask">The trip costs under</span>
+                    <span className="tt-entry__rule">Min 1,000 · step 100</span>
+                  </label>
+                  <div className="tt-field__affix">
+                    <span className="tt-field__currency" aria-hidden="true">
+                      ₹
+                    </span>
+                    <input
+                      id="tt-search-budget"
+                      ref={budgetRef}
+                      className="tt-field__input tt-field__input--fig tt-field__input--budget"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="24,000"
+                      value={budget}
+                      aria-invalid={Boolean(errors.budget)}
+                      data-blank={blank("budget")}
+                      aria-describedby={described("budget")}
+                      onChange={(event) => {
+                        setBudget(event.target.value);
+                        clearError("budget");
+                      }}
+                    />
+                  </div>
+                  <p className="tt-field__hint" id="tt-budget-hint">
+                    Rupees, for the whole trip and everyone on it — not per day.
+                  </p>
+                  {errors.budget && (
+                    <p
+                      className={`tt-field__error${blank("budget") ? " tt-field__error--missing" : ""}`}
+                      id="tt-budget-error"
+                    >
+                      {errors.budget}
+                    </p>
+                  )}
+                </div>
+              </li>
+
+              <li className="tt-entry">
+                <span className="tt-entry__no" aria-hidden="true">
+                  03
+                </span>
+                <div className="tt-entry__main">
+                  <label className="tt-entry__label" htmlFor="tt-search-days">
+                    <span className="tt-entry__ask">You have</span>
+                    <span className="tt-entry__rule">1 to 60</span>
+                  </label>
+                  <div className="tt-field__affix">
+                    <input
+                      id="tt-search-days"
+                      ref={daysRef}
+                      className="tt-field__input tt-field__input--fig"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="6"
+                      value={days}
+                      aria-invalid={Boolean(errors.days)}
+                      data-blank={blank("days")}
+                      aria-describedby={described("days")}
+                      onChange={(event) => {
+                        setDays(event.target.value);
+                        clearError("days");
+                      }}
+                    />
+                    <span className="tt-entry__unit">days, the whole trip</span>
+                  </div>
+                  <p className="tt-field__hint" id="tt-days-hint">
+                    Calendar days. The route is sequenced across every one of
+                    them.
+                  </p>
+                  {errors.days && (
+                    <p
+                      className={`tt-field__error${blank("days") ? " tt-field__error--missing" : ""}`}
+                      id="tt-days-error"
+                    >
+                      {errors.days}
+                    </p>
+                  )}
+                </div>
+              </li>
+            </ol>
+            {/* Entries 01–03 are the three a plan cannot be issued without. These
+              six are the ones the traveller used to fill in and watch the
+              planner ignore: the form sent them, and the backend read them off
+              the request and then forwarded hardcoded values instead — always
+              two people, always four stops a day, always on foot, always
+              starting today, always costed in rupees. So they are named now,
+              they change the route, and the sheet says which is which. */}
+            <section className="tt-more" aria-labelledby="tt-more-title">
+              <div className="tt-more__head">
+                <h3 className="tt-more__title" id="tt-more-title">
+                  Conditions of travel
+                </h3>
+                <p className="tt-more__note">
+                  Optional. Each one changes the route it produces.
+                </p>
+              </div>
+
+              <div className="tt-more__grid">
+                <div className="tt-more__cell">
+                  <label className="tt-more__label" htmlFor="tt-travellers">
+                    Travelling
+                  </label>
                   <input
-                    id="tt-search-days"
-                    ref={daysRef}
+                    id="tt-travellers"
                     className="tt-field__input tt-field__input--fig"
                     type="text"
                     inputMode="numeric"
-                    placeholder="6"
-                    value={days}
-                    aria-invalid={Boolean(errors.days)}
-                    data-blank={blank("days")}
-                    aria-describedby={described("days")}
-                    onChange={(event) => {
-                      setDays(event.target.value);
-                      clearError("days");
-                    }}
+                    placeholder="2"
+                    value={travellers}
+                    onChange={(event) => setTravellers(event.target.value)}
                   />
-                  <span className="tt-entry__unit">days, the whole trip</span>
+                  <p className="tt-field__hint">How many share the budget.</p>
                 </div>
-                <p className="tt-field__hint" id="tt-days-hint">
-                  Calendar days. The route is sequenced across every one of them.
-                </p>
-                {errors.days && (
-                  <p
-                    className={`tt-field__error${blank("days") ? " tt-field__error--missing" : ""}`}
-                    id="tt-days-error"
+
+                <div className="tt-more__cell">
+                  <label className="tt-more__label" htmlFor="tt-pace">
+                    Pace
+                  </label>
+                  <select
+                    id="tt-pace"
+                    className="tt-field__select"
+                    value={pace}
+                    onChange={(event) =>
+                      setPace(
+                        event.target.value as (typeof PACES)[number]["value"],
+                      )
+                    }
                   >
-                    {errors.days}
+                    {PACES.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="tt-field__hint">
+                    Stops the route fits in a day.
                   </p>
-                )}
+                </div>
+
+                <div className="tt-more__cell">
+                  <label className="tt-more__label" htmlFor="tt-mode">
+                    Getting about
+                  </label>
+                  <select
+                    id="tt-mode"
+                    className="tt-field__select"
+                    value={travelMode}
+                    onChange={(event) =>
+                      setTravelMode(
+                        event.target
+                          .value as (typeof TRAVEL_MODES)[number]["value"],
+                      )
+                    }
+                  >
+                    {TRAVEL_MODES.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="tt-field__hint">Sets every travel estimate.</p>
+                </div>
+
+                <div className="tt-more__cell">
+                  <label className="tt-more__label" htmlFor="tt-currency">
+                    Costed in
+                  </label>
+                  <select
+                    id="tt-currency"
+                    className="tt-field__select"
+                    value={currency}
+                    onChange={(event) => setCurrency(event.target.value)}
+                  >
+                    {CURRENCIES.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="tt-field__hint">
+                    The budget entry above is read in this currency.
+                  </p>
+                </div>
+
+                <div className="tt-more__cell">
+                  <label className="tt-more__label" htmlFor="tt-start-date">
+                    Leaving on
+                  </label>
+                  <input
+                    id="tt-start-date"
+                    className="tt-field__input tt-field__input--fig"
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                  />
+                  <p className="tt-field__hint">
+                    Decides which days are weekdays. Leave blank for today.
+                  </p>
+                </div>
+
+                <div className="tt-more__cell">
+                  <label className="tt-more__label" htmlFor="tt-origin">
+                    Coming from
+                  </label>
+                  <input
+                    id="tt-origin"
+                    className="tt-field__input tt-field__input--city"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="Delhi"
+                    value={originCity}
+                    onChange={(event) => setOriginCity(event.target.value)}
+                  />
+                  <p className="tt-field__hint">
+                    Optional. Shapes day one only.
+                  </p>
+                </div>
               </div>
-            </li>
-          </ol>
 
-          {refusal && (
-            <p className="tt-sheet__refusal" role="alert">
-              {refusal}
-            </p>
-          )}
+              <fieldset className="tt-more__interests">
+                <legend className="tt-more__label">Drawn to</legend>
+                <div className="tt-more__chips">
+                  {INTERESTS.map((interest) => {
+                    const on = interests.includes(interest);
+                    return (
+                      <button
+                        key={interest}
+                        type="button"
+                        className="tt-chip"
+                        aria-pressed={on}
+                        data-on={on || undefined}
+                        onClick={() =>
+                          setInterests((prev) =>
+                            on
+                              ? prev.filter((x) => x !== interest)
+                              : [...prev, interest],
+                          )
+                        }
+                      >
+                        {interest}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            </section>
 
-          {/* The sheet's terminal rule carries the one footnote and the one
+            {refusal && (
+              <p className="tt-sheet__refusal" role="alert">
+                {refusal}
+              </p>
+            )}
+
+            {/* The sheet's terminal rule carries the one footnote and the one
               issuing block together. A second copy of the caveat stranded in
               the margin column was the same sentence twice, and twice is not a
               caveat. */}
-          <div className="tt-sheet__run">
-            <p className="tt-sheet__note">
-              Nothing is booked for you. The sheet is worked out from these three
-              entries and the costs on it are estimates.
-            </p>
-            <button className="tt-btn" type="submit">
-              {working ? "Working the route" : "Issue the route"}
-              {!working && <IconArrow />}
-            </button>
-          </div>
-        </form>
+            <div className="tt-sheet__run">
+              <p className="tt-sheet__note">
+                Nothing is booked for you. The sheet is worked out from these
+                three entries and the costs on it are estimates.
+              </p>
+              <button className="tt-btn" type="submit">
+                {working ? "Working the route" : "Issue the route"}
+                {!working && <IconArrow />}
+              </button>
+            </div>
+          </form>
           <aside className="tt-carry" aria-labelledby="tt-carry-title">
             <div className="tt-carry__head">
               <h2 className="tt-carry__title" id="tt-carry-title">
@@ -461,8 +707,8 @@ export default function Search() {
               Three entries in, one sheet out. Nothing else is asked of you.
             </p>
           </aside>
-      </section>
+        </section>
+      </div>
     </div>
-        </div>
   );
 }

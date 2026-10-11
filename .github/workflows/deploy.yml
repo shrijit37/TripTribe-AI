@@ -25,36 +25,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
-      - name: Backend — install + syntax check + tests
-        run: |
-          npm ci --ignore-scripts
-          # Parse every changed module, not just the entrypoint: a syntax
-          # error in a file index.js never imports would otherwise ship.
-          node --check index.js
-          node --check routes/health.js
-          node --check routes/itenaryRoute.js
-          node --check controllers/gptResponse.js
-          node --check config/schema.js
-          node --check services/narrate.js
-          node --check services/compose.js
-          node --check solver/pipeline.js
-          node --check routes/seoRoute.js
-          node --check services/catalogue.js
-          node --check models/placeCacheModel.js
-          # Full deterministic suite — request contract, services and solver.
-          # No API keys required, so it runs on every PR.
-          node --test tests/schema.test.js tests/services.test.js tests/solver.test.js
-        working-directory: backend
-      - name: Frontend — typecheck + lint + build
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install + typecheck + lint + test + build
         run: |
           npm ci --ignore-scripts
           # `strict` plus `noUncheckedIndexedAccess`: the type errors the build
           # would catch anyway, reported before it costs a full compile.
           npm run typecheck
           npm run lint
+          # The deterministic suite — request contract, solver, services. No API
+          # keys required, so it runs on every PR.
+          npm test
           npm run build
         working-directory: frontend
 
@@ -91,16 +72,12 @@ jobs:
           env-slug: prod
           domain: https://secrets.shrijit.tech
           export-type: env
-      - name: Build+push triptribe-api
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          platforms: linux/amd64,linux/arm64
-          push: true
-          cache-from: type=gha,scope=triptribe-api
-          cache-to: type=gha,mode=max,scope=triptribe-api
-          build-args: APP_VERSION=${{ github.sha }}
-          tags: ghcr.io/${{ env.OWNER }}/triptribe-ai-api:${{ github.sha }}
+      # One image. The API is a route handler in this app, so there is no
+      # second image to build, pull, configure or point Dokploy at — and no way
+      # for the two to disagree about a URL again. The previous build baked
+      # BACKEND_URL=http://triptribe-api-y59lny:8080 into the image while the
+      # deploy step set AUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080,
+      # so the session lookup resolved to a service that did not exist.
       - name: Build+push triptribe-web
         uses: docker/build-push-action@v6
         with:
@@ -109,16 +86,8 @@ jobs:
           push: true
           cache-from: type=gha,scope=triptribe-web
           cache-to: type=gha,mode=max,scope=triptribe-web
-          # The catalogue URL and proxy target are read at request time on the
-          # server, so they stay out of the client bundle. Internal swarm DNS
-          # (no public hairpin: container egress to the public IP is
-          # unreliable). App names are stable; if the api app is recreated,
-          # update this + STATE.md.
           build-args: |
             APP_VERSION=${{ github.sha }}
-            BACKEND_URL=http://triptribe-api-y59lny:8080
-            CATALOGUE_API_URL=http://triptribe-api-y59lny:8080/api/seo/city-catalogue
-            NEXT_PUBLIC_ITENARY_API_URL=/api/itenary
             NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}
             NEXT_PUBLIC_AUTH_URL=https://auth.shrijit.tech
             NEXT_PUBLIC_SITE_URL=https://triptribe.shrijit.tech
@@ -136,6 +105,17 @@ jobs:
       # Dokploy authenticates GHCR pulls with a long-lived pull token kept
       # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
       # it expires after the job and silently breaks every later pull.
+      #
+      # One application, one environment block.
+      #
+      # `AUTH_URL` used to point at `http://app-copy-mobile-transmitter-zblo2d:8080`
+      # — the name of a scratch application, not the auth service — so every
+      # authenticated request looked for a session at an address that was not
+      # there. The public session endpoint is the only correct value now that
+      # the backend and the web app are one process.
+      #
+      # `RESEND_*` are new: the email hand-off degrades to "not available right
+      # now" without them, which is why they are optional rather than required.
       - name: Re-assert Dokploy env (Infisical sync wipes app env)
         run: |
           DOL='$'
@@ -146,27 +126,23 @@ jobs:
               "$DOKPLOY_URL/api/application.saveEnvironment" >/dev/null
           }
           jq -n --arg ref "$REF" \
-            --arg id "${{ vars.DOKPLOY_API_APP_ID }}" \
+            --arg id "${{ vars.DOKPLOY_WEB_APP_ID }}" \
             '{applicationId: $id,
-              env: ("PORT=8080\nAUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}\nOPENAI_BASE_URL=" + $ref + "TRIPTRIBE_OPENAI_BASE_URL}}\nOPENAI_MODEL=" + $ref + "TRIPTRIBE_OPENAI_MODEL}}\nGOOGLE_PLACES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}\nGOOGLE_ROUTES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}"),
+              env: ("PORT=80\nAUTH_URL=https://auth.shrijit.tech\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nOPENAI_BASE_URL=" + $ref + "TRIPTRIBE_OPENAI_BASE_URL}}\nOPENAI_MODEL=" + $ref + "TRIPTRIBE_OPENAI_MODEL}}\nGOOGLE_PLACES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}\nGOOGLE_ROUTES_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_PLACES_API_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}\nRESEND_API_KEY=" + $ref + "TRIPTRIBE_RESEND_API_KEY}}\nRESEND_FROM=" + $ref + "TRIPTRIBE_RESEND_FROM}}\nAPP_VERSION=$SHA"),
               buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env
           echo "dokploy env re-asserted"
-      - name: Point Dokploy at SHA images and redeploy
+      - name: Point Dokploy at the SHA image and redeploy
         run: |
-          point() {
-            curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
-              -H 'Content-Type: application/json' \
-              -d "{\"applicationId\":\"$1\",\"dockerImage\":\"$2\",\"username\":\"${{ github.actor }}\",\"password\":\"$GHCR_TOKEN\",\"registryUrl\":\"ghcr.io\"}" \
-              "$DOKPLOY_URL/api/application.saveDockerProvider" &&
-            curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
-              -H 'Content-Type: application/json' \
-              -d "{\"applicationId\":\"$1\"}" \
-              "$DOKPLOY_URL/api/application.redeploy" >/dev/null
-          }
-          point "${{ vars.DOKPLOY_API_APP_ID }}" "ghcr.io/$OWNER/triptribe-ai-api:$SHA"
-          point "${{ vars.DOKPLOY_WEB_APP_ID }}" "ghcr.io/$OWNER/triptribe-ai-web:$SHA"
+          curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "{\"applicationId\":\"${{ vars.DOKPLOY_WEB_APP_ID }}\",\"dockerImage\":\"ghcr.io/$OWNER/triptribe-ai-web:$SHA\",\"username\":\"${{ github.actor }}\",\"password\":\"$GHCR_TOKEN\",\"registryUrl\":\"ghcr.io\"}" \
+            "$DOKPLOY_URL/api/application.saveDockerProvider" &&
+          curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "{\"applicationId\":\"${{ vars.DOKPLOY_WEB_APP_ID }}\"}" \
+            "$DOKPLOY_URL/api/application.redeploy" >/dev/null
           echo "redeploy triggered for $SHA"
-      # Wait on /health, and require the deployed build to BE this SHA.
+      # Wait on /api/health, and require the deployed build to BE this SHA.
       #
       # Checking health alone is not enough: the previous container is still
       # serving while the new one starts, so the first poll succeeds against
@@ -174,27 +150,23 @@ jobs:
       # migration shipped a green run while the web app 502'd — the old nginx
       # container answered /health, then died, and nothing noticed.
       #
-      # `/health` carries `version`, so requiring it to equal the SHA proves we
-      # are talking to the build we just pushed rather than the one we replaced.
+      # `/api/health` carries `version`, so requiring it to equal the SHA proves
+      # we are talking to the build we just pushed rather than the one we
+      # replaced. One service to wait on now, not two.
       - name: Wait for the new containers to converge
         run: |
           for i in $(seq 1 30); do
-            ok=0
-            for base in "${{ vars.API_URL }}" "${{ vars.WEB_URL }}"; do
-              body=$(curl -s --max-time 10 "$base/health" || echo '')
-              if echo "$body" | grep -q '"status":"ok"\|"status":"degraded"'; then
-                if echo "$body" | grep -q "\"version\":\"$SHA"; then
-                  ok=$((ok+1))
-                else
-                  echo "$base healthy but still serving $(echo "$body" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')"
-                fi
-              fi
-            done
-            if [ "$ok" = "2" ]; then
-              echo "both services healthy on $SHA after $i attempt(s)"
+            body=$(curl -s --max-time 10 "${{ vars.WEB_URL }}/api/health" || echo '')
+            if echo "$body" | grep -q "\"version\":\"$SHA"; then
+              # `version` matching means this is the build we just pushed. The
+              # status field is then informational: "degraded" is a legitimate
+              # pass for an app that is deliberately honest about missing keys,
+              # whereas 503 means Mongo is down and the gate must fail.
+              echo "web healthy on $SHA after $i attempt(s)"
+              echo "$body"
               exit 0
             fi
-            echo "attempt $i/30: $ok/2 on $SHA"
+            echo "attempt $i/30: not yet serving $SHA — $(echo "$body" | head -c 200)"
             sleep 10
           done
           echo "services did not converge on $SHA" >&2

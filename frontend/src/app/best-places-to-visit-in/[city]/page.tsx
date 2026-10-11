@@ -27,32 +27,42 @@ interface PageProps {
 }
 
 /**
- * Opt in to prerendering this dynamic route.
+ * Rendered on demand, always fresh — and that is the change that makes it
+ * honest.
  *
- * Next 16 does not prerender a dynamic route unless it is told the params are
- * known at build time, and without this every city URL 404s at runtime while
- * the sitemap advertises all of them. Regenerated once a day so a place that
- * closes is eventually dropped from the page rather than served forever.
+ * These pages used to be prerendered at build time with `revalidate = 86400`.
+ * A build container has no `GOOGLE_PLACES_API_KEY`: it is a server-only key,
+ * read at request time and deliberately not an ARG. So every one of the 81
+ * city pages was generated *empty* during the build and baked into the image
+ * that way, and production then served thin pages — no place list, no ratings,
+ * nothing to rank — for up to 24 hours after every deploy. The sitemap
+ * advertised them the whole time.
+ *
+ * Rendering on demand removes the window entirely. The cost is one Mongo read
+ * per page, not one Google call: both the city resolution and the enriched
+ * places are cached for 90 days (`domain/catalogue.ts`, `placecaches`), so a
+ * warm city spends nothing at all. Next's own cache had been duplicating that
+ * with a day-long window, and a one-day cache of "empty" is worse than none.
+ *
+ * `dynamicParams = true` still stands: Next 16 404s a dynamic route whose
+ * params it does not recognise, and the sitemap advertises all 81 slugs.
  */
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
-export const revalidate = 86_400;
 
-/**
- * Prerender every curated city at build time.
- *
- * The catalogue is revalidated daily rather than frozen, so a place that
- * closes is eventually dropped — and a page that takes minutes to generate
- * never blocks a crawler.
- */
+/** Kept so `generateStaticParams` below is not dead weight in the type graph. */
 export async function generateStaticParams() {
   return INDEXED_CITIES.map((city) => ({ city: toSlug(city) }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const slug = (await params).city;
   // A build pass can reach this route with no segment at all. There is no city
   // to describe, so there is no metadata to write.
-  if (!slug) return { title: "City not found", robots: { index: false, follow: true } };
+  if (!slug)
+    return { title: "City not found", robots: { index: false, follow: true } };
   const city = fromSlug(slug);
   const catalogue = await getCityCatalogue(city);
   const title = cityPageTitle(city);
@@ -135,8 +145,8 @@ export default async function CityPlacesPage({ params }: PageProps) {
 
         {catalogue && catalogue.entries.length === 0 && (
           <p className="tt-note">
-            We have no places on file for {city} yet. Try the planner instead — it
-            searches live.
+            We have no places on file for {city} yet. Try the planner instead —
+            it searches live.
           </p>
         )}
 
@@ -162,7 +172,9 @@ export default async function CityPlacesPage({ params }: PageProps) {
                         <strong>{rating}</strong>
                       </p>
                     )}
-                    {entry.address && <p className="tt-place__address">{entry.address}</p>}
+                    {entry.address && (
+                      <p className="tt-place__address">{entry.address}</p>
+                    )}
                     {entry.opensToday && (
                       <p className="tt-place__hours">{entry.opensToday}</p>
                     )}

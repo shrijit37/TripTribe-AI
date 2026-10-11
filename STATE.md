@@ -1,114 +1,168 @@
-# STATE.md — TripTribe-AI (AI trip planner, Next.js + Express)
+# STATE.md — TripTribe-AI (AI trip planner, Next.js 16)
 
-Last verified: 2026-10-11. Frontend migrated from a Vite SPA to Next.js 16
-(App Router) with strict TypeScript; the backend is unchanged apart from the SEO
-catalogue route. Both services answer the uniform `GET /health` contract.
+Last verified: 2026-10-11. **The backend has been merged into the frontend.**
+There is now one service: a Next.js 16 App Router application with strict
+TypeScript that serves the pages, the API and the city pages from a single
+process and a single image. The Express service, the Mongoose layer and the
+second container are gone.
 
 ## What it is
-`backend` (Express 5 + Mongoose 9, :8080), `frontend` (Next.js 16 App Router,
-strict TypeScript, standalone server, :3000). AI itinerary via OpenRouter, places
-and routing via Google Places/Routes, signup/session via the shared Better Auth
-service on `auth.shrijit.tech`, city autocomplete via Google Places.
+`frontend/` — Next.js 16 App Router, strict TypeScript, `output: standalone`,
+listening on :80. Route handlers under `src/app/api/` replace every Express
+route. Planning is deterministic (`src/server/domain/solver`), narration is
+optional (`src/server/domain/narrate.ts`), places and routing come from Google
+Places/Routes, signup and session from the shared Better Auth service on
+`auth.shrijit.tech`.
 
-## Why the frontend moved off Vite
-The SPA shipped an empty `<div id="root">` to any crawler, so the site was
-invisible to search — there was no page to rank for "best places to visit in X".
-Server-rendering the city pages is the fix, and nothing in the backend needed
-rewriting to get it. Four consequences will bite anyone changing this:
-
-- **`src/pages/` is reserved by Next as the Pages Router.** The ported screens
-  live in `src/screens/`. A component dropped into `src/pages/` is treated as a
-  route, and the build fails on it having no provider context.
-- **`/best-places-to-visit-in-jaipur` is a rewrite**, onto
-  `app/best-places-to-visit-in/[city]`. Next only treats a segment as dynamic
-  when the *whole* segment is bracketed; renaming that directory to the flat
-  form silently makes it a literal route, and every city URL 404s while the
-  sitemap keeps advertising them. This was hit during the migration. Verified
-  afterwards: all 84 sitemap URLs return 200.
-- **`output: standalone` does not copy `.next/static` or `public/`.** The
-  Dockerfile copies both. Without those two lines every stylesheet and chunk
-  404s and the site renders unstyled — no error, just a broken-looking page.
-- **`react-router`'s `location.state` has no App Router equivalent.**
-  `@/lib/nav.ts` parks the itinerary plan and the Hero's form seed in one-shot
-  `sessionStorage` keys. Two components calling the *consuming* reader both get
-  nothing: `Result` claims the plan once and passes it down to `HotelSection`.
-
-## Production topology (Dokploy project `TripTribe-AI`, env `production`)
+## The one-image topology
 | Service | App | Public URL | Health |
 |---|---|---|---|
-| web | `triptribe-web-acbq9o` | https://triptribe.shrijit.tech | ok, assets:up |
-| api | `triptribe-api-y59lny` | https://api.triptribe.shrijit.tech | ok, database:up |
-| mongo | `mongo-override-redundant-firewall-1p7yfo` (mongo:9.0) | internal only | via api check |
+| web | `triptribe-web-acbq9o` | https://triptribe.shrijit.tech | `GET /api/health` |
 
-Images: `ghcr.io/shrijit37/triptribe-ai-{api,web}:<sha>`, multi-arch, built on
-GH Actions. Secrets from Infisical (`TRIPTRIBE_MONGO_URI`, vault
-`infisical-prod` assigned to the TripTribe-AI env). The web image is a Node
-server, not nginx: it produces HTML per request, so the static-file layer was
-removed rather than kept in front of it. The nginx `proxy_pass` is now the
-`rewrites()` rule in `next.config.ts`.
+Image: `ghcr.io/shrijit37/triptribe-ai-web:<sha>`, multi-arch, built on GH
+Actions. Secrets from Infisical (`TRIPTRIBE_MONGO_URI`, vault `infisical-prod`).
 
-## Env split: why some values are `NEXT_PUBLIC_` and some are not
-`NEXT_PUBLIC_*` is inlined into the client bundle at build time and is public.
-Everything else stays on the server. `BACKEND_URL` and `CATALOGUE_API_URL` name
-internal swarm DNS and **must not** be prefixed `NEXT_PUBLIC_` — that would
-publish internal hostnames to anyone reading the bundle. Both are ARG/ENV in
-`frontend/Dockerfile` and build args in `deploy.yml`.
+Two services used to exist, and having two is what caused most of the
+operational defects this change set out to fix:
+
+- **The API Dockerfile was unbootable.** `backend/Dockerfile` copied
+  `index.js`, `config/`, `controllers/`, `models/`, `routes/` and
+  `middleware/` — and silently omitted `services/` and `solver/`, which
+  `index.js` imports at startup. The container started, died on its first
+  import, and served nothing. The compose healthcheck probed the *frontend's*
+  `/`, so the stack read as healthy while the API was gone.
+- **The two env contracts disagreed.** The image baked
+  `BACKEND_URL=http://triptribe-api-y59lny:8080`; the deploy step set
+  `AUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080`. The session lookup
+  resolved to a scratch application that did not exist, so no authenticated
+  request could find a session.
+
+Both are now structurally impossible: one image, one environment block, one
+origin.
+
+## Addressing: there is none
+`NEXT_PUBLIC_ITENARY_API_URL`, `BACKEND_URL` and `CATALOGUE_API_URL` are all
+gone, along with the `rewrites()` rule that used to forward `/api/*` to
+`BACKEND_URL`. The browser calls this same origin, and the SEO city pages call
+`buildCityCatalogue` in-process (`src/lib/catalogue.ts`) rather than over HTTP.
+
+What remains in `NEXT_PUBLIC_*` is only what the *browser* genuinely needs and
+what is genuinely public: the Better Auth URL and the Places autocomplete key.
+
+## Needs owner keys (the app boots degraded without them)
+| Key | Missing means |
+|---|---|
+| `MONGO_URI` | `/api/health` returns 503. Nothing else works. |
+| `TRIPTRIBE_GOOGLE_PLACES_API_KEY` | Planning returns `PLACES_NOT_CONFIGURED` (503); SEO city pages fall back to their no-data state |
+| `TRIPTRIBE_GOOGLE_PLACES_API_KEY` (as routes) | Travel times are estimated by distance instead of computed |
+| `TRIPTRIBE_OPENAI_KEY` | Narration is skipped. The plan is complete; it just has no written descriptions |
+| `TRIPTRIBE_GOOGLE_SEARCH_KEY` | City hero images fall back to a placeholder |
+| `TRIPTRIBE_RESEND_API_KEY` | The email hand-off answers "not available right now" |
+
+"Degraded" is a legitimate healthy state for this app, and `/api/health`
+distinguishes it from "down" by returning 200 either way and naming every
+capability in `checks`. The app never calls `process.exit(1)` — a request that
+cannot reach the database returns 503 and says so, and the container stays up
+so health can report the failure instead of the orchestrator reporting a
+crash-loop.
+
+## Budget: the 1,000-call Places allowance
+`rating`, `priceLevel` and `regularOpeningHours` are Enterprise-tier on every
+Places endpoint. A plan costs roughly `days × stopsPerDay × 2 + 20` calls.
+
+- **`src/server/domain/places/quota.ts` refuses before it spends.** When the
+  projected cost exceeds the month's remaining allowance, the request is
+  answered `QUOTA_EXHAUSTED` with copy that says so, instead of serving a plan
+  scheduled without real opening hours.
+- **`src/server/domain/plan/generate.ts` caches the composed plan for 24 h**,
+  keyed on a hash of the whole request. A repeat costs nothing.
+- **Rate limits** (`src/server/http/rateLimit.ts`): 5 plans/hour signed out,
+  20/hour signed in; 1 email/hour signed out. The old API had none, so one
+  client could burn the month for everyone.
+
+**BEFORE CUTOVER: confirm the collection names** — see
+[TripTribe-AI-0gt](bd:TripTribe-AI-0gt). `src/server/db/mongo.ts` pins
+`users`, `itenaries`, `placecaches`, `usage` and `planCache`. They are the old
+Mongoose defaults. If production Atlas reports anything else, the app will
+appear to work while saving nothing.
 
 ## SEO: the city pages
-`/best-places-to-visit-in-<city>` for the 81 cities in `frontend/src/lib/seo.ts`
-(`INDEXED_CITIES`, curated and deduped), plus `/cities` as the internal-link
-hub, `/sitemap.xml` and `/robots.txt`. Each city page emits `ItemList` +
-`TouristAttraction` (carrying real ratings), `FAQPage` and `BreadcrumbList`
-JSON-LD, and an `alternates.canonical` pointing at the flat keyword URL.
-`/result`, `/search`, `/auth` and `/api/` are noindex — they render a private,
-per-visitor response or a form.
+`/best-places-to-visit-in-<city>` for the 81 cities in `src/lib/seo.ts`
+(`INDEXED_CITIES`), plus `/cities` as the internal-link hub, `/sitemap.xml` and
+`/robots.txt`. Each city page emits `ItemList` + `TouristAttraction` (real
+ratings only — an invented `aggregateRating` is a fabricated review count, which
+is exactly what structured data policies exist to prevent), `FAQPage` and
+`BreadcrumbList` JSON-LD, and an `alternates.canonical` pointing at the flat
+keyword URL. `/result`, `/search`, `/auth` and `/api/` are noindex.
 
-Data comes from `GET /api/seo/city-catalogue` →
-`backend/services/catalogue.js`, which enriches **only** the places missing
-from `placeCache` (Mongo, 90-day TTL). That cache is load-bearing rather than
-an optimisation: rating, price level and opening hours are Enterprise-tier on
-every Places endpoint against a 1,000-call monthly allowance, and a crawler
-hitting these pages repeatedly would exhaust it.
+Data comes from `buildCityCatalogue`, which enriches **only** the places missing
+from `placecaches` (Mongo, 90-day TTL). That cache is load-bearing, not an
+optimisation: a crawler hitting these pages repeatedly would otherwise exhaust
+the monthly Enterprise allowance.
 
-**The catalogue must be populated for these pages to rank.** With the Places
-daily quota spent they still render and stay crawlable, but they carry no place
-list — a thin page. Restore quota and request a few city pages to warm the
-cache; the first render per city is the one that spends the Enterprise calls.
+## Things that will bite anyone changing this
+- **`src/pages/` is reserved** by Next as the Pages Router. Ported screens live
+  in `src/screens/`. A component dropped into `src/pages/` becomes a route.
+- **`/best-places-to-visit-in-jaipur` is a rewrite** onto
+  `app/best-places-to-visit-in/[city]`. Next only treats a segment as dynamic
+  when the *whole* segment is bracketed.
+- **`output: standalone` does not copy `.next/static` or `public/`.** The
+  Dockerfile copies both. Without those two lines every stylesheet 404s and the
+  site renders unstyled — no error, just a broken-looking page.
+- **`react-router`'s `location.state` has no App Router equivalent.**
+  `src/lib/nav.ts` parks the plan in a one-shot `sessionStorage` key. Two
+  components calling the consuming reader both get nothing — `Result` claims the
+  plan once and passes it down. `reactStrictMode` invokes the claiming effect
+  twice, which is why the claim is latched.
+- **Identity comes from the Better Auth session only.** `POST /api/plan` used
+  to save a trip under whatever email the request body carried, so anyone could
+  write into any account by typing its address. The body's `email` is delivery
+  address and nothing else.
+- **A valid session is not membership.** TripTribe is an org on a *shared* auth
+  service, so `ensureMember()` in `src/server/auth/session.ts` is what turns
+  "has a session on auth.shrijit.tech" into "may use TripTribe". It checks
+  `/api/orgs/triptribe/member` and self-joins on first visit. It returns false
+  when the auth hub is unreachable or the org is unseeded, so an outage locks
+  people out rather than letting anyone in — the right direction to fail for an
+  access check. Watch for this when touching auth: it was added to the Express
+  middleware only, and the merge would have dropped it silently.
 
-## Web → api addressing
-`BACKEND_URL` / `CATALOGUE_API_URL` are baked at build time to the internal
-swarm DNS name (`http://triptribe-api-y59lny:8080`). The public-URL hairpin
-from inside a container proved unreliable (flapping 502/timeouts, verified
-2026-10-09). App names are stable; if the api app is recreated with a new
-suffix, update `deploy.yml` and this file.
+## Data model
+Collections keep their old names so existing rows still read; no migration was
+performed.
 
-## Needs owner keys (app boots degraded without them)
-| Infisical key | Powers |
-|---|---|
-| `TRIPTRIBE_OPENAI_KEY` (placeholder) | itinerary narration (`/api/itenary`) |
-| `TRIPTRIBE_GOOGLE_SEARCH_KEY` (placeholder) | city images |
-| `TRIPTRIBE_GOOGLE_PLACES_API_KEY` | place discovery, enrichment, and every SEO city page |
-| `TRIBE_FIREBASE_*` (7 keys, unset) | email signup |
+| Collection | Was | Notes |
+|---|---|---|
+| `users` | `users` | `recentSearch` is now a capped list of pointers (`{tripId, cityName, at}`), not embedded itineraries |
+| `itenaries` | `itenaries` | One document per plan: `uuid`, `city`, `itenary`, plus `userId`, `days`, `budget`, `currency`, `travellers`, `pace`, `placesSnapshot` |
+| `placecaches` | `placecaches` | 90-day TTL, unchanged |
+| `usage` | new | Monthly and hourly counters for the Places allowance and the rate limits |
+| `planCache` | new | 24 h composed plans by request hash |
 
-Without the Places key the solver reports "not configured" at request time and
-the city pages fall back to their no-data state; the app still boots. Without
-the OpenRouter key the backend boots (lazy client in `gptResponse.js`) and
-itinerary generation fails at request time. To activate: add the keys to
-Infisical (and GH secrets for `TRIBE_*`), re-run the workflow — no code change.
+## Deliberately kept
+- MongoDB, not Postgres. Renaming the misspelled `itenaries` collection is a
+  data migration with a backfill, and it does not belong in a cutover.
+- The solver algorithms ported verbatim. Nothing about sequencing, partitioning,
+  scheduling or costing was redesigned; only the bugs were fixed.
 
-## Deliberately removed / kept
-- Removed the Vite toolchain, `react-router`, `react-helmet`, `axios`, and the
-  RTK Query slices against the retired Firebase backend. `react-helmet` is
-  replaced by the Next Metadata API at each route.
-- Removed `frontend/nginx.conf`: server-rendered HTML plus a Node runtime needs
-  no static-file proxy in front of it, and its `/health` contract is preserved
-  verbatim as a Next route handler so the deploy gate's grep still matches.
-- Kept the MongoDB (Postgres rewrite out of scope — the app is Mongoose
-  throughout) and kept React 19 rather than revisiting the 18→19 cascade.
-- Fixed along the way: the dev proxy used to strip `/api` while Express mounts
-  `/api/*`, so every dev API call 404'd; `MEAL_TYPES` omitted the food subtypes
-  (`confectionery`, `tea_house`) that a `restaurant` query also returns, which
-  let sweet shops be partitioned as day activities; and both `compose.js` and
-  the live smoke classified meals by `stop.role != null` rather than by the
-  place, so a meal landing between two clock windows was filed under
-  Activities.
+## Fixed along the way
+Every one of these was a live defect, not a hypothetical:
+- `enrichPlaces([])` returned `[]` instead of `{places, failures}`, so a city
+  with no meal shortlist threw a `TypeError` and answered 500.
+- The cost was hardcoded to `en-IN` and `INR` regardless of the request.
+- `gptResponse.js` read `travellers`, `pace`, `interests`, `originCity`,
+  `startDate` and `travelMode` off the request body and then forwarded
+  `headcount=2`, `stopsPerDay=4` and `WALK`. The form collected all six; the
+  solver received none.
+- `lib/api.ts` read `body.message`; every endpoint returns `{error, details}`.
+  Every failure rendered as "Itinerary request failed".
+- `GET /api/itenary/proxy-image?url=` fetched any URL with no checks — an open
+  SSRF proxy. It is now https-only, host-allowlisted, and rejects resolved
+  private-range IPs.
+- `mealsCost` read `list[0]` — one venue's price for every meal in the plan.
+- `lodgingCost` read `lodgingFound[0]`.
+- `compose.js` imported from `pipeline.js`, so the orchestrator could not be
+  imported without the composer.
+- Two divergent copies of `haversineMeters`, one of which threw on null input.
+- `CORS origin:true` with `credentials:true` reflected any origin.
+- `docker-compose.yaml` was missing `GOOGLE_PLACES_API_KEY` entirely.

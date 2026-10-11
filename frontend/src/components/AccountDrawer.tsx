@@ -247,10 +247,10 @@ const AccountDrawer = ({ open, onClose, name, email }: AccountDrawerProps) => {
             <>
               <ul className="tt-trips">
                 {trips.map((trip, index) => (
-                  <li key={trip._id || index}>
+                  <li key={trip.uuid || index}>
                     <button type="button" className="tt-trip" onClick={() => openTrip(trip)}>
                       <span className="tt-trip__city">{trip.cityName}</span>
-                      <span className="tt-trip__when">{relativeDay(trip.createdAt)}</span>
+                      <span className="tt-trip__when">{relativeDay(trip.time)}</span>
                     </button>
                   </li>
                 ))}

@@ -19,30 +19,27 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_* values are inlined into the client bundle at build time.
+# NEXT_PUBLIC_* values are inlined into the client bundle at build time, so
+# they are fixed here and nowhere else.
 # NEXT_PUBLIC_AUTH_URL is the shared Better Auth service that issues the
 # .shrijit.tech session cookie (src/lib/auth-client.ts).
 # NEXT_PUBLIC_GOOGLE_PLACES_API_KEY powers the city autocomplete.
-# BACKEND_URL and CATALOGUE_API_URL stay server-only: they name internal
-# addresses that must never reach the browser.
-ARG NEXT_PUBLIC_ITENARY_API_URL=/api/itenary
+#
+# There is no NEXT_PUBLIC_ITENARY_API_URL any more, and no BACKEND_URL or
+# CATALOGUE_API_URL. All three named an address that no longer exists: the API
+# routes are in this image, so the browser calls this same origin, and the
+# server calls `buildCityCatalogue` in-process instead of over HTTP.
 ARG NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=
 ARG NEXT_PUBLIC_AUTH_URL=https://auth.shrijit.tech
 ARG NEXT_PUBLIC_SITE_URL=https://triptribe.shrijit.tech
-# Internal swarm DNS (no public hairpin: container egress to the public IP is
-# unreliable). App names are stable; if the api app is ever recreated, update
-# this + STATE.md.
-ARG BACKEND_URL=http://backend:8080
-ARG CATALOGUE_API_URL=http://backend:8080/api/seo/city-catalogue
-ARG APP_VERSION=unknown
 
-ENV NEXT_PUBLIC_ITENARY_API_URL=$NEXT_PUBLIC_ITENARY_API_URL \
-    NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=$NEXT_PUBLIC_GOOGLE_PLACES_API_KEY \
+ENV NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=$NEXT_PUBLIC_GOOGLE_PLACES_API_KEY \
     NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL \
-    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
-    BACKEND_URL=$BACKEND_URL \
-    CATALOGUE_API_URL=$CATALOGUE_API_URL
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
+# The server-only keys are read at request time, never at build time, so they
+# are not declared here: a missing key must degrade the capability it belongs
+# to, and a build-time ARG would freeze "missing" into the image.
 RUN npm run build
 
 FROM node:24-bookworm-slim AS runtime

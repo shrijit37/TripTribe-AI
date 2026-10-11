@@ -1,3 +1,19 @@
+# Everything the image does not need.
+#
+# `.next/` matters most: without this line a stale local build is copied into
+# the image and `npm run build` writes over it, which mostly works — but on a
+# cache hit the old chunks survive alongside the new ones and the standalone
+# output references files that no longer exist.
 node_modules
-dist
+.next
+.git
+.gitignore
+*.log
 .vscode
+.DS_Store
+
+# Not shipped, and not needed to build.
+test
+.env
+.env.local
+.env.*.local

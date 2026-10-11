@@ -6,15 +6,19 @@ TripTribe is a travel itinerary generator web application. Users can enter their
 
 - User authentication (signup, login, logout) via the shared Better Auth service
 - Personalized itinerary generation based on city, budget, and days
-- Server-rendered Next.js 16 frontend (App Router) at the root of `frontend/`
+- One Next.js 16 application (App Router) serving the pages, the API and the
+  SEO city pages from a single process — no second backend
 - SEO city pages at `/best-places-to-visit-in-<city>`, server-rendered and
   marked up as ranked lists
-- Backend API built with Express.js and MongoDB
+- Trip hand-off: email the issued sheet, and re-plan a single day from the
+  places already saved with the trip
 - Google Places Autocomplete for city input
+- MongoDB via the driver, behind a typed repository layer — no ODM
 
 ### How the itinerary is planned
 
-`backend/solver/pipeline.js` decides every fact in a plan; the LLM only
+`frontend/src/server/domain/solver/pipeline.ts` decides every fact in a plan;
+the LLM only
 narrates the finished plan and cannot change it. Stages: discover (Google
 Places) → enrich (Place Details) → partition days by geography and quality →
 schedule against real opening hours → refill a short day → cost the trip →
@@ -64,7 +68,7 @@ projects are involved:
 | frontend project | `9541bd35-aa6f-4719-b663-ec7ec99b8073` (`.infisical.json`) | `VITE_GOOGLE_PLACES_API_KEY`, `VITE_GOOGLE_CUSTOM_SEARCH_API_KEY` |
 
 `.infisical.json` at the repo root pins only the frontend project; the CLI
-picks it up automatically when run from `frontend/`. The backend vault is
+picks it up automatically when run from `frontend/`. The other vault is
 selected by `--projectId` instead, because the root `.infisical.json` would
 otherwise shadow it.
 
@@ -77,41 +81,44 @@ code reads identical variable names in both environments.
 
 | Vault key | Env var the app reads | Read by |
 |---|---|---|
-| `TRIPTRIBE_MONGO_URI` | `MONGO_URI` | `backend/config/db.js` |
-| `TRIPTRIBE_OPENAI_KEY` | `OPENAI_KEY` | `backend/controllers/gptResponse.js` |
-| `TRIPTRIBE_GOOGLE_SEARCH_KEY` | `GOOGLE_CUSTOM_SEARCH_API_KEY` | `backend/routes/itenaryRoute.js` |
-| — (not a secret) | `AUTH_URL` — **value differs, see below** | `backend/middleware/authenticate.js` |
+| `TRIPTRIBE_MONGO_URI` | `MONGO_URI` | `frontend/src/server/db/mongo.ts` |
+| `TRIPTRIBE_OPENAI_KEY` | `OPENAI_KEY` | `frontend/src/server/domain/narrate.ts` |
+| `TRIPTRIBE_GOOGLE_SEARCH_KEY` | `GOOGLE_CUSTOM_SEARCH_API_KEY` | `frontend/src/app/api/plan/image/route.ts` |
+| `TRIPTRIBE_GOOGLE_PLACES_API_KEY` | `GOOGLE_PLACES_API_KEY`, `GOOGLE_ROUTES_API_KEY` | `frontend/src/server/domain/places/` |
+| `TRIPTRIBE_RESEND_API_KEY` | `RESEND_API_KEY` | `frontend/src/server/domain/mail.ts` |
+| — (not a secret) | `AUTH_URL` — see below | `frontend/src/server/auth/session.ts` |
 | `VITE_GOOGLE_PLACES_API_KEY` | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` | `frontend/src/lib/maps.ts` |
 
 Secrets are injected as process env only — nothing is written to disk, and
 no script echoes a secret value.
 
-`TRIPTRIBE_JWT_SECRET` exists in the vault but nothing reads it: no backend
-code references `JWT_SECRET`, and the deploy job never sets it. It is a
-leftover from the pre-Better-Auth setup, when this app issued its own JWTs.
-`backend/.env.example` and `docker-compose.yaml` still list `JWT_SECRET` for
-the same historical reason; the local scripts do not set it.
+`TRIPTRIBE_JWT_SECRET` exists in the vault but nothing reads it: no code
+references `JWT_SECRET`, and the deploy job never sets it. It is a leftover
+from the pre-Better-Auth setup, when this app issued its own JWTs. It is safe
+to remove from the vault.
 
 ## Local development
 
-Three terminals, or run them in the background:
+Two terminals, or run them in the background:
 
 ```bash
 # 1. local MongoDB (data in ~/.local/share/triptribe-mongo)
 ./scripts/dev-mongo.sh
 
-# 2. backend on :8080, env from the Infisical vault
-./scripts/dev-backend.sh          # nodemon; --no-watch for a single run
-
-# 3. frontend on :3000, NEXT_PUBLIC_* from the frontend Infisical project
+# 2. the app on :3000, env from both Infisical projects
 ./scripts/dev-frontend.sh
 ```
 
-Then open http://localhost:3000.
+Then open http://localhost:3000. There is no second process: `/api/*` are route
+handlers in this app, so dev and production are the same origin by construction.
 
-The Next.js dev server proxies `/api` to `http://localhost:8080`
-(`frontend/next.config.ts` `rewrites()`), so the app runs same-origin in dev
-exactly as it does in production.
+```bash
+cd frontend
+npm test        # node --test, no API keys needed
+npm run typecheck
+npm run lint
+npm run build
+```
 
 ## SEO: the city pages
 
@@ -141,7 +148,7 @@ Two constraints are worth knowing before changing this:
   (`next.config.ts`). Making the directory literal breaks every city URL while
   the sitemap keeps advertising them.
 - **The catalogue is cached upstream.** `GET /api/seo/city-catalogue`
-  (`backend/services/catalogue.js`) resolves the city, discovers places, and
+  (`frontend/src/server/domain/catalogue.ts`) resolves the city, discovers places, and
   enriches *only the ones missing* from `placeCache` (Mongo, 90-day TTL).
   Rating, price level and opening hours are Enterprise-tier on every Places
   endpoint with a 1,000-call monthly allowance, so a crawler hitting these
@@ -159,50 +166,56 @@ will not connect from here).
 
 ## Known local/prod differences
 
-- **`AUTH_URL` reaches the same service by a different name.** Prod sets
-  `AUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080`, an internal swarm
-  DNS name that resolves only inside the swarm. Locally the script defaults
-  to `https://auth.shrijit.tech` — the public URL of that same service, and
-  the value `authenticate.js` already falls back to when `AUTH_URL` is
-  unset. Same backend, different network path; the app only calls
-  `/api/auth/get-session` on it.
+- **`AUTH_URL` is the same value everywhere now.** It used to be an internal
+  swarm DNS name in prod (`http://app-copy-mobile-transmitter-zblo2d:8080`,
+  a scratch application that did not exist) and the public URL locally. Both
+  are now `https://auth.shrijit.tech`, which is the only value that works
+  from inside the container.
 - **Session cookie.** Auth is owned by `auth.shrijit.tech`, and the session
   cookie is set on `Domain=.shrijit.tech`. It will not be issued to
   `localhost`, so signed-in flows 401 locally (`{"message":"Not authorized,
   no session."}`) even though the SPA loads. Auth-gated routes in prod:
   `GET /api/users/profile`, `PUT /api/users/profile`, `GET /api/itenary/all`.
-- **The AI provider is configurable, not hardcoded.** `gptResponse.js` reads
+- **The AI provider is configurable, not hardcoded.** `src/server/domain/narrate.ts` reads
   `OPENAI_BASE_URL` and `OPENAI_MODEL`, falling back to OpenRouter and
   `google/gemini-2.0-flash-lite-001` when unset. It currently points at the
   gateway `https://gateway.shrijit.tech/v1` with model `big-pickle`, sourced
   from the vault as `TRIPTRIBE_OPENAI_BASE_URL` / `TRIPTRIBE_OPENAI_MODEL`.
   Any OpenAI-compatible endpoint works; switching provider is a vault edit
-  plus a redeploy, with no code change. `POST /api/itenary` needs a JSON
-  itinerary back, so a model that wraps output in prose will fail to parse.
+  plus a redeploy, with no code change. The narrator only writes descriptions
+  for place ids the solver already chose — it cannot change the plan, so a
+  model that wraps its output in prose degrades to un-narrated stops rather
+  than breaking the route.
 - **Google keys expire.** The Places key in the vault expired once already
   and silently broke autocomplete while everything else looked fine. Check
   the key with a Geocoding call before blaming the app; see Troubleshooting.
 - **Frontend build-time values.** `NEXT_PUBLIC_*` are inlined into the client
-  bundle by `frontend/Dockerfile` at CI build time, so changing a key requires
-  a rebuild. Both CI and local read the same Infisical frontend project
-  (`9541bd35-…`), so local and prod agree; `NEXT_PUBLIC_ITENARY_API_URL`,
-  `NEXT_PUBLIC_AUTH_URL` and `NEXT_PUBLIC_SITE_URL` are non-secret build args
-  set inline in `deploy.yml` and must be kept in step with
-  `frontend/.env.example`. `BACKEND_URL` and `CATALOGUE_API_URL` are
-  server-only and must never be prefixed `NEXT_PUBLIC_` — they name internal
-  addresses that would otherwise be published in the bundle.
+  bundle by `frontend/Dockerfile` at CI build time, so changing one requires a
+  rebuild. Both CI and local read the same Infisical frontend project
+  (`9541bd35-…`), so local and prod agree; `NEXT_PUBLIC_AUTH_URL` and
+  `NEXT_PUBLIC_SITE_URL` are non-secret build args set inline in `deploy.yml`
+  and must be kept in step with `frontend/.env.example`.
+  Every other key is read at request time, never at build time — a missing key
+  must degrade its own capability, and a build-time ARG would freeze
+  "missing" into the image.
 
 ## Deployment
 
-Push to `main`: CI lints and builds both packages, builds multi-arch images
-to `ghcr.io/shrijit37/triptribe-ai-{api,web}:<sha>`, then the deploy job
-re-asserts the Dokploy env (Infisical's own sync wipes it) and redeploys both
-apps. See `STATE.md` for the live topology.
+Push to `main`: CI typechecks, lints, tests and builds, then builds one
+multi-arch image to `ghcr.io/shrijit37/triptribe-ai-web:<sha>`, and the deploy
+job re-asserts the Dokploy env (Infisical's own sync wipes it) and redeploys
+the one app. See `STATE.md` for the live topology.
+
+The deploy gate waits for `/api/health` to report **this** SHA as its
+`version`. Checking health alone is not enough: the previous container keeps
+serving while the new one starts, so the first poll succeeds against the old
+build. That is how the frontend migration once shipped a green run while the
+web app was 502-ing.
 
 Every key comes from Infisical — none from GH secrets. The `build` job pulls
 the frontend project with `Infisical/secrets-action` using the
 `INFISICAL_CLIENT_ID` / `INFISICAL_CLIENT_SECRET` machine identity, and the
-backend's keys reach Dokploy through the vault's own sync. GH secrets hold
+the server-side keys reach Dokploy through the vault's own sync. GH secrets hold
 only the deploy credentials (`DOKPLOY_*`, `GHCR_PULL_TOKEN`). If you add a
 key, add it to Infisical and never to a GH secret: a duplicated key drifts,
 and a GH secret set but empty bakes an empty value into the image.
@@ -211,8 +224,14 @@ and a GH secret set but empty bakes an empty value into the image.
 
 - **`infisical-env: export failed`** — run `infisical login`; the CLI profile
   must target the instance that owns the vault.
-- **`/health` returns 503** — the database is down. Check
-  `~/.local/share/triptribe-mongo/log/mongod.log`.
+- **`/api/health` returns 503** — the database is down. Check
+  `~/.local/share/triptribe-mongo/log/mongod.log`. The body also lists every
+  capability as `up` / `missing` / `estimated` / `skipped` / `unavailable`, so
+  a degraded key is visible without reading logs.
+- **`/api/plan` answers `QUOTA_EXHAUSTED`** — the month's 1,000 Enterprise
+  Places calls are spent. A plan costs roughly `days × stopsPerDay × 2 + 20`.
+  This is deliberate: it refuses before spending, with copy that says so,
+  rather than serving a plan scheduled without real opening hours.
 - **Autocomplete attaches but shows no suggestions** — the Places key is
   dead, expired, or the Places API is off on its project. Check it directly:
   ```bash

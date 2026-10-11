@@ -8,7 +8,8 @@
 #   MONGO_URI                     <- TRIPTRIBE_MONGO_URI
 #   OPENAI_KEY                    <- TRIPTRIBE_OPENAI_KEY
 #   GOOGLE_CUSTOM_SEARCH_API_KEY  <- TRIPTRIBE_GOOGLE_SEARCH_KEY
-#   AUTH_URL                      -> internal swarm DNS of the auth service
+#   RESEND_API_KEY                <- TRIPTRIBE_RESEND_API_KEY
+#   AUTH_URL                      =  https://auth.shrijit.tech
 #
 # This script performs the same mapping locally so a local run and a prod
 # container see identically named variables. Secrets are only ever held in
@@ -24,9 +25,12 @@
 #   --vault-mongo                   use the prod vault MONGO_URI (only
 #                                   reachable from inside the prod swarm)
 #
-# Mappings this script adds for the grounded itinerary pipeline:
+# Mappings this script adds for the grounded itinerary pipeline and the
+# email hand-off:
 #   GOOGLE_PLACES_API_KEY         <- TRIPTRIBE_GOOGLE_PLACES_API_KEY
 #   GOOGLE_ROUTES_API_KEY         <- TRIPTRIBE_GOOGLE_PLACES_API_KEY (same key)
+#   RESEND_API_KEY                <- TRIPTRIBE_RESEND_API_KEY
+#   RESEND_FROM                   <- TRIPTRIBE_RESEND_FROM
 #                                   reachable from inside the prod swarm)
 
 TRIPTRIBE_INFISICAL_PROJECT_ID="${TRIPTRIBE_INFISICAL_PROJECT_ID:-1a39a192-cf29-4ec9-812f-94c35cce34f2}"
@@ -34,6 +38,10 @@ TRIPTRIBE_INFISICAL_ENV="${TRIPTRIBE_INFISICAL_ENV:-prod}"
 TRIPTRIBE_LOCAL_MONGO_URI="${TRIPTRIBE_LOCAL_MONGO_URI:-mongodb://127.0.0.1:27017/triptribe_ai_local}"
 # Prod points this at internal swarm DNS (http://app-copy-mobile-transmitter-zblo2d:8080).
 # That name does not resolve off the server; the public URL is the same service.
+# Prod used to point this at internal swarm DNS
+# (http://app-copy-mobile-transmitter-zblo2d:8080) — the name of a scratch
+# application, not the auth service. The public endpoint is the only value that
+# works from inside the container.
 TRIPTRIBE_AUTH_URL="${TRIPTRIBE_AUTH_URL:-https://auth.shrijit.tech}"
 
 __triptribe_use_vault_mongo=false
@@ -132,14 +140,26 @@ if [ -n "$OPENAI_BASE_URL" ] || [ -n "$OPENAI_MODEL" ]; then
   fi
 fi
 
+# The email hand-off. Optional in both directions: without the key the route
+# answers "not available right now" rather than failing opaquely.
+RESEND_API_KEY="$(__triptribe_get TRIPTRIBE_RESEND_API_KEY)"
+RESEND_FROM="$(__triptribe_get TRIPTRIBE_RESEND_FROM)"
+if [ -z "$RESEND_API_KEY" ]; then
+  echo "infisical-env: TRIPTRIBE_RESEND_API_KEY is missing — the email hand-off" \
+    "will report 'not available right now'" >&2
+fi
+
 AUTH_URL="$TRIPTRIBE_AUTH_URL"
-PORT="${PORT:-8080}"
+# The app listens on 80 in the container and on 3000 in dev; this script is the
+# dev path.
+PORT="${PORT:-3000}"
 NODE_ENV="${NODE_ENV:-development}"
 APP_VERSION="${APP_VERSION:-local}"
 
 export MONGO_URI OPENAI_KEY GOOGLE_CUSTOM_SEARCH_API_KEY OPENAI_BASE_URL \
   OPENAI_MODEL AUTH_URL PORT NODE_ENV APP_VERSION \
-  GOOGLE_PLACES_API_KEY GOOGLE_ROUTES_API_KEY
+  GOOGLE_PLACES_API_KEY GOOGLE_ROUTES_API_KEY \
+  RESEND_API_KEY RESEND_FROM
 
 unset __triptribe_secrets __triptribe_get __triptribe_use_vault_mongo __triptribe_arg \
   __triptribe_require __triptribe_warn_placeholder

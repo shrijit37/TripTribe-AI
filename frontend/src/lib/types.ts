@@ -30,6 +30,7 @@ export type MealName = "breakfast" | "lunch" | "dinner";
 
 export interface ItineraryDay {
   day: number;
+  /** Empty when the solver could not place the day on a calendar. */
   weekday: string;
   activities: NamedPlace[];
   meals: Record<MealName, MealSlot>;
@@ -44,6 +45,16 @@ export interface Hotel {
   prices: string;
   rating: string;
   placeId?: string;
+}
+
+/** The plan's own parameters, echoed so the sheet can name what it is. */
+export interface TripBlock {
+  days: number;
+  stopsPerDay: number;
+  headcount: number;
+  travelMode: string;
+  startWeekday: number;
+  startDate: string | null;
 }
 
 export interface CityBlock {
@@ -67,19 +78,26 @@ export interface ReachBlock {
   nearestBusStation: [string, string];
 }
 
+/**
+ * Every figure is a string because it is rendered as one, and every figure is
+ * nullable because the composer genuinely emits null when the solver had no
+ * number to format — a plan costed without a hotel, for instance. Declaring
+ * these as `string` was a claim the server did not keep; `sum()` already
+ * renders null as an em dash rather than a zero, which is the honest reading.
+ */
 export interface BudgetBlock {
-  total: string;
+  total: string | null;
   breakdown: {
-    accommodation: string;
-    meals: string;
-    activities: string;
-    transportation: string;
+    accommodation: string | null;
+    meals: string | null;
+    activities: string | null;
+    transportation: string | null;
   };
   insufficientBudget: boolean;
   insufficientBudgetMessage: string;
   alternativeOptions: string;
-  averageTotalCost: string;
-  averageAccommodationCost: string;
+  averageTotalCost: string | null;
+  averageAccommodationCost: string | null;
   isEstimate: boolean;
   currency: string;
 }
@@ -96,15 +114,56 @@ export interface PlanPayload {
   metrics?: Record<string, unknown>;
   warnings?: string[];
   verification?: unknown;
-  trip?: Record<string, unknown>;
+  trip?: TripBlock;
+  /** Set on the generate/regenerate responses: the handle for email + re-plan. */
+  tripUuid?: string;
+  /** True when the answer came from the 24 h plan cache rather than the solver. */
+  cached?: boolean;
 }
 
-/** One record from the authenticated `GET /api/itenary/all`. */
+/**
+ * What `POST /api/plan` accepts.
+ *
+ * Six fields here were collected by the Search form and then thrown away: the
+ * old `controllers/gptResponse.js` read `travellers`, `pace`, `interests`,
+ * `originCity`, `startDate` and `travelMode` off the body and forwarded hardcoded
+ * values instead (`headcount=2`, `stopsPerDay=4`, `WALK`), so a traveller who
+ * asked for six people, a relaxed pace and a start date got a plan for two, on a
+ * packed schedule, starting today, on foot. They are declared here because the
+ * client sends them, and the server parses them for the same reason.
+ */
+export interface PlanRequest {
+  cityName: string;
+  days: number;
+  budget: number;
+  /** Delivery address for the hand-off. Never identity — see `auth/session.ts`. */
+  email: string;
+  /** How many people the plan is for. Defaults to 2. */
+  travellers?: number;
+  /** "RELAXED" | "BALANCED" | "PACKED" — decides stops per day. */
+  pace?: PaceName;
+  /** "WALK" | "TRANSIT" | "DRIVE" | "BICYCLE" — decides travel estimates. */
+  travelMode?: TravelModeName;
+  interests?: string[];
+  /** Where the trip starts from, when the traveller said. */
+  originCity?: string;
+  /** ISO `YYYY-MM-DD`. */
+  startDate?: string;
+  /** ISO 4217. Defaults to INR. */
+  currency?: string;
+}
+
+export type PaceName = "RELAXED" | "BALANCED" | "PACKED";
+export type TravelModeName = "WALK" | "TRANSIT" | "DRIVE" | "BICYCLE";
+
+/** One record from the authenticated `GET /api/trips`. */
 export interface TripsApiRecord {
-  _id: string;
-  cityName?: string;
-  itenary?: PlanPayload;
-  createdAt?: string;
+  /** The trip's uuid — the handle the email and regenerate routes take. */
+  uuid: string;
+  cityName: string;
+  /** When it was generated. */
+  time?: string;
+  itenary: PlanPayload;
 }
 
 /** A saved trip in the account drawer's own shape. */
@@ -119,14 +178,6 @@ export interface TripSummary {
 /** The Google Custom Search shape behind `/api/itenary/city-image`. */
 export interface CityImageResponse {
   items?: { link?: string }[];
-}
-
-/** What `parsePlanRequest` accepts, mirrored for the client's own validation. */
-export interface PlanRequest {
-  cityName: string;
-  days: number;
-  budget: number;
-  email: string;
 }
 
 /** One validation failure, as `POST /api/itenary` reports it on a 400. */
