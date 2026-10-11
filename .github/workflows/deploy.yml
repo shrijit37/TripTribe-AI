@@ -166,22 +166,36 @@ jobs:
           point "${{ vars.DOKPLOY_API_APP_ID }}" "ghcr.io/$OWNER/triptribe-ai-api:$SHA"
           point "${{ vars.DOKPLOY_WEB_APP_ID }}" "ghcr.io/$OWNER/triptribe-ai-web:$SHA"
           echo "redeploy triggered for $SHA"
-      # Wait on /health (uniform contract): ok or degraded both serve
-      # traffic; only down/503 fails the gate.
+      # Wait on /health, and require the deployed build to BE this SHA.
+      #
+      # Checking health alone is not enough: the previous container is still
+      # serving while the new one starts, so the first poll succeeds against
+      # the old build and the gate reports success. That is how the frontend
+      # migration shipped a green run while the web app 502'd — the old nginx
+      # container answered /health, then died, and nothing noticed.
+      #
+      # `/health` carries `version`, so requiring it to equal the SHA proves we
+      # are talking to the build we just pushed rather than the one we replaced.
       - name: Wait for the new containers to converge
         run: |
           for i in $(seq 1 30); do
             ok=0
             for base in "${{ vars.API_URL }}" "${{ vars.WEB_URL }}"; do
               body=$(curl -s --max-time 10 "$base/health" || echo '')
-              echo "$body" | grep -q '"status":"ok"\|"status":"degraded"' && ok=$((ok+1))
+              if echo "$body" | grep -q '"status":"ok"\|"status":"degraded"'; then
+                if echo "$body" | grep -q "\"version\":\"$SHA"; then
+                  ok=$((ok+1))
+                else
+                  echo "$base healthy but still serving $(echo "$body" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')"
+                fi
+              fi
             done
             if [ "$ok" = "2" ]; then
-              echo "both services healthy after $i attempt(s)"
+              echo "both services healthy on $SHA after $i attempt(s)"
               exit 0
             fi
-            echo "attempt $i/30: $ok/2 healthy"
+            echo "attempt $i/30: $ok/2 on $SHA"
             sleep 10
           done
-          echo "services did not converge" >&2
+          echo "services did not converge on $SHA" >&2
           exit 1

@@ -49,12 +49,15 @@ FROM node:24-bookworm-slim AS runtime
 
 WORKDIR /app
 
-# Re-declared here, not inherited: an ARG is scoped to the stage that declares
-# it. Without this the ENV below expands to an empty string and `/health`
-# reports `version: ""` instead of the commit sha.
+# Binds 80, not Next's default 3000, and deliberately so: this app is routed by
+# Dokploy to the port its application was created with, which was nginx's. When
+# the frontend moved from a static nginx bundle to a Node server, listening on
+# 3000 meant Dokploy kept routing to 80 and every request 502'd while the old
+# container was gone. Serving on 80 keeps the deployment contract identical to
+# what the app has always been configured for.
 ARG APP_VERSION=unknown
 ENV NODE_ENV=production \
-    PORT=3000 \
+    PORT=80 \
     HOSTNAME=0.0.0.0 \
     APP_VERSION=$APP_VERSION
 
@@ -67,5 +70,5 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 
-EXPOSE 3000
+EXPOSE 80
 CMD ["node", "server.js"]
