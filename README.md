@@ -101,12 +101,14 @@ will not connect from here).
   `localhost`, so signed-in flows 401 locally (`{"message":"Not authorized,
   no session."}`) even though the SPA loads. Auth-gated routes in prod:
   `GET /api/users/profile`, `PUT /api/users/profile`, `GET /api/itenary/all`.
-- **The AI key is still a placeholder.** `TRIPTRIBE_OPENAI_KEY` remains
-  `REPLACE_ME_*` in the vault, so `POST /api/itenary` returns 500 and
-  `/api/itenary/city-image`-backed AI features fail at request time. The
-  backend boots anyway (the OpenAI client is built lazily) and
-  `/api/itenary/city-image` works — it uses `TRIPTRIBE_GOOGLE_SEARCH_KEY`,
-  which now holds a real key.
+- **The AI provider is configurable, not hardcoded.** `gptResponse.js` reads
+  `OPENAI_BASE_URL` and `OPENAI_MODEL`, falling back to OpenRouter and
+  `google/gemini-2.0-flash-lite-001` when unset. It currently points at the
+  gateway `https://gateway.shrijit.tech/v1` with model `big-pickle`, sourced
+  from the vault as `TRIPTRIBE_OPENAI_BASE_URL` / `TRIPTRIBE_OPENAI_MODEL`.
+  Any OpenAI-compatible endpoint works; switching provider is a vault edit
+  plus a redeploy, with no code change. `POST /api/itenary` needs a JSON
+  itinerary back, so a model that wraps output in prose will fail to parse.
 - **Google keys expire.** The Places key in the vault expired once already
   and silently broke autocomplete while everything else looked fine. Check
   the key with a Geocoding call before blaming the app; see Troubleshooting.
