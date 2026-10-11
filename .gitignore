@@ -9,3 +9,7 @@ frontend/.env
 frontend/node_modules/
 backend/.env
 backend/node_modules/
+
+# Impeccable tool state: review screenshots, surface dumps, question rolls.
+# Local tooling only — nothing in the app or CI reads it.
+.impeccable/
