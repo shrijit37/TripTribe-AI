@@ -8,8 +8,12 @@ dotenv.config();
 // Lazy client: constructing OpenAI at import time throws when no key is
 // configured (SDK v7+) and would crash the whole boot. AI features fail
 // at request time instead; everything else keeps working.
+//
+// Any OpenAI-compatible gateway works — OPENAI_BASE_URL and OPENAI_MODEL
+// override the defaults. The SDK is used unchanged; only the endpoint and
+// model are configurable.
 const getClient = () => new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
+    baseURL: process.env.OPENAI_BASE_URL || "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENAI_KEY,
 });
 
@@ -34,7 +38,7 @@ const getResponse = asyncHandler(async (days, cityName, budget, retryCount = 0) 
   }
   try {
     const completion = await getClient().chat.completions.create({
-        model: "google/gemini-2.0-flash-lite-001", 
+        model: process.env.OPENAI_MODEL || "google/gemini-2.0-flash-lite-001",
         messages: [
           { 
             role: "system", 

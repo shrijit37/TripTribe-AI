@@ -130,7 +130,7 @@ jobs:
           jq -n --arg ref "$REF" \
             --arg id "${{ vars.DOKPLOY_API_APP_ID }}" \
             '{applicationId: $id,
-              env: ("PORT=8080\nAUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}"),
+              env: ("PORT=8080\nAUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080\nMONGO_URI=" + $ref + "TRIPTRIBE_MONGO_URI}}\nOPENAI_KEY=" + $ref + "TRIPTRIBE_OPENAI_KEY}}\nGOOGLE_CUSTOM_SEARCH_API_KEY=" + $ref + "TRIPTRIBE_GOOGLE_SEARCH_KEY}}\nOPENAI_BASE_URL=" + $ref + "TRIPTRIBE_OPENAI_BASE_URL}}\nOPENAI_MODEL=" + $ref + "TRIPTRIBE_OPENAI_MODEL}}"),
               buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env
           echo "dokploy env re-asserted"
       - name: Point Dokploy at SHA images and redeploy

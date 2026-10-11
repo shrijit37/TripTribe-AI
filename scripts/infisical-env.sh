@@ -70,6 +70,8 @@ if [ "$__triptribe_use_vault_mongo" != true ]; then
 fi
 OPENAI_KEY="$(__triptribe_get TRIPTRIBE_OPENAI_KEY)"
 GOOGLE_CUSTOM_SEARCH_API_KEY="$(__triptribe_get TRIPTRIBE_GOOGLE_SEARCH_KEY)"
+OPENAI_BASE_URL="$(__triptribe_get TRIPTRIBE_OPENAI_BASE_URL)"
+OPENAI_MODEL="$(__triptribe_get TRIPTRIBE_OPENAI_MODEL)"
 
 # A missing vault key must fail loudly: an empty MONGO_URI leaves mongoose
 # hanging on connect and an empty OPENAI_KEY fails only at request time, so
@@ -100,13 +102,24 @@ __triptribe_require GOOGLE_CUSTOM_SEARCH_API_KEY "$GOOGLE_CUSTOM_SEARCH_API_KEY"
 __triptribe_warn_placeholder OPENAI_KEY "$OPENAI_KEY"
 __triptribe_warn_placeholder GOOGLE_CUSTOM_SEARCH_API_KEY "$GOOGLE_CUSTOM_SEARCH_API_KEY"
 
+# A gateway changes endpoint and model together; either both are present or
+# neither is, so a half-configured pair never silently falls back to
+# OpenRouter while looking configured.
+if [ -n "$OPENAI_BASE_URL" ] || [ -n "$OPENAI_MODEL" ]; then
+  if [ -z "$OPENAI_BASE_URL" ] || [ -z "$OPENAI_MODEL" ]; then
+    echo "infisical-env: OPENAI_BASE_URL and OPENAI_MODEL must both be set" \
+      "for a non-OpenRouter gateway; one alone was found" >&2
+    return 1 2>/dev/null || exit 1
+  fi
+fi
+
 AUTH_URL="$TRIPTRIBE_AUTH_URL"
 PORT="${PORT:-8080}"
 NODE_ENV="${NODE_ENV:-development}"
 APP_VERSION="${APP_VERSION:-local}"
 
-export MONGO_URI OPENAI_KEY GOOGLE_CUSTOM_SEARCH_API_KEY AUTH_URL \
-  PORT NODE_ENV APP_VERSION
+export MONGO_URI OPENAI_KEY GOOGLE_CUSTOM_SEARCH_API_KEY OPENAI_BASE_URL \
+  OPENAI_MODEL AUTH_URL PORT NODE_ENV APP_VERSION
 
 unset __triptribe_secrets __triptribe_get __triptribe_use_vault_mongo __triptribe_arg \
   __triptribe_require __triptribe_warn_placeholder
