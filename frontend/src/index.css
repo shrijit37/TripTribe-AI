@@ -639,7 +639,16 @@ body {
   transition: border-color 0.22s var(--tt-ease);
 }
 
+/* An example must not be mistakable for an entry. The fields are set in the
+   display and measuring faces at figure size, so a placeholder in those same
+   faces reads as a value already typed in — which on this surface would be a
+   lie, because nothing has been entered. The example drops to the body face,
+   a size down and faint. */
 .tt-field__input::placeholder {
+  font-family: var(--tt-face-text);
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0;
   color: var(--tt-ink-faint);
   opacity: 1;
 }
@@ -696,6 +705,25 @@ body {
   height: 6px;
   background: var(--tt-vermilion);
   transform: translateY(-1px);
+}
+
+/* A blank entry is an absent figure, not a refused value: the faint ink and
+   the same em dash every other missing measurement on the sheet carries. */
+.tt-field__error--missing {
+  color: var(--tt-ink-faint);
+}
+
+.tt-field__error--missing::before {
+  content: '—';
+  width: auto;
+  height: auto;
+  background: none;
+  transform: none;
+  font-family: var(--tt-face-data);
+}
+
+.tt-field__input[aria-invalid='true'][data-blank='true'] {
+  border-bottom-color: var(--tt-ink);
 }
 
 .tt-field__input[aria-invalid='true'] {
@@ -872,6 +900,1038 @@ body {
   color: var(--tt-ink-soft);
   margin: 0;
   max-width: 68ch;
+}
+
+/* --- The manifest: the instrument, and the sheet it issues -----------------
+
+   One hairline-ruled column. The three entries are numbered rows; each row's
+   restraint is printed on the same baseline as the entry it limits, in the
+   measuring face. The right-hand column carries the units a field cannot
+   state in words. This is a ledger, so the rules do the separating and
+   nothing else does — no borders, no fills, no shadows between rows.
+   ---------------------------------------------------------------------- */
+
+.tt-manifest {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(2.25rem, 5vw, 3.5rem);
+  padding-bottom: var(--tt-rhythm);
+  align-items: start;
+}
+
+.tt-manifest__about {
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.tt-manifest__display {
+  font-size: clamp(2rem, 3.3vw, 2.85rem);
+  line-height: 1.04;
+}
+
+/* Two tiers read off the same DOM: the sheet leads the middle column and the
+   two supporting columns share the right. Nothing is duplicated and nothing is
+   reordered in the markup — only placed. */
+@media (min-width: 900px) {
+  .tt-manifest {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+    column-gap: clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .tt-sheet {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .tt-manifest__about {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tt-carry {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+@media (min-width: 1180px) {
+  .tt-manifest {
+    grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.2fr) minmax(0, 0.88fr);
+  }
+
+  .tt-manifest__about {
+    grid-column: 1;
+  }
+
+  .tt-sheet {
+    grid-column: 2;
+  }
+
+  .tt-carry {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+.tt-manifest__lede {
+  font-size: 1rem;
+  line-height: 1.58;
+  max-width: 46ch;
+  margin-top: 1.3rem;
+}
+
+
+/* The mark is the foot of the margin column — the rule that closes it lands
+   level with the sheet's own terminal rule rather than mid-column. */
+
+.tt-sheet {
+  min-width: 0;
+  background: var(--tt-paper-lift);
+  border: 1px solid var(--tt-rule-strong);
+  padding: clamp(1.4rem, 3vw, 2.25rem);
+}
+
+.tt-sheet__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: nowrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--tt-rule-strong);
+}
+
+.tt-sheet__title {
+  font-family: var(--tt-face-display);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+  letter-spacing: -0.015em;
+  margin: 0;
+  line-height: 1;
+}
+
+.tt-sheet__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.tt-sheet__slash {
+  color: var(--tt-prussian);
+}
+
+/* --- Entries: numbered rows, each with its restraint --------------------- */
+
+.tt-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tt-entry {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 0 1.1rem;
+  padding: 1.4rem 0 1.25rem;
+  border-bottom: 1px solid var(--tt-rule-hair);
+}
+
+.tt-entry:last-child {
+  border-bottom: 0;
+}
+
+.tt-entry__no {
+  font-family: var(--tt-face-data);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--tt-ink-faint);
+  padding-top: 0.2rem;
+}
+
+.tt-entry__main {
+  min-width: 0;
+}
+
+/* The ask is a sign: the display face, set as signage. The restraint beside
+   it is a limit — a measurement — so it takes the measuring face. */
+.tt-entry__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.9rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.tt-entry__ask {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--tt-ink);
+  line-height: 1;
+}
+
+.tt-entry__rule {
+  font-family: var(--tt-face-data);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+  white-space: nowrap;
+}
+
+.tt-entry__unit {
+  font-family: var(--tt-face-text);
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--tt-ink-faint);
+  letter-spacing: 0;
+  margin-left: 0.45rem;
+  white-space: nowrap;
+}
+
+/* --- The run: the line the sheet is issued on ---------------------------- */
+
+.tt-sheet__run {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.1rem 2rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding-top: 1.35rem;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-sheet__note {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--tt-ink-faint);
+  margin: 0;
+  max-width: 36ch;
+  flex: 1 1 15rem;
+}
+
+/* A refusal that came back from the planner belongs where the refusal is,
+   on the sheet itself, not in a floating toast over it.
+
+   It is set in vermilion on the sheet's own stock, under a terminal rule,
+   rather than on a pressed block: vermilion measures 4.32:1 against the press
+   stock and would fail the Darkest-Ground Rule there, while on the lifted
+   sheet it measures 5.10:1 and holds. The rule says the same thing about it. */
+.tt-sheet__refusal {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--tt-vermilion);
+  margin: 0.95rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 2px solid var(--tt-ink);
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.tt-sheet__refusal::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--tt-vermilion);
+  transform: translateY(-1px);
+}
+
+/* --- Carry: what the issued sheet will hold, and nothing more ------------ */
+
+.tt-carry {
+  min-width: 0;
+}
+
+.tt-carry__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 2px solid var(--tt-ink);
+}
+
+.tt-carry__title {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.005em;
+  margin: 0;
+  line-height: 1;
+}
+
+.tt-carry__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--tt-ink-faint);
+  margin: 0;
+}
+
+.tt-carry__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tt-carry__item {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--tt-rule-hair);
+}
+
+.tt-carry__body {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--tt-ink-soft);
+  margin: 0;
+}
+
+.tt-carry__body strong {
+  font-weight: 600;
+  color: var(--tt-ink);
+}
+
+.tt-carry__foot {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--tt-ink-faint);
+  margin: 1.1rem 0 0;
+  max-width: 40ch;
+}
+
+/* --- Google Places suggestions, printed in the sheet's own rules ----------
+   The widget injects this markup at body level, so the selectors are the
+   widget's own. Separation is a rule and a solid ground, never a shadow:
+   the two lifted surfaces in this world are the map sheet and the slip.
+   ---------------------------------------------------------------------- */
+
+.pac-container {
+  border: 1px solid var(--tt-rule-strong);
+  background: var(--tt-paper-lift);
+  font-family: var(--tt-face-text);
+  margin: 0;
+  padding: 0;
+  z-index: 40;
+}
+
+.pac-container:empty {
+  display: none;
+}
+
+.pac-item {
+  padding: 0.65rem 0.85rem;
+  border-top: 1px solid var(--tt-rule-hair);
+  cursor: pointer;
+  color: var(--tt-ink);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.pac-item:first-child {
+  border-top: 0;
+}
+
+.pac-item:hover,
+.pac-item-selected,
+.pac-item-query {
+  background: var(--tt-prussian-wash);
+}
+
+.pac-item-query {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  letter-spacing: -0.008em;
+  color: var(--tt-ink);
+  font-size: 1rem;
+}
+
+.pac-item-matched {
+  font-weight: 600;
+  color: var(--tt-prussian);
+}
+
+.pac-icon {
+  display: none;
+}
+
+/* The field and the sheet were written for the desktop rail. Below the rail
+   the entries stack and the two supporting columns follow the sheet. */
+@media (max-width: 899px) {
+  .tt-entry {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0 0.85rem;
+  }
+
+  .tt-sheet__run {
+    align-items: flex-start;
+  }
+
+  .tt-sheet__note {
+    max-width: none;
+  }
+}
+
+/* --- The sheet, filled ------------------------------------------------------
+   /search posts a manifest as a slip: bordered, lifted, waiting for three
+   entries. /result is the same sheet with the entries in it, so the paper is
+   no longer a slip at all — it is the document, and it runs the full rail
+   without a border. Separation is done by the ruled lines the Flat Print Rule
+   already asks for, so nothing new is spent on a panel. */
+.tt-issue {
+  padding: clamp(2.5rem, 6vw, 4.5rem) 0 clamp(1.75rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-issue__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tt-issue__title {
+  margin: 0;
+}
+
+.tt-issue__ref {
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--tt-ink-faint);
+}
+
+.tt-issue__lede {
+  margin-top: 1.1rem;
+  max-width: 62ch;
+}
+
+/* The city block is reference data, so it is ruled as a table of contents and
+   typed in the measuring face where it carries figures like a currency. */
+.tt-issue__facts {
+  margin: clamp(1.75rem, 4vw, 2.75rem) 0 0;
+  border-top: 1px solid var(--tt-rule);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.tt-issue__fact {
+  padding: 0.85rem 1rem 0 0;
+  min-width: 0;
+}
+
+.tt-issue__factKey {
+  font-family: var(--tt-face-data);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-issue__factVal {
+  margin: 0.45rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.tt-sheet--filled {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.tt-entry__plain {
+  margin: 1.1rem 0 0;
+  max-width: 62ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--tt-ink-soft);
+}
+
+/* --- The verdict ------------------------------------------------------------
+   The only vermilion on the page, and only ever over a value the solver
+   refused. It sits on lifted slip stock, which is why it is the one element
+   on /result permitted the world's single shadow. */
+/* The one raised sheet on /result. What lifts it is the refusal, and how the
+   refusal is marked is the vermilion type below — not a coloured stripe on the
+   edge of a callout, which is a shape the floor refuses and which says nothing
+   the sentence has not already said. */
+.tt-verdict {
+  margin-top: 1.4rem;
+  background: var(--tt-paper-lift);
+  padding: 1.35rem 1.5rem 1.45rem;
+  box-shadow: var(--tt-lift);
+}
+
+.tt-verdict__line {
+  margin: 0;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.12rem;
+  line-height: 1.28;
+  color: var(--tt-vermilion);
+}
+
+.tt-verdict__body {
+  margin: 0.85rem 0 0;
+  max-width: 64ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.tt-verdict__body + .tt-verdict__body {
+  margin-top: 0.5rem;
+}
+
+/* --- The split of the total -------------------------------------------------
+   Four categories, label and figure on one rule. A missing figure prints a
+   blank in the column rather than a zero: a reader comparing these lines is
+   trusting the gaps as much as the numbers. */
+.tt-split {
+  margin: 1.5rem 0 0;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-split__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-split__key {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tt-split__val {
+  margin: 0;
+  font-family: var(--tt-face-data);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- The route --------------------------------------------------------------
+   One band per day, run top to bottom. Tabs showed a single day behind a
+   control that looked like navigation; a day is a route, and a route is read
+   in order rather than clicked through. */
+.tt-days {
+  margin: 1.5rem 0 0;
+  border-top: 2px solid var(--tt-ink);
+}
+
+/* A day is a band, and a band carries value. The hypsometric tints the landing
+   page spends on contour lines are the world's own scale, so a day here takes
+   the first step of it: flat tint, no border, the hairline underneath still
+   doing the separating. Ink tiers clear 4.5:1 on this ground because the tint
+   is a shade off the stock, not a different surface. */
+.tt-day {
+  padding: 1.5rem 0 1.75rem;
+  border-bottom: 1px solid var(--tt-rule);
+  background: var(--tt-band-1);
+}
+
+.tt-day:nth-child(even) {
+  background: var(--tt-band-2);
+}
+
+.tt-day__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.tt-day__no {
+  font-family: var(--tt-face-data);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--tt-prussian);
+}
+
+.tt-day__weekday {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.tt-day__measures {
+  margin-left: auto;
+  font-family: var(--tt-face-data);
+  font-size: 0.63rem;
+  letter-spacing: 0.12em;
+  color: var(--tt-ink-faint);
+}
+
+.tt-stops {
+  margin: 1.1rem 0 0;
+}
+
+.tt-stop {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0 1.25rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--tt-rule-hair);
+}
+
+.tt-stop__hour {
+  font-family: var(--tt-face-data);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--tt-ink-faint);
+  padding-top: 0.15rem;
+}
+
+.tt-stop__place {
+  margin: 0;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.tt-stop__note {
+  margin: 0.35rem 0 0;
+  max-width: 64ch;
+/* The anchor is the day's first move and the one the rest of the day hangs
+   off, so it is the one stop the product is asserting: prussian, and set with
+   the measure at weight 600. No other stop carries the product's ink. */
+}
+
+
+/* The anchor is the day's first move and the one the rest of the day hangs
+   off, so it is the one stop the product is asserting: prussian, and given a
+   "FROM HERE" reference mark in the measuring face. No stop other than the
+   anchor carries the product's ink. */
+.tt-stop--anchor .tt-stop__place {
+  color: var(--tt-prussian);
+}
+
+.tt-stop--anchor .tt-stop__hour {
+  color: var(--tt-prussian);
+  font-weight: 600;
+}
+.tt-stop__flag {
+  margin: 0.45rem 0 0;
+  font-family: var(--tt-face-data);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--tt-ink-faint);
+}
+
+/* Meals sit on the same rule as the stops above them — same hours column,
+   same place column, no second ledger set one indent to the right. The meal
+   takes its name as a reference mark on its own line instead of a column. */
+.tt-meals {
+  margin: 0.35rem 0 0;
+}
+
+.tt-stop__tag {
+  margin-right: 0.5rem;
+  font-family: var(--tt-face-data);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-stop--meal {
+  border-bottom: 0;
+  padding-bottom: 0.4rem;
+}
+
+.tt-stop--meal .tt-stop__place {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.tt-stop--meal .tt-stop__note {
+  font-size: 0.88rem;
+}
+
+/* The roster ships Barlow upright at 400, 500 and 600 and no italic, so a
+   synthetic oblique would be the one face on the sheet nobody chose. The
+   absence reads in the faint ink instead. */
+.tt-stop__none {
+  margin: 0;
+  padding: 0.8rem 0 0.9rem;
+  border-bottom: 1px solid var(--tt-rule-hair);
+  font-size: 0.9rem;
+  color: var(--tt-ink-faint);
+}
+
+/* The day's own closing rule ends the day; a second rule under it reads as a
+   printing fault rather than as an ending. */
+.tt-stop__none:last-child {
+  border-bottom: 0;
+}
+
+.tt-stop__none .tt-stop__tag {
+  font-style: normal;
+}
+
+/* --- Arrival ---------------------------------------------------------------- */
+.tt-reach {
+  margin: 1.4rem 0 0;
+  border-top: 1px solid var(--tt-rule-strong);
+}
+
+.tt-reach__row {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0 1.25rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-reach__mode {
+  font-family: var(--tt-face-data);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+  padding-top: 0.2rem;
+}
+
+.tt-reach__name {
+  margin: 0;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.tt-reach__detail {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: var(--tt-face-text);
+  font-weight: 400;
+  font-size: 0.88rem;
+  color: var(--tt-ink-soft);
+}
+
+/* --- The estimate ----------------------------------------------------------- */
+/* Ruled stock, not lifted stock. The world's single raise on this surface
+   belongs to the verdict; a work area the visitor fills in does not earn a
+   second one. */
+.tt-calc {
+  margin-top: 2rem;
+  padding: 1.5rem 1.6rem 1.6rem;
+  background: var(--tt-paper-press);
+}
+
+.tt-calc__title {
+  margin: 0;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.tt-calc__note {
+  margin: 0.45rem 0 0;
+  max-width: 58ch;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--tt-ink-soft);
+}
+
+.tt-calc__fields {
+
+  margin-top: 1.4rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--tt-rule);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 1.25rem;
+}
+
+.tt-calc__field {
+  display: block;
+  min-width: 0;
+}
+
+.tt-calc__label {
+  display: block;
+  font-family: var(--tt-face-data);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-ink-faint);
+}
+
+.tt-calc__input {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  border-bottom: 1px solid var(--tt-ink);
+}
+
+.tt-calc__box {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--tt-face-data);
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--tt-ink);
+  background: none;
+  border: 0;
+  padding: 0.2rem 0 0.35rem;
+}
+
+.tt-calc__box:focus {
+  outline: 0;
+  box-shadow: 0 2px 0 0 var(--tt-prussian);
+}
+
+.tt-calc__suffix {
+  flex: 0 0 auto;
+  font-family: var(--tt-face-data);
+  font-size: 0.62rem;
+  color: var(--tt-ink-faint);
+  white-space: nowrap;
+}
+
+.tt-calc__out {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 1.5rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-calc__outKey {
+  font-family: var(--tt-face-data);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--tt-ink-faint);
+}
+
+.tt-calc__figure {
+  font-family: var(--tt-face-data);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--tt-prussian);
+}
+
+/* An estimate nobody has named yet is not the product acting, so it does not
+   wear the product's ink. The figure turns prussian the moment there is one. */
+.tt-calc__figure[data-empty="true"] {
+  color: var(--tt-ink-faint);
+}
+
+/* The balance's first term, printed in the measuring face at figure size: the
+   total is the number that was entered, the split beneath it is worked out. */
+.tt-balance-line {
+  margin: 0.2rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+}
+
+.tt-balance-line__figure {
+  font-family: var(--tt-face-data);
+  font-weight: 600;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.tt-balance-line__note {
+  font-size: 0.85rem;
+  color: var(--tt-ink-soft);
+}
+
+/* --- Notes ------------------------------------------------------------------ */
+.tt-tips {
+  margin: 1.4rem 0 0;
+  border-top: 1px solid var(--tt-rule-strong);
+}
+
+.tt-tip {
+  padding: 0.85rem 0 0.9rem;
+  border-bottom: 1px solid var(--tt-rule);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 66ch;
+}
+
+/* --- The stay --------------------------------------------------------------- */
+.tt-stay {
+  margin-top: 1.5rem;
+}
+
+.tt-stay__caveat,
+.tt-stay__none {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--tt-ink-soft);
+}
+
+.tt-stay__list {
+  margin: 1.2rem 0 0;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-stay__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 1.25rem;
+  align-items: baseline;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--tt-rule);
+}
+
+.tt-stay__name {
+  margin: 0;
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.tt-stay__where {
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--tt-ink-soft);
+}
+
+.tt-stay__figures {
+  display: flex;
+  gap: 1.75rem;
+  align-items: baseline;
+}
+
+.tt-stay__figure {
+  font-family: var(--tt-face-data);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tt-stay__figureKey {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--tt-ink-faint);
+}
+
+/* --- The balance the sheet closes on --------------------------------------- */
+.tt-balance {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--tt-ink);
+}
+
+.tt-balance__key {
+  font-family: var(--tt-face-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--tt-ink-faint);
+}
+
+.tt-balance__val {
+  font-family: var(--tt-face-display);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+  letter-spacing: -0.01em;
+}
+
+.tt-balance__note {
+  margin: 1rem 0 var(--tt-rhythm);
+  max-width: 58ch;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--tt-ink-soft);
+}
+
+@media (max-width: 1179px) {
+  .tt-calc__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+  }
+}
+
+@media (max-width: 899px) {
+  .tt-issue__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 0.5rem;
+  }
+
+  .tt-stop {
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+    gap: 0 0.85rem;
+  }
+
+  .tt-day__measures {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+
+  .tt-reach__row {
+    grid-template-columns: 5rem minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  .tt-stay__item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tt-stay__figures {
+    grid-column: 1;
+    margin-top: 0.5rem;
+  }
 }
 
 /* --- Close ------------------------------------------------------------------- */

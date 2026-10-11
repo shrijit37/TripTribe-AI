@@ -70,6 +70,25 @@ typography:
   data-caption:
     fontFamily: "'Martian Mono', ui-monospace, monospace"
     fontSize: "0.68rem"
+  entry-ask:
+    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
+    fontSize: "0.78rem"
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: "0.02em"
+  restraint:
+    fontFamily: "'Martian Mono', ui-monospace, monospace"
+    fontSize: "0.6rem"
+    fontWeight: 600
+    lineHeight: 1.4
+    letterSpacing: "0.12em"
+  verdict:
+    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
+    fontSize: "1.12rem"
+    fontWeight: 600
+    lineHeight: 1.28
+    letterSpacing: "normal"
+  rounded:
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "0.12em"
@@ -81,6 +100,9 @@ spacing:
   gutter: "clamp(1.25rem, 4vw, 4.5rem)"
   rhythm: "clamp(4.5rem, 9vw, 8.5rem)"
   sheet: "clamp(1.5rem, 3.5vw, 3rem)"
+  sheet-manifest: "clamp(1.4rem, 3vw, 2.25rem)"
+  entry: "1.4rem 0 1.25rem"
+  verdict: "1.35rem 1.5rem 1.45rem"
   ledger: "clamp(1.25rem, 2vw, 2rem)"
   row: "2rem"
 components:
@@ -114,6 +136,39 @@ components:
   slip-sheet:
     backgroundColor: "{colors.stock-lift}"
     rounded: "{rounded.sharp}"
+  sheet-manifest:
+    backgroundColor: "{colors.stock-lift}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sharp}"
+    padding: "{spacing.sheet-manifest}"
+  sheet-issued:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sharp}"
+    padding: "0"
+  verdict-slip:
+    backgroundColor: "{colors.stock-lift}"
+    textColor: "{colors.vermilion}"
+    typography: "{typography.verdict}"
+    rounded: "{rounded.sharp}"
+    padding: "{spacing.verdict}"
+  day-band:
+    backgroundColor: "{colors.band-1}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sharp}"
+    padding: "1.5rem 0 1.75rem"
+  stop-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.title}"
+    rounded: "{rounded.sharp}"
+    padding: "0.8rem 0"
+  ledger-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sharp}"
+    padding: "0.7rem 0"
     padding: "{spacing.sheet}"
   map-sheet:
     backgroundColor: "{colors.stock-paper}"
@@ -135,6 +190,16 @@ components:
 > `frontend/src/components/Footer.jsx`. It is a scan of shipped code, not an intention.
 > Two surfaces are still **outside** this world and are recorded as such under *Layout*
 > and *Do's and Don'ts*: `/search` and `/result`.
+
+>
+> **Amended.** `/search` and `/result` have since been migrated into this world
+> (`frontend/src/screens/Search.tsx`, `frontend/src/screens/Result.tsx`,
+> `frontend/src/components/ActivityCard.tsx`, `frontend/src/components/HotelSection.tsx`,
+> `frontend/src/lib/money.ts`, and a new block in `frontend/src/index.css`). They are no
+> longer outside it and no longer exempt from it. What is written below as scope is the
+> landing and auth world; every section marked *extended by the `/search` + `/result`
+> build* is the same world's answer to a transit manifest and the sheet it issues, and those
+> sections are as normative as the ones they follow.
 
 ## Overview
 
@@ -173,6 +238,37 @@ not by a timer. That is the thesis stated before a word of copy is read.
 - Square corners, tabular figures, uppercase mono labels at wide tracking.
 - The map is a component with a thesis, not an illustration beside the copy.
 - Every browser surface — selection, focus, scrollbars, underline offsets, spin buttons — is themed.
+
+**Extended by the `/search` + `/result` build.** Those two screens are now the system's
+second and third examples rather than its exception: the same stocks, inks, three faces,
+square corners and hairline grammar, with no new token of any kind added to serve them.
+What the build established is not a palette or a component kit but a **document
+relationship** — one object shown twice.
+
+- `/search` is a transit manifest: three ordered entries, `01` `02` `03`, filled in one
+  pass, issued by a single prussian block at its foot.
+- `/result` is *the same sheet*, filled in and issued. The DOM is the same component on
+  both routes; the blank sheet lifts off the stock and loses its border, the filled sheet
+  runs the full rail. One form, one sheet, one grammar.
+- The cost ledger is **always argued**. Total plus the four-way breakdown are visible as
+  ruled rows on every sheet; a vermilion verdict slip appears *only* where a value was
+  refused, and it is the one raised panel on `/result`.
+- The day band is a **value axis** now, not only a map convention: alternating band-1 /
+  band-2 grounds give each day a ground of its own, and the day's anchor stop is marked by
+  taking both its hour and its place into prussian. Nothing else on the page changes.
+- There is **no image** on either screen. The city is named in the display face rather than
+  shown, the sheet is the object, and every figure that belongs to the product is drawn in
+  CSS rules and stock tints.
+
+**Key Characteristics, extended by this build:**
+- Measure every new ink against the ground it actually lands on, not against the ground it
+  was designed on. Both `/result` bands clear the 4.5:1 floor for `ink-faint` (5.48:1 on
+  band-1, 4.92:1 on band-2) and for prussian (6.50:1 / 5.84:1).
+- Mark a refusal with the type colour, never with a coloured stripe or a filled chip.
+- Budget figures belong in a mono figure with a restraint label beside them, and totals get
+  the treatment, not every number on the page.
+- Never ship a figure the visitor did not enter: a solver-void cost prints `—` with a
+  stated reason, and it prints at `ink-faint` rather than at the ink.
 
 ## Colors
 
@@ -232,6 +328,18 @@ functional red. There is no second accent and no gradient anywhere in the system
 - **The Flat Print Rule.** Separation is drawn with ink at low alpha (hair 9%, rule 16%,
   strong rule 34%) rather than with borders, fills or shadow.
 
+- **The Band-Axis Rule, extended.** The hypsometric tints may leave the map when the tint is
+  doing the same job the map does — carrying a value. On `/result` a day is a contour band
+  lying down: alternating `band-1` / `band-2` grounds give each day its own ground without
+  a rule, a fill or a card, and both steps are inside the text floor (`ink-faint` 5.48:1 and
+  4.92:1; prussian 6.50:1 and 5.84:1). `band-3` and `band-4` remain map-only, and a band
+  may never sit under a control.
+- **The Posted-Sheet Rule.** Prussian may take one further form on a sheet: a reference or
+  restraint mark, mono and wide-tracked, printed as a stamp on the form — `TT/ROUTE /
+  FILLED`, `ESTIMATE`, `GATHERED`, the day's anchor. It never becomes a heading, a fill or
+
+  a border.
+
 ## Typography
 
 **Display Font:** Barlow Semi Condensed, self-hosted (weights 500/600/700, latin + latin-ext)
@@ -279,6 +387,18 @@ and declared with `font-display: swap`. There is no CDN type on this page.
   sans-serif`. If the woff2 fails to load, the condensed character is lost and headings fall
   back to generic sans — a real degradation, not a designed one. Verify the font actually
   loads before judging a screenshot.
+- **The Ask-Is-Signage Rule, applied to a form.** An entry's ask is the sign on that entry —
+  display face, 600, uppercase, tight tracking, 0.78rem — and the value beside it is set in
+- **The Refusal-is-Type Rule.** A refusal is set, not shown. Vermilion claims its lines by
+  taking the display face at 1.12rem and nothing else: no stripe, no chip, no icon, no fill
+  beyond the stock it sits on.
+  panel; a form that asks its questions in signage is a manifest.
+- **The Restraint Rule.** A contract limit (`1 TO 60`, `Min 1,000 · step 100`) is a mono
+  stamp at 0.6rem / +0.12em, and the unit or the consequence is set *beside* the field in
+  Barlow rather than appended to the stamp. Long enough to read, quiet enough to ignore.
+- **The Refusal-is-Type Rule.** A refusal is set, not shown. Verdilion claims its lines by
+  taking the display face at 1.12rem and nothing else: no stripe, no chip, no icon, no fill
+  beyond the stock it sits on.
 
 ## Layout
 
@@ -305,6 +425,34 @@ below it**, so the ledger reading is a wide-viewport behaviour, not a universal 
 text measures deliberately narrow: display capped at 14ch, lede and body at 66–68ch, the map
 caption at 58ch, the closing line at 22ch. Long measures are not permitted in this world.
 
+### The manifest spread (`/search`)
+
+`/search` re-uses the rail and the rhythm token and adds one grid of its own. It is one
+column by default with a `clamp(2.25rem, 5vw, 3.5rem)` gap; it steps twice, and the second
+step is the one the direction contract describes:
+
+- **Below 900px** — the display line, then the sheet, then the carry list, stacked. The
+  sheet is the object; everything else is margin.
+- **From 900px** — two columns, `minmax(0, 1.12fr) minmax(0, 1fr)`: the sheet holds column
+  one alone, and the issue line sits above the carry list in column two. A `2.5rem` gutter
+  separates the entry numbers from their asks.
+- **From 1180px** — three columns, `minmax(0, 0.84fr) minmax(0, 1.2fr) minmax(0, 0.88fr)`:
+  the issue in the left margin, the raised sheet in the middle, the carry list in the right
+  margin. The three tracks are `minmax(0, …)` throughout, so a long mono reference can
+  never blow out a column.
+
+The issued sheet on `/result` inverts that: one column, full rail, no side margin, because a
+signed document is not a panel on a page. Its internal measures are `5.5rem / minmax(0, 1fr)`
+for a stop row, `2.5rem / minmax(0, 1fr)` for an entry, `minmax(0, 1fr) / auto` for a hotel
+row, and `repeat(5, minmax(0, 1fr))` for the five facts under the title (two columns below
+900px). Every one of them collapses to a single column, with the figure set on its own line
+rather than centred under it, at the breakpoint named in the component.
+
+The estimate calculator is the one place the four-up row is not four labels in a row: from
+1179px the fields pair two-by-two so a label and its unit always travel together.
+
+caption at 58ch, the closing line at 22ch. Long measures are not permitted in this world.
+
 ## Elevation & Depth
 
 There is exactly one shadow in the system, `--tt-lift`, and it appears twice: on the map
@@ -322,13 +470,30 @@ from 10% ink to transparent below the cut reads as light catching the fold. Insi
 a `feGaussianBlur` at `stdDeviation="0.5"` softens the contour bands so the tint stack reads
 as a printed join rather than stacked vectors.
 
+**Amended by the `/search` + `/result` build.** The shadow *vocabulary* is untouched and
+the Sheet device is still the only shadow in the system, but it now has a fifth surface: the
+verdict slip on `/result`, the raised panel that appears only when the solver refuses the
+budget. It is the single lifted surface on that screen — a refusal is the one thing on a
+signed sheet that earns a raise, and the cost ledger around it stays flat ruled rows so the
+raise means something. The manifest on `/search` does **not** add a lift: the raised sheet
+the direction contract describes is the incumbent `.tt-slip__sheet` device re-used as
+`.tt-sheet`, and the issued version of the same sheet drops its border and its fill rather
+than gaining a second shadow.
+
 ### Shadow Vocabulary
 - **Sheet** (`0 1px 2px rgba(20,24,28,0.06), 0 12px 32px -12px rgba(20,24,28,0.22)`): the map
   sheet and the slip sheet only. Nothing else in the system may cast a shadow.
+  *(Amended: the same Sheet device now also lifts the verdict slip on `/result` and the auth
+  gate. The device list is unchanged — this is still the only shadow value in the system, and
+  the count of *surfaces* that use it is now three on the signed route, one on `/search`
+  via the re-used slip sheet, and one on `/auth`.)*
 
 ### Rules
 - **The Shadow-Budget Rule.** Two surfaces in the entire world are lifted. If a third element
   needs to be lifted, it needs a material reason, not a preference.
+  *(Amended: the third surface arrived with a material reason — a refused budget is the only
+  thing on a signed sheet that earns a raise — and the fourth was the auth gate's whole
+  argument. A fifth still has to make that case.)*
 - **The Soft-Join Rule.** Depth in a drawing comes from tonal stacking and hairline edges.
   No blur-heavy glows, no glass, no backdrop filters.
 
@@ -347,6 +512,13 @@ Silhouettes in the SVG work follow the same logic. Icons are hand-drawn at `24×
 single stroke weight (1.6; 1.7 on the arrow) and round caps — no icon font, no glyph
 standing in for an icon system. The map's contour bands are closed Catmull-Rom splines with
 a 0.66 vertical squash, so the massif reads as terrain rather than as a circle.
+
+The `/search` + `/result` build added **no radius at all** and no new separation device: it
+reused this file's rules unchanged. Its one shape decision is that a sheet changes its
+*geometry* between its two states rather than gaining an outline — the blank manifest is
+lifted and ruled at `rule-strong`, the issued sheet is bare stock with its entries ruled by
+hairline only. Same object, filled in. Nothing else on either screen has an edge that is not
+one of the four rule strengths already named above.
 
 ## Components
 
@@ -458,6 +630,111 @@ intent: pending, the trips ledger with relative dates and the estimates disclaim
 empty list that reads as an invitation, and an API failure naming the failing service with
 a working retry.
 
+### The manifest sheet (`.tt-sheet`) — one component, two states
+
+The single component this build established, and the reason `/search` and `/result` read as
+one object. It is a ledger of numbered entries between a rule-strong head and an issuing
+foot, and it has exactly two states:
+
+- **Blank** (`/search`): stock-lift, a 1px `rule-strong` border, `padding:
+  clamp(1.4rem, 3vw, 2.25rem)`, entered as `.tt-slip__sheet` — it inherits that device's
+  `--tt-lift`. The head reads `TT/SHEET` beside the ask; the foot is a 2px ink rule, a
+  mono-600 restraint stamp, and the single prussian primary action. The action is **never
+  disabled** — an unfilled field is answered with a refusal that names what to do, not with a
+  dead control.
+- **Issued** (`/result`): `.tt-sheet--filled` sets `border: 0`, `background: none`,
+  `padding: 0`. The head becomes `TT/ROUTE / FILLED` with the slash in prussian; the entries
+  answer in prose rather than in inputs. Five entries, in this order and no other:
+  **01** the trip costs under, **02** the route runs, **03** how you arrive, **04** before you
+  go, **05** where you would sleep. Order is the argument: money first, then the route, then
+  arrival, then advice, then somewhere to lie down.
+
+An entry is a grid — `2.5rem minmax(0, 1fr)` — with a mono-600 number, an uppercase display
+ask, and one line of answer. On the blank sheet the answer is the field; on the issued sheet
+it is `ink-soft` body at 0.95rem capped at 62ch. Entries are ruled with a hairline and
+separated by padding, never by a card.
+
+### The cost ledger (`.tt-split`) — argued, never asserted
+
+**Always visible**, whether or not the budget is accepted. A 2px ink rule caps it; each
+category is a `.tt-split__row`: an uppercase display key at 0.86rem on the left, a mono-600
+tabular figure at 0.9rem on the right, hairline beneath, `space-between` on the baseline.
+Four categories — stay, food, doings, getting about — then the total, then, *only when the
+arithmetic demands it*, one reconciling sentence.
+
+That sentence is the ledger's honesty device and it is **sign-branched**: a remainder above
+zero says the solver did not attribute it to a category; a remainder below zero says the
+categories add up to more than the total entered and the split is over-stated. It is
+gated on the remainder being present and non-zero, so a sheet that adds up exactly says
+nothing at all. It never prints `Math.abs`, because the sign is the information.
+
+### The verdict slip (`.tt-verdict`)
+
+The only vermilion panel in the world, and it exists only when `Budget.insufficientBudget`
+is true. Stock-lift, the Sheet shadow, `1.35rem 1.5rem 1.45rem` padding, one display-600
+verdict line at 1.12rem in vermilion, one body paragraph capped at 64ch carrying
+`insufficientBudgetMessage`, and `alternativeOptions` rendered as the same ruled rows the
+cost ledger uses — never as a styled list. It reports a refusal; it does not apologise and
+it does not offer a retry.
+
+### The day band (`.tt-day`)
+
+A day's stops on a tint of its own. `1.5rem 0 1.75rem` padding, hairline beneath, alternating
+`band-1` / `band-2` by `:nth-child(even)` — no ink between days, because the tint is the
+separator. The head is a mono-600 prussian day number, the weekday in display 600, and the
+day's measure pushed to the far end in mono `ink-faint` (`6 STOPS · 11 H 30 MIN · 62 KM`);
+below 900px the measure drops to its own line rather than being squeezed. The band's only
+mark is the anchor: the day's fixed stop takes **both** its hour and its place into prussian
+at weight 600, and nothing else changes. That is how a reader finds the thing they cannot
+move.
+
+### The stop row (`ActivityCard`)
+
+One component for activities and meals alike, which is the point: a meal is a stop that
+happens at an hour. A `5.5rem / minmax(0, 1fr)` grid — the hour in mono-600 tabular
+`ink-faint`, then place in display 600 and a note in Barlow — padded `0.8rem 0` with a
+hairline. The hour comes from a shared `clock()` helper that formats minutes past midnight,
+returns null outside `0–1440`, zero-pads, and wraps at 24 hours; an hour the solver did not
+gather prints `—` at `ink-faint` rather than a fabricated time.
+
+Meals seat into the same hours with a mono `BREAKFAST` / `LUNCH` / `DINNER` tag set in the
+margin and a lighter place size; they carry no bottom rule of their own, so the day's stops
+stay one list. Flags — `HELD 40 MIN`, `OPENS LATER` — are mono-600 stamps in `ink-faint`, and
+an empty day says so in `ink-faint` at upright rather than rendering a bare rule.
+
+### The estimate calculator (`.tt-calc`)
+
+The road-trip cost as arithmetic instead of folklore. Stock-**press**, not lift: the verdict
+owns the only raise on this screen, so the calculator is a working panel set *into* the
+paper. Four visitor-named fields — distance, fuel, tolls, people — in a
+`repeat(4, minmax(0, 1fr))` row that pairs two-by-two from 1179px, each a mono-600
+`tabular-nums` figure with a 1px ink underline and its unit set as a mono suffix. The result
+is a 2px-ruled row: a mono key, and a **prussian** 1.5rem figure that goes `ink-faint` while
+the four fields are empty, so the panel never invents a total before it has been asked for.
+
+### The stay list (`.tt-stay`)
+
+Caveat first, list second. Each row is `minmax(0, 1fr) auto`: hotel name in display 600,
+its area in `ink-soft` beneath, then a figures cluster of rating, a per-night and a total,
+each a mono-600 tabular figure with a `PER NIGHT` / `FOR n NIGHTS` restraint beneath it.
+Below 600px the figures drop to their own line. A hotel is marked as an estimate in the
+word "worked out", and when the solver returns none the section says so and names the city
+rather than showing an empty list under a heading.
+
+### The balance line (`.tt-balance`)
+
+The sheet's foot and its last raised voice: `ISSUED` in mono, then `Jaipur · 4 DAYS · ₹24,000
+ESTIMATED` in display 600 at `clamp(1.15rem, 2.2vw, 1.6rem)`, then one `ink-soft` note that
+carries the estimates disclaimer and ends the document. It repeats what entry 01 argued in
+the sheet's own signature form, and nothing more.
+
+### The closing band (`.tt-close`)
+
+The screen's last line, and the one place a `.tt-close` band must not be returned bare: it
+carries no horizontal padding of its own, so on its own it renders at `x = 0` with its fine
+print clipped off the left edge. **It is always wrapped in `.tt-page` and `.tt-rail`**, like
+every other section, and the fine print carries its own `rule-hair` top border.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -473,6 +750,15 @@ a working retry.
 - **Do** let the map stay driven by real state. Every spot height must sit on equal-or-darker
   ground than the figure below it; every terminus must move for every legal input.
 - **Do** keep the disclaimer that prices and availability are estimates, on every surface
+- **Do** let one object carry two states, as the sheet does: same entries, same order, same
+  grammar — blank it is a form, filled it is a document.
+- **Do** argue a number rather than assert it. Show the breakdown, show the total, and when
+  the parts and the whole disagree, say which way.
+- **Do** print a refused value where the refusal happened, on the ground where it is
+  legible, and carry the alternatives with it. A product that cannot say "this will not work"
+  has not finished the sheet.
+- **Do** gate optional blocks on the data that exists, never on a field the solver has not
+  gathered yet. Render the payload you have; blank the block you don't.
   that shows a plan.
 
 ### Don't:
@@ -489,14 +775,60 @@ a working retry.
   instruction — same component, same props, same wrapper div, `40vh` / `600px`, `rounded-xl`.
   Treat it as a boundary, not a precedent: the *seam around it* is part of this world, the
   block inside it is not.
-- **Don't** assume this world has reached the rest of the product. It has not.
-  `daisyUI` and Tailwind are still installed and still style `/search` and `/result`.
-  Those surfaces do not follow these tokens and must not be treated as examples of the
-  system. The first surface to migrate them inherits a documented world, not an
-  enforced one.
+- **Don't** assume this world has reached the whole product. `/`, `/auth`, `/search` and
+  `/result` are now all built from these tokens, and `/search` and `/result` are the system's
+  **second and third examples** rather than its exception: the sheet, the day band, the cost
+  ledger and the verdict slip are all incumbent grammar, and the build added no colour, no
+  radius and no shadow value to serve them. The warning that used to close this bullet still
+  stands — **the world is documented, not enforced.** `daisyUI` and Tailwind are still
+  installed under `frontend/`, nothing in the toolchain stops the next route from reaching
+  for a class instead of a token, and nothing in this file can prove which one it reached
+  for. Inherit a documented world, not an enforced one: read this file before writing a
+  route, and when the code disagrees with it, report the code — do not copy it.
 - **Don't** spend the third shadow, or a fourth use of prussian, on a panel. The account
   drawer separates on its own hairline edge and carries its identity as a square of stock
   in ink — prussian stays on the route, the primary action, and reference marks.
+  *(Amended: the verdict slip is the third shadow. It reports a refusal rather than creating
+  separation, which is the material reason this rule asks for; the account drawer was right
+  to refuse one.)*
 - **Don't** claim an account capability the product does not have. Email hand-off is
   intended and unbuilt; there is no mail transport in the repository. The auth margin
   states what an address does today and nothing more.
+- **Don't** use vermilion, or any ink that failed the contrast floor, on a ground it was not
+  measured against. A refusal block printed on pressed stock measures 4.32:1 and does not
+  clear the 4.5:1 floor this system sets for itself.
+- **Don't** add a second radius, or a "component" that is really a card. The manifest is a
+  ledger with three entries; a fourth field does not make it a grid.
+- **Don't** let a stepper own a form that fits on one sheet. Three ordered entries are read
+  at a glance; the same three entries behind `NEXT` are not.
+- **Don't** print a figure the visitor did not supply and the solver did not return. `—`
+  with a stated reason is a correct answer; a plausible number is not.
+- **Don't** invent a currency. Format what `Budget.currency` or `city.Currency` carries and
+  fall back to ₹; never apply a rate the repository does not hold.
+- **Don't** use emoji as iconography, a day/meal tab pair, a mouse-follow distortion
+  background, or a stepper — the `/search` + `/result` build deleted all four and the world
+  did not miss them.
+
+### Drift carried by this build, not canonized
+
+Recorded here because a build is allowed to contradict itself for one release and not to
+teach it. None of these is a rule; each is a defect the next surface must not inherit as
+precedent.
+
+- **A dead token.** `--tt-vermilion-wash: rgba(184, 52, 26, 0.1)` is declared in `:root` and
+  used by nothing. It predates this build; it is listed so the next surface does not
+  discover it as an available colour and reach for it.
+
+Two more were found by the same audit and **repaired before the build shipped**, so they are
+rules here rather than drift:
+
+- **Vermilion belongs on lifted stock.** `.tt-sheet__refusal` was first set in vermilion on
+  `--tt-paper-press`, which measures **4.32:1** and fails the floor set in **The
+  Darkest-Ground Rule** above. The rule was not relaxed; the block was. It now carries no
+  fill of its own — vermilion type on the sheet's own stock, **5.10:1**, under a 2px terminal
+  rule. Every vermilion mark on these two surfaces now measures at least 4.5:1 against the
+  ground it actually sits on, including the field refusals in `.tt-field__error`.
+- **No synthetic obliques.** The roster ships Barlow upright at 400, 500 and 600 and no
+  italic cut — all 16 woff2 subsets are `font-style: normal`. `.tt-stop__none` had asked for
+  one; the absence now reads in `ink-faint` at upright, and the rule is that nothing on
+  these surfaces may ask for a cut the roster does not ship.
