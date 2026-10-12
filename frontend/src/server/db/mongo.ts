@@ -41,7 +41,7 @@ export const COLLECTIONS = {
   users: "users",
   /** One document per generated itinerary. Named `itenaries` by Mongoose. */
   trips: "itenaries",
-  /** 90-day TTL cache of enriched places, feeding the SEO city pages. */
+  /** 30-day retention cache of enriched places, feeding the SEO city pages. */
   placeCache: "placecaches",
   /** Call counters for the Places allowance and the rate limits. */
   usage: "usage",

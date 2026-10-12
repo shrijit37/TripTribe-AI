@@ -1,44 +1,81 @@
 import "server-only";
-import { addCount, getCount, monthKey } from "@/server/db/repositories/usage";
+import { addCount, getCount, dayKey } from "@/server/db/repositories/usage";
 
 /**
- * The Places monthly budget, enforced before a single call is spent.
- * `rating`, `priceLevel` and `regularOpeningHours` are Enterprise on every
- * Places endpoint with a 1,000 calls/month allowance. A plan costs ~20
- * enrichment calls plus 3 discovery calls, so the pipeline projects its cost
- * *before* running: when the remaining allowance cannot cover the request, it
- * answers `QUOTA_EXHAUSTED` (503) with honest copy instead of serving a plan
- * scheduled without real opening hours and pretending otherwise.
+ * The Places daily budget, enforced before a call is spent.
+ *
+ * Google's real ceiling is per-project per-day: `SearchNearbyRequestPerDayPerProject`
+ * = 100/day and `GetPlaceRequestPerDayPerProject` = 100/day (measured
+ * 2026-10-12, project 1024136789335). The old model assumed a 1,000/month
+ * Enterprise allowance, which is the wrong axis (bead 5uz): discovery and
+ * enrichment are separate metrics, and both reset at 00:00 UTC.
+ *
+ * So this module tracks two counters and answers `QUOTA_EXHAUSTED` (503)
+ * with honest copy when either one cannot cover the next plan, instead of
+ * spending the cap and letting a real upstream 429 surface as an opaque 500.
  */
 
-export const MONTHLY_PLACES_ALLOWANCE = 1000;
+export const DAILY_DISCOVERY_ALLOWANCE = 100;
+export const DAILY_ENRICHMENT_ALLOWANCE = 100;
 
-/** What a full plan costs, by shape. Discovery is Pro (free tier); enrichment is Enterprise. */
+/** Discovery: 3×searchNearby (sights/meals/lodging) + 1×resolveCity.
+ * Enrichment: sights shortlist (days×stopsPerDay×2+8) + meals shortlist (12). */
+export interface PlanCost {
+  discovery: number;
+  enrichment: number;
+}
+
 export const projectPlanCost = ({
   days,
   stopsPerDay,
 }: {
   days: number;
   stopsPerDay: number;
-}): number => days * stopsPerDay * 2 + 8 + 12;
-
-export const placesUsedThisMonth = async (at = new Date()): Promise<number> =>
-  getCount(monthKey("places", at));
+}): PlanCost => ({
+  discovery: 4,
+  enrichment: days * stopsPerDay * 2 + 8 + 12,
+});
 
 export const recordPlacesSpent = async (
-  calls: number,
+  cost: PlanCost,
   at = new Date(),
-): Promise<number> => addCount(monthKey("places", at), calls);
+): Promise<void> => {
+  await Promise.all([
+    addCount(dayKey("places-discovery", at), cost.discovery),
+    addCount(dayKey("places-enrichment", at), cost.enrichment),
+  ]);
+};
 
 /**
- * Whether the projected cost fits the remaining allowance.
- * Returns the shortfall (0 when it fits) so the route can report it.
+ * Whether the projected cost fits today's remaining allowance on *both*
+ * axes. Returns the used/remaining pair for each so the refusal can say
+ * which cap is dry.
  */
 export const quotaShortfall = async (
-  projected: number,
+  projected: PlanCost,
   at = new Date(),
-): Promise<{ fits: boolean; used: number; remaining: number }> => {
-  const used = await placesUsedThisMonth(at);
-  const remaining = Math.max(0, MONTHLY_PLACES_ALLOWANCE - used);
-  return { fits: projected <= remaining, used, remaining };
+): Promise<{
+  fits: boolean;
+  discovery: { used: number; remaining: number };
+  enrichment: { used: number; remaining: number };
+}> => {
+  const [discoveryUsed, enrichmentUsed] = await Promise.all([
+    getCount(dayKey("places-discovery", at)),
+    getCount(dayKey("places-enrichment", at)),
+  ]);
+  const discovery = {
+    used: discoveryUsed,
+    remaining: Math.max(0, DAILY_DISCOVERY_ALLOWANCE - discoveryUsed),
+  };
+  const enrichment = {
+    used: enrichmentUsed,
+    remaining: Math.max(0, DAILY_ENRICHMENT_ALLOWANCE - enrichmentUsed),
+  };
+  return {
+    fits:
+      projected.discovery <= discovery.remaining &&
+      projected.enrichment <= enrichment.remaining,
+    discovery,
+    enrichment,
+  };
 };

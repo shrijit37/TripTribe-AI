@@ -38,6 +38,7 @@ export const createTrip = async (input: CreateTripInput): Promise<TripDoc> => {
     travellers: input.travellers,
     pace: input.pace,
     placesSnapshot: input.placesSnapshot,
+    snapshotAt: new Date().toISOString(),
     emailSentAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),

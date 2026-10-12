@@ -40,7 +40,7 @@ interface PageProps {
  *
  * Rendering on demand removes the window entirely. The cost is one Mongo read
  * per page, not one Google call: both the city resolution and the enriched
- * places are cached for 90 days (`domain/catalogue.ts`, `placecaches`), so a
+ * places are cached for 30 days (`domain/catalogue.ts`, `placecaches`), so a
  * warm city spends nothing at all. Next's own cache had been duplicating that
  * with a day-long window, and a one-day cache of "empty" is worse than none.
  *

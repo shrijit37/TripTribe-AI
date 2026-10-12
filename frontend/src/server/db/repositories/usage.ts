@@ -3,10 +3,10 @@ import { COLLECTIONS, withDb } from "@/server/db/mongo";
 import type { UsageDoc } from "@/server/db/documents";
 
 /**
- * Monotonic counters in Mongo: `{ _id: "places:2026-10", count }`.
- * Backs the Places monthly budget (`domain/places/quota.ts`) and the rate
- * limits (`http/rateLimit.ts`). Mongo-backed rather than in-process so a
- * restart or a second container cannot reset the month.
+ * Monotonic counters in Mongo, keyed by day or month bucket. Backs the
+ * Places daily budget (`domain/places/quota.ts`) and the rate limits
+ * (`http/rateLimit.ts`). Mongo-backed rather than in-process so a restart
+ * or a second container cannot reset the clock.
  */
 export const getCount = async (key: string): Promise<number> => {
   try {
@@ -38,6 +38,10 @@ export const addCount = async (key: string, by: number): Promise<number> => {
     return by;
   }
 };
+
+/** UTC day bucket: `places-discovery:2026-10-12`. Reset when the cap resets. */
+export const dayKey = (prefix: string, at = new Date()): string =>
+  `${prefix}:${at.toISOString().slice(0, 10)}`;
 
 export const monthKey = (prefix: string, at = new Date()): string =>
   `${prefix}:${at.getUTCFullYear()}-${String(at.getUTCMonth() + 1).padStart(2, "0")}`;

@@ -41,6 +41,7 @@ the app for local use but can never produce the artefact production runs.
 |---|---|---|---|
 | MongoDB (`MONGO_URI` → swarm service, see README) | not this repo | none | An external cluster; nothing here deploys it. `/api/health` returns 503 when it is unreachable. |
 | Better Auth (`AUTH_URL`) | a separate service | https://auth.shrijit.tech | Owns the session cookie on `Domain=.shrijit.tech`. Nothing here deploys it. |
+| `google-maps-scraper` sidecar (`SCRAPER_BASE_URL` → internal URL) | Dokploy, from `google-maps-scraper-kit/docker-compose.yml` (digest-pinned) | none — internal only | Runs the scrape fallback behind `POST /api/internal/prewarm`. No public ingress: it must never be reachable from the internet. Web app also needs `INTERNAL_PREWARM_TOKEN` set to the same bearer the cron sends. |
 
 Data services get no public domain because they are never routed by Dokploy
 through this app — there is no proxy to them in this repo's config.

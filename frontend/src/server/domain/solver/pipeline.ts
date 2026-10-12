@@ -7,6 +7,10 @@ import {
   type EnrichedPlace,
 } from "@/server/domain/places/client";
 import {
+  readPrewarmPlaces,
+  isQuotaError,
+} from "@/server/domain/places/fallback";
+import {
   computeRoutesOptimized,
   isRoutesConfigured,
 } from "@/server/domain/places/routes";
@@ -325,71 +329,92 @@ export const solveItinerary = async ({
     fail("CITY_NOT_FOUND", `Could not resolve a location for "${city}"`);
   const resolved = centre as EnrichedPlace;
   const radius = 9000;
-  const [sights, mealsFound, lodgingFound] = await Promise.all([
-    searchNearby({
-      latitude: (resolved.location as LatLng).lat,
-      longitude: (resolved.location as LatLng).lng,
-      includedTypes: [
-        "tourist_attraction",
-        "museum",
-        "historical_landmark",
-        "monument",
-        "art_gallery",
-        "park",
-        "castle",
-        "shopping_mall",
-      ],
-      radius,
-      maxResultCount: 20,
-    }),
-    searchNearby({
-      latitude: (resolved.location as LatLng).lat,
-      longitude: (resolved.location as LatLng).lng,
-      includedTypes: [...MEAL_TYPES],
-      radius,
-      maxResultCount: 12,
-    }),
-    searchNearby({
-      latitude: (resolved.location as LatLng).lat,
-      longitude: (resolved.location as LatLng).lng,
-      includedTypes: ["lodging"],
-      radius,
-      maxResultCount: 6,
-    }),
-  ]);
+  let usable: EnrichedPlace[] = [];
+  let degraded = false;
+  let lodgingFound: EnrichedPlace[] = [];
+  try {
+    const [sights, mealsFound, lodging] = await Promise.all([
+      searchNearby({
+        latitude: (resolved.location as LatLng).lat,
+        longitude: (resolved.location as LatLng).lng,
+        includedTypes: [
+          "tourist_attraction",
+          "museum",
+          "historical_landmark",
+          "monument",
+          "art_gallery",
+          "park",
+          "castle",
+          "shopping_mall",
+        ],
+        radius,
+        maxResultCount: 20,
+      }),
+      searchNearby({
+        latitude: (resolved.location as LatLng).lat,
+        longitude: (resolved.location as LatLng).lng,
+        includedTypes: [...MEAL_TYPES],
+        radius,
+        maxResultCount: 12,
+      }),
+      searchNearby({
+        latitude: (resolved.location as LatLng).lat,
+        longitude: (resolved.location as LatLng).lng,
+        includedTypes: ["lodging"],
+        radius,
+        maxResultCount: 6,
+      }),
+    ]);
 
-  // ── 2. enrich ──
-  const sightPool = sights.filter((p) => p.location);
-  const mealPool = mealsFound.filter((p) => p.location);
-  const sightShortlist = sightPool.slice(0, days * stopsPerDay * 2 + 8);
-  const mealShortlist = mealPool.slice(0, 12);
-  const shortlist = (pool: EnrichedPlace[]) =>
-    enrichPlaces(pool.map((p) => p.placeId));
+    lodgingFound = lodging;
+    // ── 2. enrich ──
+    const sightPool = sights.filter((p) => p.location);
+    const mealPool = mealsFound.filter((p) => p.location);
+    const sightShortlist = sightPool.slice(0, days * stopsPerDay * 2 + 8);
+    const mealShortlist = mealPool.slice(0, 12);
+    const shortlist = (pool: EnrichedPlace[]) =>
+      enrichPlaces(pool.map((p) => p.placeId));
 
-  let sightResult = await shortlist(sightShortlist);
-  let mealResult = await shortlist(mealShortlist);
+    let sightResult = await shortlist(sightShortlist);
+    let mealResult = await shortlist(mealShortlist);
 
-  if (sightResult.places.length === 0 && sightResult.failures.length > 0) {
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
-    sightResult = await shortlist(sightShortlist);
-    mealResult = await shortlist(mealShortlist);
-  }
+    if (sightResult.places.length === 0 && sightResult.failures.length > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      sightResult = await shortlist(sightShortlist);
+      mealResult = await shortlist(mealShortlist);
+    }
 
-  const degraded =
-    sightResult.places.length === 0 && sightResult.failures.length > 0;
-  if (sightResult.failures.length > 0 && !degraded) {
-    warnings.push(
-      `${sightResult.failures.length} of ${sightShortlist.length} attraction(s) had no rating or opening hours and were skipped`,
+    degraded =
+      sightResult.places.length === 0 && sightResult.failures.length > 0;
+    if (sightResult.failures.length > 0 && !degraded) {
+      warnings.push(
+        `${sightResult.failures.length} of ${sightShortlist.length} attraction(s) had no rating or opening hours and were skipped`,
+      );
+    }
+
+    const pool = degraded
+      ? [...sightPool, ...mealPool]
+      : [...sightResult.places, ...mealResult.places];
+    usable = pool.filter((p) => p.location && p.isOperational);
+    if (degraded) {
+      warnings.push(
+        "Opening hours and ratings could not be fetched, so times are approximate and venues may be closed when reached",
+      );
+    }
+  } catch (error) {
+    // Google's daily Places cap is spent (an upstream 429 carries
+    // QUOTA_EXHAUSTED, see client.ts). Serve the prewarm snapshot when the
+    // city has one, so the plan still goes out with real — if week-old —
+    // hours; otherwise surface the honest quota refusal (bead 9ve).
+    if (!isQuotaError(error)) throw error;
+    const snapshot = await readPrewarmPlaces(city);
+    if (!snapshot) throw error;
+    usable = [...snapshot.sights, ...snapshot.meals, ...snapshot.lodging].filter(
+      (p) => p.location && p.isOperational,
     );
-  }
-
-  const pool = degraded
-    ? [...sightPool, ...mealPool]
-    : [...sightResult.places, ...mealResult.places];
-  const usable = pool.filter((p) => p.location && p.isOperational);
-  if (degraded) {
+    degraded = false;
     warnings.push(
-      "Opening hours and ratings could not be fetched, so times are approximate and venues may be closed when reached",
+      "Today's live map lookup is exhausted, so this plan was built from a recent snapshot of the city's places — some details may be a few days old",
     );
   }
   if (usable.length === 0)

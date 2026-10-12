@@ -30,7 +30,10 @@ export async function GET(request: Request) {
           "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
       },
     });
-  } catch {
+  } catch (error) {
+    if ((error as { code?: string } | null)?.code === "QUOTA_EXHAUSTED") {
+      return fail("QUOTA_EXHAUSTED", "Places are unavailable right now");
+    }
     return fail("UPSTREAM_UNAVAILABLE", "Places are unavailable right now");
   }
 }

@@ -1,6 +1,6 @@
 import "server-only";
 import { missing, optional, timeoutMs } from "@/server/env";
-import type { LatLng, Place } from "@/server/domain/types";
+import { PlanError, type LatLng, type Place } from "@/server/domain/types";
 
 /**
  * Google Places API (New) client.
@@ -110,6 +110,23 @@ export class PlacesRequestError extends Error {
   }
 }
 
+/**
+ * An upstream 429 means Google's per-project daily cap is spent — the same
+ * state our own budget models, so it carries our code (bead 9ve). Anything
+ * else stays a `PlacesRequestError` for the caller to log or retry.
+ */
+const requestError = (
+  what: string,
+  status: number,
+  detail: string,
+): PlacesRequestError | PlanError =>
+  status === 429
+    ? new PlanError(
+        "QUOTA_EXHAUSTED",
+        `${what} hit Google's daily Places cap (upstream 429)`,
+      )
+    : new PlacesRequestError(what, status, detail);
+
 interface RawPlace {
   id?: string;
   displayName?: { text?: string };
@@ -151,8 +168,8 @@ const get = async (
     });
     if (!response.ok) {
       const text = await response.text().catch(() => "");
-      throw new PlacesRequestError(
-        `Places GET ${path} failed: ${response.status}`,
+      throw requestError(
+        `Places GET ${path}`,
         response.status,
         text.slice(0, 500),
       );
@@ -187,8 +204,8 @@ const post = async (
     });
     if (!response.ok) {
       const text = await response.text().catch(() => "");
-      throw new PlacesRequestError(
-        `Places ${path} failed: ${response.status}`,
+      throw requestError(
+        `Places ${path}`,
         response.status,
         text.slice(0, 500),
       );
@@ -371,7 +388,13 @@ export const enrichPlaces = async (
       }
       enriched.push(place);
     } else {
-      const reason = outcome.reason as { message?: string } | null;
+      const reason = outcome.reason as
+        | { message?: string; code?: string }
+        | null;
+      // An upstream 429 anywhere in the batch means the cap is dry: serving
+      // a plan without hours would pretend otherwise, so refuse honestly
+      // instead of recording a degradation (bead 9ve).
+      if (reason?.code === "QUOTA_EXHAUSTED") throw reason;
       failures.push({
         placeId: id,
         error: reason?.message ?? "enrichment failed",

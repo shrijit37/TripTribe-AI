@@ -77,19 +77,33 @@ cannot reach the database returns 503 and says so, and the container stays up
 so health can report the failure instead of the orchestrator reporting a
 crash-loop.
 
-## Budget: the 1,000-call Places allowance
-`rating`, `priceLevel` and `regularOpeningHours` are Enterprise-tier on every
-Places endpoint. A plan costs roughly `days × stopsPerDay × 2 + 20` calls.
+## Budget: two daily Places caps, with a scraper fallback
+Google's real ceiling (measured 2026-10-12, project 1024136789335) is per-day
+and per-metric: `SearchNearbyRequestPerDayPerProject` = 100/day and
+`GetPlaceRequestPerDayPerProject` = 100/day. A plan costs 4 discovery calls
++ `days × stopsPerDay × 2 + 20` enrichment calls.
 
-- **`src/server/domain/places/quota.ts` refuses before it spends.** When the
-  projected cost exceeds the month's remaining allowance, the request is
-  answered `QUOTA_EXHAUSTED` with copy that says so, instead of serving a plan
-  scheduled without real opening hours.
+- **`src/server/domain/places/quota.ts` refuses before it spends.** Two
+  counters (`places-discovery:<UTC day>`, `places-enrichment:<UTC day>` in the
+  `usage` collection) are checked against the 100/day budget on each axis;
+  a shortfall is answered `QUOTA_EXHAUSTED` (503) with honest copy that says
+  the allowance reopens tomorrow — instead of serving a plan scheduled without
+  real opening hours.
+- **An upstream 429 is also `QUOTA_EXHAUSTED`, never an opaque 500.**
+  `domain/places/client.ts` maps the Google 429 to the same code, and
+  `enrichPlaces` rethrows instead of silently degrading a half-built plan.
+- **Fallback: the scraper snapshot.** `POST /api/internal/prewarm` (weekly
+  GitHub Action, bearer `INTERNAL_PREWARM_TOKEN`) scrapes each curated city
+  through the self-hosted `gosom/google-maps-scraper` sidecar
+  (`SCRAPER_BASE_URL`), writes places to `placecaches` and records ordered ids
+  under `prewarm:<city slug>` (7-day TTL). On a quota hit the solver and the
+  city-catalogue route serve that snapshot instead of failing; with no fresh
+  snapshot they still refuse honestly. Never inline: a scrape takes 45–55 s.
 - **`src/server/domain/plan/generate.ts` caches the composed plan for 24 h**,
   keyed on a hash of the whole request. A repeat costs nothing.
 - **Rate limits** (`src/server/http/rateLimit.ts`): 5 plans/hour signed out,
   20/hour signed in; 1 email/hour signed out. The old API had none, so one
-  client could burn the month for everyone.
+  client could burn the day's budget for everyone.
 
 **Collection names — verified, not assumed** (was
 [TripTribe-AI-0gt](bd:TripTribe-AI-0gt)). `src/server/db/mongo.ts` pins
@@ -125,7 +139,7 @@ is exactly what structured data policies exist to prevent), `FAQPage` and
 keyword URL. `/result`, `/search`, `/auth` and `/api/` are noindex.
 
 Data comes from `buildCityCatalogue`, which enriches **only** the places missing
-from `placecaches` (Mongo, 90-day TTL). That cache is load-bearing, not an
+from `placecaches` (Mongo, 30-day retention per the Places terms — bead e88). That cache is load-bearing, not an
 optimisation: a crawler hitting these pages repeatedly would otherwise exhaust
 the monthly Enterprise allowance.
 
@@ -163,8 +177,8 @@ performed.
 | Collection | Was | Notes |
 |---|---|---|
 | `users` | `users` | `recentSearch` is now a capped list of pointers (`{tripId, cityName, at}`), not embedded itineraries |
-| `itenaries` | `itenaries` | One document per plan: `uuid`, `city`, `itenary`, plus `userId`, `days`, `budget`, `currency`, `travellers`, `pace`, `placesSnapshot` |
-| `placecaches` | `placecaches` | 90-day TTL, unchanged |
+| `itenaries` | `itenaries` | One document per plan: `uuid`, `city`, `itenary`, plus `userId`, `days`, `budget`, `currency`, `travellers`, `pace`, `placesSnapshot` + `snapshotAt` (30-day re-plan window, bead e88) |
+| `placecaches` | `placecaches` | 30-day retention, stale rows deleted on read |
 | `usage` | new | Monthly and hourly counters for the Places allowance and the rate limits |
 | `planCache` | new | 24 h composed plans by request hash |
 

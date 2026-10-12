@@ -111,11 +111,11 @@ export const generatePlan = async (
   if (!quota.fits) {
     throw new PipelineError(
       "QUOTA_EXHAUSTED",
-      `This month's map allowance is spent (${quota.used} calls used) — planning reopens next month`,
+      `Today's map allowance is spent (discovery ${quota.discovery.used}/${quota.discovery.used + quota.discovery.remaining}, enrichment ${quota.enrichment.used}/${quota.enrichment.used + quota.enrichment.remaining}) — planning reopens tomorrow`,
     );
   }
-
   // 2. Repeat requests are free.
+
   const hash = requestHash(input);
   const cached = await readPlanCache(hash);
   if (cached) {

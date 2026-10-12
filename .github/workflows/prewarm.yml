@@ -1,0 +1,65 @@
+name: prewarm-snapshots
+
+# Weekly refresh of the scraper fallback snapshots. Each curated city is
+# scraped once into placeCache; when Google's daily Places cap is dry, the
+# solver and city-catalogue route fall back to these snapshots instead of
+# failing with a 503 (bead gr1).
+on:
+  workflow_dispatch:
+    inputs:
+      cities:
+        description: "JSON array of cities (defaults to the curated list server-side)"
+        required: false
+        default: "[]"
+  schedule:
+    # Sunday 03:15 UTC — a quiet slot well clear of weekday planning traffic.
+    - cron: "15 3 * * 0"
+
+concurrency:
+  group: prewarm-snapshots
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prewarm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      WEB_URL: ${{ vars.WEB_URL }}
+      # Token shared with the deployment's INTERNAL_PREWARM_TOKEN.
+      INTERNAL_PREWARM_TOKEN: ${{ secrets.INTERNAL_PREWARM_TOKEN }}
+    steps:
+      - name: Check configuration
+        run: |
+          if [ -z "$WEB_URL" ]; then
+            echo "WEB_URL var is not set" >&2
+            exit 1
+          fi
+          if [ -z "$INTERNAL_PREWARM_TOKEN" ]; then
+            echo "INTERNAL_PREWARM_TOKEN secret is not set" >&2
+            exit 1
+          fi
+
+      # The endpoint returns ok:true even when individual cities fail (their
+      # per-city result carries ok:false), so a retry on the next scheduled run
+      # is the whole recovery story. We only fail hard on a non-2xx (auth,
+      # missing config, or a thrown error), which is a config problem, not a
+      # transient one.
+      - name: Trigger prewarm
+        run: |
+          set -euo pipefail
+          CITIES='${{ github.event.inputs.cities || '[]' }}'
+          code=$(curl -sS -o body.json -w "%{http_code}" \
+            -X POST "$WEB_URL/api/internal/prewarm" \
+            -H "Authorization: Bearer $INTERNAL_PREWARM_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "{\"cities\": $CITIES}")
+          echo "HTTP $code"
+          cat body.json
+          echo
+          case "$code" in
+            2*) ;;
+            *) exit 1 ;;
+          esac

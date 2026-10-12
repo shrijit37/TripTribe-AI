@@ -6,6 +6,7 @@ import {
   RegenError,
   type RegenScope,
 } from "@/server/domain/plan/regenerate";
+import { snapshotStaleReason } from "@/server/domain/places/retention";
 import { fail } from "@/server/http/errors";
 import { checkLimit, PLAN_LIMIT } from "@/server/http/rateLimit";
 
@@ -69,6 +70,10 @@ export async function POST(
     if (viewer && trip.userId !== viewer.identity.authId) {
       return fail("FORBIDDEN", "This trip belongs to someone else");
     }
+    // Retention (bead e88): only the place id may be kept indefinitely, so a
+    // snapshot older than 30 days can no longer back a re-plan.
+    const stale = snapshotStaleReason(trip);
+    if (stale) return fail("BAD_INPUT", stale);
     const patched = regenerateDay(trip, dayIndex, body.scope as RegenScope);
     const ok = await replacePlan(tripId, patched);
     if (!ok) return fail("INTERNAL", "Could not save the re-planned day");

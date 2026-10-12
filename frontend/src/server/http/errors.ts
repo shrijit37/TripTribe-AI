@@ -75,7 +75,7 @@ export const failFrom = (error: unknown): NextResponse<ErrorBody> => {
   if (code === "QUOTA_EXHAUSTED") {
     return fail(
       code,
-      "This month's map allowance is spent — planning reopens next month",
+      "Today's map allowance is spent — planning reopens tomorrow",
     );
   }
   const message =

@@ -37,8 +37,10 @@ export type EnvKey =
   | "RESEND_FROM"
   | "APP_VERSION"
   | "PLACES_TIMEOUT_MS"
-  | "ROUTES_TIMEOUT_MS";
-
+  | "ROUTES_TIMEOUT_MS"
+  | "SCRAPER_BASE_URL"
+  | "SCRAPER_TIMEOUT_MS"
+  | "INTERNAL_PREWARM_TOKEN";
 /**
  * What each capability needs. `required` marks the ones with no degraded
  * fallback at all; `fallback` documents what happens when it is absent.
@@ -80,6 +82,15 @@ export const ENV_SPEC = {
   APP_VERSION: { required: false, fallback: "unknown" },
   PLACES_TIMEOUT_MS: { required: false, fallback: "15000" },
   ROUTES_TIMEOUT_MS: { required: false, fallback: "20000" },
+  SCRAPER_BASE_URL: {
+    required: false,
+    fallback: "scrape fallback is inert; the planner serves Google only",
+  },
+  SCRAPER_TIMEOUT_MS: { required: false, fallback: "120000" },
+  INTERNAL_PREWARM_TOKEN: {
+    required: false,
+    fallback: "POST /api/internal/prewarm refuses every call (no prewarm)",
+  },
 } as const satisfies Record<EnvKey, { required: boolean; fallback: string }>;
 
 const trimmed = (value: string | undefined): string | null => {

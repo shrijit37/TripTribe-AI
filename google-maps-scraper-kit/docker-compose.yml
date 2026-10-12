@@ -1,0 +1,16 @@
+services:
+  scraper:
+    # Pinned by digest (v1.18.1, revision 549e4b5): the scrape layout this
+    # adapter parses is payload-shape dependent, so an unpinned `latest` that
+    # changes the CSV or the hours payload would break the fallback silently.
+    image: gosom/google-maps-scraper@sha256:e205c02913c5a69c16fc2094b8e5b194a2f655166d2c1126d50548d216e6b1b2
+    container_name: triptribe-scraper-spike
+    ports:
+      - "18080:8080"
+    volumes:
+      - gmaps-playwright-cache:/opt
+      - ./gmapsdata:/gmapsdata
+    command: ["-data-folder", "/gmapsdata"]
+
+volumes:
+  gmaps-playwright-cache:

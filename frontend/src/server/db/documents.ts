@@ -55,6 +55,9 @@ export interface TripDoc {
   pace: string;
   /** Enriched shortlist, so day-regeneration costs zero Places calls. */
   placesSnapshot: EnrichedPlace[];
+  /** ISO stamp of when the snapshot was fetched (bead e88). Absent on trips
+   * written before the retention fix — those age by `createdAt` instead. */
+  snapshotAt?: string;
   emailSentAt?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
