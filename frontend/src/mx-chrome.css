@@ -9,7 +9,9 @@
   gap: 0.5rem 1rem;
   padding: 0.5rem 1rem;
   background: var(--mx-stock);
-  border-bottom: 1px solid var(--mx-line);
+  /* Neutral rule, not ballpoint: the chrome belongs to neither world, so it
+     bridges cover and diary instead of picking a side. */
+  border-bottom: 1px solid rgba(27, 22, 17, 0.2);
 }
 
 .mx-strip__mark {
@@ -21,7 +23,7 @@
   background: none;
   border: 0;
   border-radius: 0;
-  color: var(--mx-ink);
+  color: #1b1611;
   cursor: pointer;
 }
 
@@ -37,7 +39,7 @@
   font-family: var(--mx-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
-  color: var(--mx-ink-soft);
+  color: #6f6653;
 }
 
 .mx-strip__actions {
@@ -51,32 +53,42 @@
 .mx-strip__btn {
   min-height: 44px;
   padding: 0.5rem 1rem;
-  background: var(--mx-card);
-  border: 1px solid var(--mx-ink);
+  background: transparent;
+  border: 1px solid #1b1611;
   border-radius: 0;
-  color: var(--mx-ink);
+  color: #1b1611;
   font-family: var(--mx-body);
   font-size: 1rem;
   line-height: 1.4;
   cursor: pointer;
+  transition:
+    background 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.mx-strip__btn:hover {
+  background: #1b1611;
+  border-color: #1b1611;
+  color: #f8f3e8;
 }
 
 .mx-strip__btn--quiet {
   background: transparent;
-  border-color: var(--mx-line);
+  border-color: rgba(27, 22, 17, 0.28);
 }
 
 .mx-strip__mark:focus-visible,
 .mx-strip__btn:focus-visible,
 .mx-colophon__contact:focus-visible {
-  outline: 3px solid var(--mx-ink);
+  outline: 2px solid #6e5620;
   outline-offset: 2px;
 }
 
 .mx-colophon {
   background: var(--mx-stock);
-  border-top: 1px solid var(--mx-line);
-  color: var(--mx-ink);
+  border-top: 1px solid rgba(27, 22, 17, 0.2);
+  color: #1b1611;
 }
 
 .mx-colophon__inner {
@@ -102,7 +114,7 @@
   font-family: var(--mx-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
-  color: var(--mx-ink-soft);
+  color: #6f6653;
 }
 
 .mx-colophon__note {
@@ -110,7 +122,7 @@
   margin: 0.75rem 0 0;
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--mx-ink-soft);
+  color: #57503f;
 }
 
 .mx-colophon__contact {
@@ -120,14 +132,14 @@
   line-height: 44px;
   font-family: var(--mx-mono);
   font-size: 0.875rem;
-  color: var(--mx-ink);
+  color: #1b1611;
 }
 
 .mx-colophon__legal {
   margin: 0.5rem 0 0;
   font-family: var(--mx-mono);
   font-size: 0.75rem;
-  color: var(--mx-ink-soft);
+  color: #6f6653;
 }
 
 @media (prefers-reduced-motion: reduce) {

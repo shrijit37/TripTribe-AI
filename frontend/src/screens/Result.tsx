@@ -181,7 +181,23 @@ const Result = () => {
   const budget = plan.Budget;
   const days = Array.isArray(plan.itinerary) ? plan.itinerary : [];
   const unit = moneyUnit(plan);
-
+  // The pass-around: a WhatsApp summary dubbed from the real plan — city,
+  // day count, estimated total, first three stops. Self-contained text,
+  // because no shared-view route exists yet to link to; the link goes home
+  // so the group can dub their own.
+  const passStops = days
+    .flatMap((day) => day.activities ?? [])
+    .map((stop) => stop.place?.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  const passTotal = numeric(budget?.total);
+  const passText =
+    `TripTribe tape — ${city?.name ?? "the trip"}` +
+    ` · ${days.length} ${days.length === 1 ? "day" : "days"}` +
+    (passTotal == null ? "" : ` · ${money(unit, passTotal)} estimated`) +
+    (passStops.length ? `. Route: ${passStops.join("; ")}.` : ".") +
+    " Dubbed for the group — everyone walks the same route.";
+  const passHref = `https://wa.me/?text=${encodeURIComponent(passText)}`;
   /** The four categories, in the order a reader adds them up in. */
   const split = budget?.breakdown
     ? ([
@@ -605,7 +621,22 @@ const Result = () => {
             </div>
 
             <section className="mx-rs-section" aria-label="Handing it over">
-              <h2 className="mx-rs-section__title">Handing it over</h2>
+              <h2 className="mx-rs-section__title">Dubbed. Now pass it around.</h2>
+              <div className="mx-rs-handoff__run">
+                <a
+                  className="mx-rs-btn"
+                  href={passHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Pass the tape on WhatsApp
+                </a>
+              </div>
+              <p className="mx-rs-handoff__hint">
+                Opens WhatsApp with the route summary written out for the
+                group chat. Nothing on it is booked — it is a route and an
+                estimate.
+              </p>
               {tripId ? (
                 <>
                   <label

@@ -1,5 +1,7 @@
 :root {
-  --mx-stock: #f4f1e6;
+  /* Shared ground with the landing cover (#f6f1e7): same paper, so the cut
+     reads as a chapter head, not an identity change. Blue ink still acts. */
+  --mx-stock: #f6f1e7;
   --mx-card: #faf7ec;
   --mx-ink: #1b3fb0;
   --mx-ink-soft: color-mix(in srgb, var(--mx-ink) 72%, var(--mx-stock));
@@ -7,8 +9,15 @@
   --mx-accent: #d23c2a;
   --mx-line: rgba(27, 63, 176, 0.28);
   --mx-line-soft: rgba(27, 63, 176, 0.14);
+  /* Shared motion grammar with the landing: same ease, so reveals and the
+     plan arrival feel continuous even as costume changes. */
+  --mx-ease: cubic-bezier(0.16, 0.84, 0.44, 1);
   --mx-hand: 'Caveat', cursive;
   --mx-hand2: 'Shadows Into Light', cursive;
+  /* Shared with the landing's editorial world: the serif carries display
+     type here too, so the two surfaces read as family. The faces themselves
+     load in mx-landing.css, imported alongside this sheet in layout. */
+  --mx-serif: 'Taviraj', Georgia, 'Times New Roman', serif;
   --mx-body: 'Barlow', system-ui, sans-serif;
   --mx-mono: 'Martian Mono', ui-monospace, monospace;
 }
@@ -159,6 +168,20 @@
   min-width: 0;
   max-width: 75ch;
   padding: 28px clamp(16px, 4vw, 56px) 64px;
+  /* The handoff: arrival rises on the shared ease, so opening the diary
+     continues the cover's motion instead of hard-cutting. */
+  animation: mx-plan-arrive 0.9s var(--mx-ease) both;
+}
+
+@keyframes mx-plan-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* The inner fold: booking slip beside the pinned carry notes, as sketched.
@@ -192,17 +215,30 @@
 }
 
 .mx-plan-title {
-  font-family: var(--mx-hand);
-  font-weight: 700;
+  font-family: var(--mx-serif);
+  font-weight: 600;
   font-size: clamp(40px, 5vw, 64px);
   line-height: 1.02;
+  letter-spacing: -0.015em;
   margin: 0 0 4px;
 }
 .mx-plan-title em {
-  font-style: normal;
-  text-decoration: underline;
-  text-decoration-thickness: 3px;
-  text-underline-offset: 6px;
+  font-style: italic;
+  font-weight: 500;
+}
+.mx-plan-folio {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid var(--mx-line);
+  font-family: var(--mx-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mx-ink-soft);
 }
 .mx-plan-lede {
   font-family: var(--mx-hand2);
@@ -223,23 +259,41 @@
   min-height: 64px;
 }
 .mx-plan-dest-pin {
-  width: 56px;
-  height: 56px;
-  flex: 0 0 56px;
+  width: 112px;
+  height: 84px;
+  flex: 0 0 112px;
   border: 2px solid var(--mx-ink);
   object-fit: cover;
   display: block;
 }
 .mx-plan-dest-name {
-  font-family: var(--mx-hand);
+  font-family: var(--mx-serif);
   font-weight: 600;
-  font-size: 30px;
-  line-height: 1.1;
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+}
+.mx-plan-dest-cap {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mx-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mx-ink-soft);
 }
 .mx-plan-dest-empty {
   font-family: var(--mx-hand2);
   font-size: 20px;
   color: var(--mx-ink-soft);
+}
+
+@media (max-width: 640px) {
+  /* The running head keeps its reference; the gloss drops out rather
+     than stacking into a cramped second line. */
+  .mx-plan-folio span:last-child {
+    display: none;
+  }
 }
 
 .mx-plan-entries {
@@ -579,6 +633,12 @@
 @media (prefers-reduced-motion: no-preference) {
   .mx-plan-spool-spin {
     animation: mx-plan-spin 2.4s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-plan-main {
+    animation: none;
   }
 }
 @keyframes mx-plan-spin {

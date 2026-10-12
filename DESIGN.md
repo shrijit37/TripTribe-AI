@@ -400,8 +400,9 @@ an ink fill with a stock label.
 ## Do's and Don'ts
 
 ### Do:
-- **Do** print card stock on the `#f4f1e6` ground, ruled with the ink lines.
-  One stock, one card, one ink.
+- **Do** print card stock on the `#f6f1e7` ground, ruled with the ink lines.
+  One stock, one card, one ink. The diary ground is the cover ground, so
+  the cut reads as a chapter head.
 - **Do** spend ink on what acts and names, pencil on what is tentative, red
   on the stripe and the refusal.
 - **Do** keep corners at 0px and every time and figure in tabular mono,
@@ -416,10 +417,28 @@ an ink fill with a stock label.
 - **Do** carry the estimates note on the dub block and every plan surface,
   one affiliate disclosure per wallet, and the cab-search disclosure beside
   its stub.
+- **Do** pass the tape on WhatsApp from the result hand-off: a square
+  outline button opening `wa.me` with city, day count, estimated total and
+  the first three stops dubbed from the live plan. Self-contained text —
+  no shared-view route exists yet to link to. Needs no trip handle, so it
+  shows even when the email send cannot.
 - **Do** admit only a real destination photograph to the plate; leave the
   pin off otherwise.
 - **Do** keep `/search` a permanent redirect to `/plan` and the canonical
   tag on `/plan`.
+- **Do** keep the landing (`/`, `screens/Hero.tsx`, `mx-landing.css`)
+  inside its own editorial world: ivory stock, ink text, one brass accent,
+  Taviraj display + Hanken Grotesk body, captioned photo plates, folio rows.
+  Three of those devices are shared with `/plan` (serif display title +
+  destination name, folio running head, captioned destination plate) so the
+  cut reads as family; ballpoint blue still does all the acting there.
+  Pill buttons and full-bleed photography never travel past the landing.
+- **Do** keep the chrome (navbar, footer) neutral: handwritten ballpoint-blue
+  wordmark per owner pin, mono ref, ink-outline buttons, brass focus. Rules
+  and buttons belong to neither world, so they bridge both; the mark itself
+  stays diary.
+- **Do** arrive on `/plan` on the shared ease (`--mx-ease`, same curve as
+  the cover's `--vl-ease`): one 0.9 s rise, settled under reduced-motion.
 
 ### Don't:
 - **Don't** use TDK red for anything but the stripe, the sheet edge, and a
@@ -433,18 +452,27 @@ an ink fill with a stock label.
   planner, no completion state the request hasn't reached.
 - **Don't** invent proof — no testimonials, ratings, counts, or press
   (PRODUCT.md: zero proof assets exist).
-- **Don't** restyle the landing hero distortion block. Fixed by owner
-  instruction — a boundary, not a precedent.
+- **Don't** reach past the landing's editorial world into `/plan` or
+  `/result`: pill buttons, photography, and Taviraj/Hanken live in
+  `mx-landing.css` (`.vl-*`) only. The wallet screens keep square coupons,
+  no photography, and the Barlow/Martian Mono faces.
 - **Don't** treat this file as enforced. Tooling and tokens remain
   installed; nothing stops the next route from reaching past them. Read this
   file before writing a route, and when the code disagrees, report the
   code — don't copy it.
 
 ### Drift carried, not canonized
-- The landing body (`screens/Hero.tsx`, 72 `tt-` references) and the
-  city-article pages (`app/cities`, `app/best-places-to-visit-in`) still
-  render the old ticket-wallet `tt-*` system pending a later pass. It is the
-  old world, not an available alternative.
+- The landing (`screens/Hero.tsx`) was rebuilt 2026-10-12 as an editorial
+  surface (`.vl-*` in `mx-landing.css`), replacing the ticket-wallet `tt-*`
+  body and the hero distortion plate per owner instruction — which retires
+  the old "don't restyle the distortion block" boundary. The GridDistortion
+  component itself still ships untouched for any other use. The city-article
+  pages (`app/cities`, `app/best-places-to-visit-in`) still render the old
+  `tt-*` system pending a later pass. It is the old world, not an available
+  alternative.
+- Landing plates (`frontend/public/landing/*`) are owner-supplied travel
+  photographs of unverified license; the Taviraj/Hanken faces are OFL.
+  Re-verify the photographs before any use beyond this project.
 - `--tt-vermilion-wash` is dead: zero declarations, zero references
   repo-wide. It is not an available colour.
 - The email hand-off draft is untouched: the `triptribe-itinerary` Resend

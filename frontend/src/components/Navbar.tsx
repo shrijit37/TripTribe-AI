@@ -6,9 +6,10 @@ import AccountDrawer from "@/components/AccountDrawer";
 import { useAppSelector } from "@/store";
 
 /**
- * The mixtape's running head: an inlay strip with the hand-lettered wordmark,
- * a mono route ref, and the two standing actions. `Sign in` routes to `/auth`;
- * the account drawer opens over the page for signed-in travellers.
+ * The neutral running head: a serif wordmark in dark ink, mono route ref,
+ * and two standing actions. Deliberately neither cover nor diary — it
+ * bridges both. `Sign in` routes to `/auth`; the account drawer opens over
+ * the page for signed-in travellers.
  */
 const Navbar = () => {
   const router = useRouter();

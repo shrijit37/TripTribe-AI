@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import GridDistortion from '@/components/GridDistortion';
 import ContourRoute from '@/components/ContourRoute';
 import { onMapsReady } from '@/lib/maps';
 import { storeSeed } from '@/lib/nav';
@@ -45,15 +44,21 @@ const IconArrow = ({ size = 18 }: { size?: number }) => (
 
 /* ───────────────────────────────────────────────────────────────────────── */
 
-// The CSS media query cannot reach a JS-initiated smooth scroll, so the
-// preference is read here too.
+// The CSS media query cannot reach JS-initiated motion, so the preference is
+// read here too.
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const scrollToId = (id: string) => {
+  document.getElementById(id)?.scrollIntoView({
+    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    block: 'start',
+  });
+};
 
-// Ordered exactly as the slip asks for them, so the numbered run describes
-// the form the visitor is actually looking at above it.
+// Ordered exactly as the form asks for them, so the numbered run describes
+// the sheet the visitor is actually looking at below it.
 const STEPS = [
   {
     n: '01',
@@ -72,7 +77,7 @@ const STEPS = [
   },
 ];
 
-const INCLUDED = [
+const CARE_ROWS = [
   {
     Icon: IconRoute,
     title: 'A route, in order',
@@ -92,14 +97,26 @@ const INCLUDED = [
 
 const Hero = () => {
   const router = useRouter();
+  const rootRef = useRef<HTMLElement>(null);
 
   // The map is a live read of what the visitor has typed. Real state, not a loop.
   const [city, setCity] = useState('');
   const [days, setDays] = useState('');
   const [budget, setBudget] = useState('');
 
+  // `.vl-js` gates the hidden pre-reveal state so no-JS readers never stare
+  // at blanks; `heroReady` fires the first-viewport line masks on load.
+  const [js, setJs] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+
   const cityRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<MapsAutocomplete | null>(null);
+
+  useEffect(() => {
+    setJs(true);
+    const frame = requestAnimationFrame(() => setHeroReady(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   useEffect(() => {
     // Bound once: the closure runs later, when React's narrowing of
@@ -141,6 +158,61 @@ const Hero = () => {
     };
   }, []);
 
+  // One observer for every reveal on the page; each element fires once.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || prefersReducedMotion()) {
+      root?.querySelectorAll('.vl-rv').forEach((el) => el.classList.add('is-in'));
+      return;
+    }
+    const seen = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-in');
+            seen.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.16, rootMargin: '0px 0px -6% 0px' },
+    );
+    root.querySelectorAll('.vl-rv').forEach((el) => seen.observe(el));
+    return () => seen.disconnect();
+  }, [js]);
+
+  // One rAF-throttled scroll listener drives every parallax plate. Each plate
+  // declares its speed in `data-plx`; the image headroom (scale ≥ 1.1) means
+  // the travel never exposes an edge.
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const vh = window.innerHeight;
+      rootRef.current?.querySelectorAll<HTMLElement>('[data-plx]').forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom < -vh || rect.top > vh * 2) return;
+        const speed = Number(el.dataset.plx) || 0.08;
+        const drift = (rect.top + rect.height / 2 - vh / 2) * speed;
+        const clamped = Math.max(-140, Math.min(140, drift));
+        el.style.setProperty('--plx', `${(-clamped).toFixed(1)}px`);
+      });
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [js]);
+
   // Validate explicitly: min/max attributes alone never fire on a noValidate
   // form, so days=999 would otherwise sail through to the planner.
   const dayNum = Number(days);
@@ -159,265 +231,463 @@ const Hero = () => {
         ? 'Enter a total budget of at least ₹1,000.'
         : '';
 
+  const focusCity = () => {
+    // Scroll first: focusing before the scroll lands keyboard focus on a
+    // field that is then moved out of view. `preventScroll` keeps the browser
+    // from undoing it a frame later.
+    scrollToId('plan');
+    window.setTimeout(() => {
+      document.getElementById('vl-city')?.focus({ preventScroll: true });
+    }, prefersReducedMotion() ? 0 : 450);
+  };
+
   return (
-    <>
-      <main className="tt-page">
-        {/* ── The photograph, as a tipped-in plate ───────────────────────
-            A captioned figure in the printed supplement: on the rail,
-            hard-edged, sized as a plate. The GridDistortion component and
-            its props ship exactly as they always have. ─────────────── */}
-        <section className="tt-hero">
-          <div className="tt-rail tt-hero__rail">
-            <figure className="tt-hero__figure">
-              <div className="tt-hero__plate">
-                <GridDistortion
-                  imageSrc="https://picsum.photos/1920/1080?grayscale"
-                  grid={12}
-                  mouse={0.1}
-                  strength={0.15}
-                  relaxation={0.9}
-                  className="custom-className='text-md'"
+    <main ref={rootRef} className={`vl${js ? ' vl-js' : ''}`}>
+      {/* ── Hero. Full-bleed coast, bottom-left thesis. ─────────────────── */}
+      <section className={`vl-hero${heroReady ? ' is-ready' : ''}`} aria-labelledby="vl-hero-title">
+        <div className="vl-hero__media" data-plx="0.1" aria-hidden="true">
+          <img
+            src="/landing/landing-pier.webp"
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+          />
+        </div>
+        <div className="vl-hero__scrim" aria-hidden="true" />
+        <div className="vl-rail vl-hero__inner">
+          <p className="vl-hero__ref">
+            <span>TripTribe — TT / Route</span>
+            <span>City · Days · Budget</span>
+          </p>
+          <h1 id="vl-hero-title" className="vl-hero__title">
+            <span className="vl-mask">
+              <span style={{ ['--rvd' as string]: '0.15s' }}>A trip is a route,</span>
+            </span>
+            <span className="vl-mask">
+              <span style={{ ['--rvd' as string]: '0.3s' }}>
+                <em>not a list.</em>
+              </span>
+            </span>
+          </h1>
+          <p className="vl-hero__lede">
+            Most itinerary generators hand you a pile of famous places and leave you to
+            work out the order. TripTribe sequences the day instead — each stop placed so
+            the next one leads from it — and picks your meals where you will already be.
+          </p>
+          <div className="vl-hero__actions">
+            <button type="button" className="vl-btn vl-btn--solid" onClick={focusCity}>
+              <span>Plan a trip</span>
+              <IconArrow size={18} />
+            </button>
+            <button type="button" className="vl-btn vl-btn--ghost" onClick={() => scrollToId('route')}>
+              <span>What comes back</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Intro. Centred statement, then a plate pair. ────────────────── */}
+      <section className="vl-intro" aria-labelledby="vl-intro-title">
+        <div className="vl-rail">
+          <div className="vl-folio vl-rv">
+            <span>TT / Orientation</span>
+            <span>The whole argument, before the detail</span>
+          </div>
+          <h2 id="vl-intro-title" className="vl-intro__statement vl-rv">
+            Planned around the order you will walk it,{' '}
+            <em>priced against the money you have.</em>
+          </h2>
+          <div className="vl-intro__pair">
+            <figure className="vl-plate vl-rv">
+              <div className="vl-plate__frame vl-plate__frame--std" data-plx="0.06">
+                <img
+                  src="/landing/landing-city-rooftops.webp"
+                  alt="Rooftops of an old town in winter light"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
-              <figcaption className="tt-hero__caption">
-                <span>
-                  Plate <span className="tt-hero__plate-ref">I</span> · destination survey
-                </span>
-                <span className="tt-hero__note">The ground a route is drawn across.</span>
+              <figcaption>
+                <span>The destination, surveyed</span>
+                <span>Plate I</span>
+              </figcaption>
+            </figure>
+            <figure className="vl-plate vl-rv" style={{ ['--rvd' as string]: '0.12s' }}>
+              <div className="vl-plate__frame vl-plate__frame--std" data-plx="0.06">
+                <img
+                  src="/landing/landing-route-canal.webp"
+                  alt="A canal running between old city buildings"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <figcaption>
+                <span>The order, before the places</span>
+                <span>Plate II</span>
               </figcaption>
             </figure>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── Thesis. The first thing below the photograph is the map. ── */}
-        <section className="tt-thesis" id="route">
-          <div className="tt-rail">
-            <div className="tt-thesis__grid">
-              <div className="tt-thesis__copy">
-                <h1 className="tt-display">
-                  A trip is a route,
-                  <br />
-                  not a list.
-                </h1>
-                <p className="tt-lede">
-                  Most itinerary generators hand you a pile of famous places and leave you to
-                  work out the order. TripTribe sequences the day instead — each stop placed so
-                  the next one leads from it — and picks your meals where you will already be.
+      {/* ── Bands. One plate and one argument each, alternating. ────────── */}
+      <section className="vl-bands" id="route" aria-label="What the plan holds">
+        <div className="vl-rail">
+          <div className="vl-folio vl-rv">
+            <span>TT / The stay</span>
+            <span>Three plates, three promises</span>
+          </div>
+
+          <div className="vl-band">
+            <div className="vl-band__grid">
+              <div className="vl-band__copy vl-rv">
+                <p className="vl-band__index">Noches — 01 · The sequence</p>
+                <h2 className="vl-band__title">
+                  Days that walk <em>in order.</em>
+                </h2>
+                <p className="vl-band__body">
+                  Day by day, the stops are sequenced so one leads into the next rather
+                  than sending you back across the city. The route is drawn first; the
+                  famous places slot into it.
                 </p>
-                <p className="tt-note">
-                  Three inputs. The route below redraws as you set them.
+                <button type="button" className="vl-band__link" onClick={focusCity}>
+                  <span>Start this route</span>
+                  <IconArrow size={16} />
+                </button>
+              </div>
+              <figure className="vl-plate vl-band__media vl-rv" style={{ ['--rvd' as string]: '0.1s' }}>
+                <div className="vl-plate__frame vl-plate__frame--tall" data-plx="0.07">
+                  <img
+                    src="/landing/landing-street.webp"
+                    alt="A city street lined with tall trees and towers"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <figcaption>
+                  <span>One route, walked end to end</span>
+                  <span>Plate III</span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div className="vl-band vl-band--flip">
+            <div className="vl-band__grid">
+              <div className="vl-band__copy vl-rv">
+                <p className="vl-band__index">Luma — 02 · The table</p>
+                <h2 className="vl-band__title">
+                  Meals where you <em>already are.</em>
+                </h2>
+                <p className="vl-band__body">
+                  Breakfast, lunch and dinner are picked near the day&apos;s stops — not in
+                  a different district at midday. Hunger never reroutes the afternoon.
+                </p>
+                <button type="button" className="vl-band__link" onClick={focusCity}>
+                  <span>Start this route</span>
+                  <IconArrow size={16} />
+                </button>
+              </div>
+              <figure className="vl-plate vl-band__media vl-rv" style={{ ['--rvd' as string]: '0.1s' }}>
+                <div className="vl-plate__frame vl-plate__frame--tall" data-plx="0.07">
+                  <img
+                    src="/landing/landing-table.webp"
+                    alt="A cup of raspberries on a table, dessert after a long walk"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <figcaption>
+                  <span>Dinner near the last stop</span>
+                  <span>Plate IV</span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div className="vl-band">
+            <div className="vl-band__grid">
+              <div className="vl-band__copy vl-rv">
+                <p className="vl-band__index">Aya — 03 · The ledger</p>
+                <h2 className="vl-band__title">
+                  Hotels inside <em>the budget.</em>
+                </h2>
+                <p className="vl-band__body">
+                  A shortlist that respects the figure you gave us, with the prices the
+                  plan was built from. The number you typed governs the result — including
+                  when it is too small, in which case the plan says so plainly.
+                </p>
+                <p className="vl-band__note">
+                  Hotel prices are generated estimates, not live availability. Check fares
+                  with the operator before you book.
+                </p>
+                <button type="button" className="vl-band__link" onClick={focusCity}>
+                  <span>Start this route</span>
+                  <IconArrow size={16} />
+                </button>
+              </div>
+              <figure className="vl-plate vl-band__media vl-rv" style={{ ['--rvd' as string]: '0.1s' }}>
+                <div className="vl-plate__frame vl-plate__frame--tall" data-plx="0.07">
+                  <img
+                    src="/landing/landing-road-van.webp"
+                    alt="A camper van ready for a road trip"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <figcaption>
+                  <span>The road, costed honestly</span>
+                  <span>Plate V</span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Field. Full-bleed interlude over the pier. ──────────────────── */}
+      <section className="vl-field" aria-labelledby="vl-field-title">
+        <div className="vl-field__media" data-plx="0.12" aria-hidden="true">
+          <img
+            src="/landing/landing-avenue.webp"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div className="vl-field__scrim" aria-hidden="true" />
+        <div className="vl-rail vl-field__inner">
+          <div className="vl-folio vl-folio--dark vl-rv">
+            <span>TT / Elsewhere</span>
+            <span>The awaiting part</span>
+          </div>
+          <h2 id="vl-field-title" className="vl-field__quote vl-rv">
+            Between the city&apos;s noise and a dozen possible orders,{' '}
+            <em>the walkable day awaits.</em>
+          </h2>
+          <div className="vl-field__actions vl-rv">
+            <button type="button" className="vl-btn vl-btn--ghost" onClick={focusCity}>
+              <span>Discover the planner</span>
+              <IconArrow size={18} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Care. The concierge band. ───────────────────────────────────── */}
+      <section className="vl-care" aria-labelledby="vl-care-title">
+        <div className="vl-rail">
+          <div className="vl-folio vl-rv">
+            <span>TT / The care</span>
+            <span>Handled, not listed</span>
+          </div>
+          <h2 id="vl-care-title" className="vl-care__title vl-rv">
+            Sit back and relax — <em>the sequencing is handled.</em>
+          </h2>
+          <div className="vl-care__grid">
+            <div className="vl-rv">
+              <ul className="vl-care__rows">
+                {CARE_ROWS.map(({ Icon, title, body }) => (
+                  <li className="vl-care__row" key={title}>
+                    <span className="vl-care__icon">
+                      <Icon size={22} />
+                    </span>
+                    <div>
+                      <h3 className="vl-care__name">{title}</h3>
+                      <p className="vl-care__body">{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="vl-care__actions">
+                <button type="button" className="vl-btn vl-btn--dark" onClick={focusCity}>
+                  <span>Discover the planner</span>
+                  <IconArrow size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="vl-care__media">
+              <figure className="vl-plate vl-rv" style={{ ['--rvd' as string]: '0.1s' }}>
+                <div className="vl-plate__frame vl-plate__frame--wide" data-plx="0.06">
+                  <img
+                    src="/landing/landing-lamps.webp"
+                    alt="Street lamps glowing on a snowy night"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <figcaption>
+                  <span>Evenings, accounted for</span>
+                  <span>Plate VI</span>
+                </figcaption>
+              </figure>
+              <figure className="vl-plate vl-rv" style={{ ['--rvd' as string]: '0.18s' }}>
+                <div className="vl-plate__frame vl-plate__frame--std" data-plx="0.06">
+                  <img
+                    src="/landing/landing-mug.webp"
+                    alt="A coffee mug with a travel illustration"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <figcaption>
+                  <span>Mornings, near the first stop</span>
+                  <span>Plate VII</span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Plan. The close: getaway line, numbered run, live sheet. ────── */}
+      <section className="vl-plan" id="plan" aria-labelledby="vl-plan-title">
+        <div className="vl-rail">
+          <div className="vl-folio vl-rv">
+            <span>TT / The close</span>
+            <span>Three inputs, one route</span>
+          </div>
+          <h2 id="vl-plan-title" className="vl-plan__title vl-rv">
+            Begin your <em>dream getaway.</em>
+          </h2>
+
+          <ol className="vl-plan__run">
+            {STEPS.map((step, i) => (
+              <li key={step.n} className="vl-rv" style={{ ['--rvd' as string]: `${i * 0.1}s` }}>
+                <span className="vl-plan__n">{step.n}</span>
+                <h3 className="vl-plan__name">{step.title}</h3>
+                <p className="vl-plan__body">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div className="vl-plan__sheet vl-rv">
+            <form
+              className="vl-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!ready) return;
+                // Carry the three inputs forward: the visitor must never
+                // retype what they just told us.
+                storeSeed({
+                  cityName: city.trim(),
+                  days: String(dayNum),
+                  budget: String(budgetNum),
+                });
+                router.push('/plan');
+              }}
+              noValidate
+            >
+              <div className="vl-field-row">
+                <label className="vl-label" htmlFor="vl-city">
+                  City
+                </label>
+                <input
+                  id="vl-city"
+                  ref={cityRef}
+                  className="vl-input"
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Where are you going?"
+                  autoComplete="off"
+                  aria-describedby="vl-city-hint"
+                />
+                <p className="vl-hint" id="vl-city-hint">
+                  Start typing; suggestions appear as you go.
                 </p>
               </div>
 
-              <div className="tt-thesis__map">
+              <div className="vl-field-row">
+                <label className="vl-label" htmlFor="vl-days">
+                  Days
+                </label>
+                <input
+                  id="vl-days"
+                  className="vl-input"
+                  type="number"
+                  min="1"
+                  max="60"
+                  inputMode="numeric"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                  placeholder="4"
+                  aria-invalid={days !== '' && !daysOk}
+                  aria-describedby={days !== '' && !daysOk ? 'vl-days-error' : undefined}
+                />
+                {days !== '' && !daysOk && (
+                  <p className="vl-error" id="vl-days-error" role="alert">
+                    Between 1 and 60 days.
+                  </p>
+                )}
+              </div>
+
+              <div className="vl-field-row">
+                <label className="vl-label" htmlFor="vl-budget">
+                  Total budget
+                </label>
+                <div className="vl-affix">
+                  <span className="vl-currency" aria-hidden="true">
+                    ₹
+                  </span>
+                  <input
+                    id="vl-budget"
+                    className="vl-input--affixed"
+                    type="number"
+                    min="1000"
+                    step="100"
+                    inputMode="numeric"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="48000"
+                    aria-invalid={budget !== '' && !budgetOk}
+                    aria-describedby={
+                      budget !== '' && !budgetOk ? 'vl-budget-error' : 'vl-budget-hint'
+                    }
+                  />
+                </div>
+                {budget !== '' && !budgetOk ? (
+                  <p className="vl-error" id="vl-budget-error" role="alert">
+                    At least ₹1,000.
+                  </p>
+                ) : (
+                  <p className="vl-hint" id="vl-budget-hint">
+                    For the whole trip, not per day.
+                  </p>
+                )}
+              </div>
+
+              <div className="vl-form__action">
+                <button type="submit" className="vl-btn vl-btn--ink" disabled={!ready}>
+                  <span>Generate the route</span>
+                  <IconArrow size={18} />
+                </button>
+                {/* Announced in reading order, not stranded on a disabled
+                    control that keyboard users can never reach. */}
+                <p className="vl-need" role="status">
+                  {needText}
+                </p>
+              </div>
+            </form>
+
+            <figure className="vl-plan__map">
+              <div className="vl-map__frame">
                 <ContourRoute
                   city={city.trim()}
                   days={Number(days) || 0}
                   budget={Number(budget) || 0}
                 />
               </div>
-            </div>
+            </figure>
           </div>
-        </section>
 
-        {/* ── The action, in the form's own vocabulary ─────────────────── */}
-        <section className="tt-slip" aria-labelledby="tt-slip-title">
-          <div className="tt-rail">
-            <div className="tt-slip__sheet">
-              <div className="tt-slip__head">
-                <h2 id="tt-slip-title" className="tt-slip__title">
-                  Plan a trip
-                </h2>
-                <p className="tt-slip__ref">
-                  <span>TT</span>
-                  <span className="tt-slip__slash">/</span>
-                  <span>ROUTE</span>
-                </p>
-              </div>
-
-              <form
-                className="tt-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!ready) return;
-                  // Carry the three inputs forward: the visitor must never
-                  // retype what they just told us.
-                  storeSeed({
-                    cityName: city.trim(),
-                    days: String(dayNum),
-                    budget: String(budgetNum),
-                  });
-                  router.push('/plan');
-                }}
-                noValidate
-              >
-                <div className="tt-field">
-                  <label className="tt-field__label" htmlFor="tt-city">
-                    City
-                  </label>
-                  <input
-                    id="tt-city"
-                    ref={cityRef}
-                    className="tt-field__input tt-field__input--city"
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Where are you going?"
-                    autoComplete="off"
-                    aria-describedby="tt-city-hint"
-                  />
-                  <p className="tt-field__hint" id="tt-city-hint">
-                    Start typing; suggestions appear as you go.
-                  </p>
-                </div>
-
-                <div className="tt-field">
-                  <label className="tt-field__label" htmlFor="tt-days">
-                    Days
-                  </label>
-                  <input
-                    id="tt-days"
-                    className="tt-field__input tt-field__input--fig"
-                    type="number"
-                    min="1"
-                    max="60"
-                    inputMode="numeric"
-                    value={days}
-                    onChange={(e) => setDays(e.target.value)}
-                    placeholder="4"
-                    aria-invalid={days !== '' && !daysOk}
-                    aria-describedby={days !== '' && !daysOk ? 'tt-days-error' : undefined}
-                  />
-                  {days !== '' && !daysOk && (
-                    <p className="tt-field__error" id="tt-days-error" role="alert">
-                      Between 1 and 60 days.
-                    </p>
-                  )}
-                </div>
-
-                <div className="tt-field">
-                  <label className="tt-field__label" htmlFor="tt-budget">
-                    Total budget
-                  </label>
-                  <div className="tt-field__affix">
-                    <span className="tt-field__currency" aria-hidden="true">
-                      ₹
-                    </span>
-                    <input
-                      id="tt-budget"
-                      className="tt-field__input tt-field__input--fig tt-field__input--budget"
-                      type="number"
-                      min="1000"
-                      step="100"
-                      inputMode="numeric"
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
-                      placeholder="48000"
-                      aria-invalid={budget !== '' && !budgetOk}
-                      aria-describedby={
-                        budget !== '' && !budgetOk ? 'tt-budget-error' : 'tt-budget-hint'
-                      }
-                    />
-                  </div>
-                  {budget !== '' && !budgetOk ? (
-                    <p className="tt-field__error" id="tt-budget-error" role="alert">
-                      At least ₹1,000.
-                    </p>
-                  ) : (
-                    <p className="tt-field__hint" id="tt-budget-hint">
-                      For the whole trip, not per day.
-                    </p>
-                  )}
-                </div>
-
-                <div className="tt-form__action">
-                  <button type="submit" className="tt-btn" disabled={!ready}>
-                    <span>Generate the route</span>
-                    <IconArrow size={18} />
-                  </button>
-                  {/* Announced in reading order, not stranded on a disabled
-                      control that keyboard users can never reach. */}
-                  <p className="tt-form__need" id="tt-slip-need" role="status">
-                    {needText}
-                  </p>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
-        {/* ── What the plan contains. Not a benefit grid. ─────────────── */}
-        <section className="tt-included" aria-labelledby="tt-included-title">
-          <div className="tt-rail">
-            <h2 id="tt-included-title" className="tt-section">
-              What comes back
-            </h2>
-
-            <div className="tt-included__list">
-              {INCLUDED.map(({ Icon, title, body }) => (
-                <article className="tt-included__item" key={title}>
-                  <span className="tt-included__icon">
-                    <Icon />
-                  </span>
-                  <h3 className="tt-included__name">{title}</h3>
-                  <p className="tt-included__body">{body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── The one path through, as a printed run ──────────────────── */}
-        <section className="tt-flow" aria-labelledby="tt-flow-title">
-          <div className="tt-rail">
-            <h2 id="tt-flow-title" className="tt-section">
-              How it works
-            </h2>
-
-            <ol className="tt-flow__run">
-              {STEPS.map((step) => (
-                <li className="tt-flow__step" key={step.n}>
-                  <span className="tt-flow__n">{step.n}</span>
-                  <h3 className="tt-flow__name">{step.title}</h3>
-                  <p className="tt-flow__body">{step.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* ── Close, anchored and unadorned ───────────────────────────── */}
-        <section className="tt-close">
-          <div className="tt-rail">
-            <div className="tt-close__inner">
-              <p className="tt-close__line">
-                Send us the city, the days and the money. It comes back as a route.
-              </p>
-              <button
-                type="button"
-                className="tt-btn"
-                onClick={() => {
-                  // Scroll to the slip first: focusing before the scroll
-                  // lands keyboard focus on a field that is then moved out
-                  // of view. `preventScroll` keeps the browser from undoing
-                  // it a frame later.
-                  const slip = document.querySelector('.tt-slip');
-                  slip?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-                  document.getElementById('tt-city')?.focus({ preventScroll: true });
-                }}
-              >
-                <span>Start a route</span>
-                <IconArrow size={18} />
-              </button>
-              <p className="tt-close__fine">
-                Itineraries, hotel shortlists and prices are generated estimates. Check
-                availability and fares with the operator before you book.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-    </>
+          <p className="vl-plan__fine">
+            Itineraries, hotel shortlists and prices are generated estimates. Check
+            availability and fares with the operator before you book.
+          </p>
+        </div>
+      </section>
+    </main>
   );
 };
 

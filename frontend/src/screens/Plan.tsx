@@ -429,6 +429,10 @@ export default function Plan() {
       </div>
 
       <div className="mx-plan-main">
+        <div className="mx-plan-folio" aria-hidden="true">
+          <span>TT / Booking counter</span>
+          <span>Three entries · one wallet</span>
+        </div>
         <h1 className="mx-plan-title">
           {city.trim() ? (
             <>
@@ -455,7 +459,10 @@ export default function Plan() {
             />
           )}
           {city.trim() ? (
-            <span className="mx-plan-dest-name">{city.trim()}</span>
+            <span>
+              <span className="mx-plan-dest-name">{city.trim()}</span>
+              <span className="mx-plan-dest-cap">Destination survey</span>
+            </span>
           ) : (
             <span className="mx-plan-dest-empty">
               The picked city lands here, with its photo pin.

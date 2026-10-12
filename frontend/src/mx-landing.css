@@ -1,0 +1,967 @@
+/* The landing's editorial world. Original work: ivory stock, ink text, one
+   brass accent, Taviraj for display, Hanken Grotesk for reading. Scoped to
+   `.vl-*` so the ticket-wallet screens never inherit it. */
+
+@font-face {
+  font-family: "Taviraj";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/taviraj-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Taviraj";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/taviraj-500-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Taviraj";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/taviraj-600-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Taviraj";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/taviraj-italic-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/hanken-grotesk-400-600-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/hanken-grotesk-400-600-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/hanken-grotesk-400-600-latin.woff2") format("woff2");
+}
+
+.vl {
+  --vl-paper: #f6f1e7;
+  --vl-card: #fffdf8;
+  --vl-ink: #1b1611;
+  --vl-soft: #57503f;
+  --vl-faint: #6f6653;
+  --vl-line: rgba(27, 22, 17, 0.2);
+  --vl-line-soft: rgba(27, 22, 17, 0.12);
+  --vl-brass: #6e5620;
+  --vl-brass-deep: #544219;
+  --vl-refuse: #9c2b12;
+  --vl-on-dark: #f8f3e8;
+  --vl-on-dark-soft: rgba(248, 243, 232, 0.78);
+  --vl-serif: "Taviraj", Georgia, "Times New Roman", serif;
+  --vl-sans: "Hanken Grotesk", "Barlow", system-ui, sans-serif;
+  --vl-ease: cubic-bezier(0.16, 0.84, 0.44, 1);
+  --vl-rail: 1320px;
+  --vl-gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --vl-rhythm: clamp(5rem, 10vw, 9rem);
+  background: var(--vl-paper);
+  color: var(--vl-ink);
+  font-family: var(--vl-sans);
+}
+
+.vl ::selection {
+  background: var(--vl-brass);
+  color: var(--vl-on-dark);
+}
+
+.vl :focus-visible {
+  outline: 2px solid var(--vl-brass);
+  outline-offset: 3px;
+}
+
+.vl-rail {
+  max-width: var(--vl-rail);
+  margin-inline: auto;
+  padding-inline: var(--vl-gutter);
+}
+
+/* ── Reveal choreography. One authored entrance: rise + fade, staggered by
+   --rvd. Elements are visible by default without JS; the hidden state only
+   applies once `.vl-js` is set, so no-JS readers never stare at blanks. ── */
+
+.vl-js .vl-rv {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.9s ease,
+    transform 1.05s var(--vl-ease);
+  transition-delay: var(--rvd, 0s);
+}
+
+.vl-js .vl-rv.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.vl-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.vl-mask > span {
+  display: block;
+}
+
+.vl-js .vl-mask > span {
+  transform: translateY(112%);
+  transition: transform 1.15s var(--vl-ease);
+  transition-delay: var(--rvd, 0s);
+}
+
+.vl-js .is-in .vl-mask > span,
+.vl-js .is-ready .vl-mask > span {
+  transform: none;
+}
+
+/* ── Folio row. A running head for each band: reference left, plain fact
+   right. Never glued to a heading as an eyebrow. ── */
+
+.vl-folio {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-block: 0.85rem;
+  border-top: 1px solid var(--vl-line);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vl-faint);
+}
+
+.vl-folio--dark {
+  border-top-color: rgba(248, 243, 232, 0.35);
+  color: var(--vl-on-dark-soft);
+}
+
+/* ── Hero. Full-bleed coast plate, scrim, bottom-left thesis. ── */
+
+.vl-hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  overflow: clip;
+  background: #14100c;
+  color: var(--vl-on-dark);
+}
+
+.vl-hero__media {
+  position: absolute;
+  inset: 0;
+}
+
+.vl-hero__media img {
+  width: 100%;
+  height: 112%;
+  object-fit: cover;
+  object-position: center 60%;
+  transform: translate3d(0, var(--plx, 0px), 0) scale(1.06);
+  transform-origin: center 60%;
+  will-change: transform;
+}
+
+.vl-js .vl-hero__media img {
+  animation: vl-hero-settle 2.6s var(--vl-ease) 0.1s both;
+}
+
+@keyframes vl-hero-settle {
+  from {
+    scale: 1.14;
+  }
+  to {
+    scale: 1.06;
+  }
+}
+
+.vl-hero__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(12, 9, 6, 0.8) 0%, rgba(12, 9, 6, 0.46) 45%, rgba(12, 9, 6, 0.32) 70%, rgba(12, 9, 6, 0.36) 100%);
+}
+
+.vl-hero__inner {
+  position: relative;
+  width: 100%;
+  padding-bottom: clamp(3.5rem, 8vh, 6rem);
+}
+
+.vl-hero__ref {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+  border-bottom: 1px solid rgba(248, 243, 232, 0.35);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vl-on-dark-soft);
+}
+
+.vl-hero__title {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: clamp(3rem, 9vw, 7.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin: 0;
+  max-width: 14ch;
+}
+
+.vl-hero__title em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.vl-hero__lede {
+  max-width: 46ch;
+  margin: 1.5rem 0 0;
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  line-height: 1.65;
+  color: var(--vl-on-dark-soft);
+}
+
+.vl-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 2.2rem;
+}
+
+/* ── Buttons. Pill outline on dark, ink fill for the primary act. ── */
+
+.vl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 243, 232, 0.55);
+  background: transparent;
+  color: var(--vl-on-dark);
+  font-family: var(--vl-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    transform 0.45s var(--vl-ease);
+}
+
+.vl-btn svg {
+  transition: transform 0.45s var(--vl-ease);
+}
+
+.vl-btn:hover svg {
+  transform: translateX(4px);
+}
+
+.vl-btn--solid {
+  background: var(--vl-on-dark);
+  border-color: var(--vl-on-dark);
+  color: #171208;
+}
+
+.vl-btn--solid:hover {
+  background: #fff;
+  border-color: #fff;
+}
+
+.vl-btn--ghost:hover {
+  background: rgba(248, 243, 232, 0.14);
+  border-color: var(--vl-on-dark);
+}
+
+.vl-btn--dark {
+  border-color: var(--vl-ink);
+  color: var(--vl-ink);
+}
+
+.vl-btn--dark:hover {
+  background: var(--vl-ink);
+  color: var(--vl-on-dark);
+}
+
+.vl-btn--dark:hover svg {
+  transform: translateX(4px);
+}
+
+.vl-btn--ink {
+  background: var(--vl-ink);
+  border-color: var(--vl-ink);
+  color: var(--vl-on-dark);
+}
+
+.vl-btn--ink:hover {
+  background: var(--vl-brass-deep);
+  border-color: var(--vl-brass-deep);
+}
+
+/* ── Intro. Centred serif statement, then a plate pair. ── */
+
+.vl-intro {
+  padding-block: var(--vl-rhythm) calc(var(--vl-rhythm) * 0.7);
+}
+
+.vl-intro__statement {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  text-align: center;
+  max-width: 28ch;
+  margin: 3rem auto 0;
+}
+
+.vl-intro__statement em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.vl-intro__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.vl-plate {
+  margin: 0;
+}
+
+.vl-plate__frame {
+  position: relative;
+  overflow: clip;
+  background: #ddd5c2;
+}
+
+.vl-plate__frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate3d(0, var(--plx, 0px), 0) scale(1.12);
+  will-change: transform;
+}
+
+.vl-plate__frame--wide {
+  aspect-ratio: 16 / 8;
+}
+
+.vl-plate__frame--std {
+  aspect-ratio: 4 / 3;
+}
+
+.vl-plate__frame--tall {
+  aspect-ratio: 4 / 5;
+}
+
+.vl-plate figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--vl-line-soft);
+  margin-top: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vl-faint);
+}
+
+.vl-plate figcaption span:last-child {
+  text-align: right;
+}
+
+/* ── Bands. Alternating plates and serif arguments. ── */
+
+.vl-bands {
+  padding-bottom: var(--vl-rhythm);
+}
+
+.vl-band {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+  border-top: 1px solid var(--vl-line-soft);
+}
+
+.vl-band:last-child {
+  border-bottom: 1px solid var(--vl-line-soft);
+}
+
+.vl-band__grid {
+  display: grid;
+  grid-template-columns: 1.02fr 0.98fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: center;
+}
+
+.vl-band--flip .vl-band__copy {
+  order: 2;
+}
+
+.vl-band--flip .vl-band__media {
+  order: 1;
+}
+
+.vl-band__index {
+  font-family: var(--vl-serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--vl-brass);
+  margin: 0 0 0.6rem;
+}
+
+.vl-band__title {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: clamp(2.4rem, 4.6vw, 4.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.vl-band__title em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.vl-band__body {
+  max-width: 44ch;
+  margin: 1.4rem 0 0;
+  font-size: 1.06rem;
+  line-height: 1.7;
+  color: var(--vl-soft);
+}
+
+.vl-band__note {
+  max-width: 44ch;
+  margin: 1rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--vl-faint);
+}
+
+.vl-band__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.8rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--vl-ink);
+  font-family: var(--vl-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--vl-brass);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.vl-band__link svg {
+  transition: transform 0.45s var(--vl-ease);
+}
+
+.vl-band__link:hover svg {
+  transform: translateX(4px);
+}
+
+/* ── Field. Full-bleed parallax interlude over the pier. ── */
+
+.vl-field {
+  position: relative;
+  overflow: clip;
+  background: #14100c;
+  color: var(--vl-on-dark);
+  padding-block: clamp(6rem, 14vw, 11rem);
+}
+
+.vl-field__media {
+  position: absolute;
+  inset: -8% 0;
+}
+
+.vl-field__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.8) contrast(1.1);
+  transform: translate3d(0, var(--plx, 0px), 0) scale(1.1);
+  will-change: transform;
+}
+
+.vl-field__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 9, 6, 0.32);
+}
+
+.vl-field__inner {
+  position: relative;
+  text-align: center;
+}
+
+.vl-field__quote {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  max-width: 26ch;
+  margin: 2rem auto 0;
+}
+
+.vl-field__quote em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.vl-field__actions {
+  margin-top: 2.4rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Care. The concierge band: wide night plate, quiet rows. ── */
+
+.vl-care {
+  padding-block: var(--vl-rhythm);
+}
+
+.vl-care__head {
+  max-width: 30ch;
+}
+
+.vl-care__title {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: clamp(2.4rem, 4.6vw, 4.2rem);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin: 2.5rem 0 0;
+}
+
+.vl-care__title em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.vl-care__grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  align-items: start;
+}
+
+.vl-care__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vl-care__row {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 1.1rem;
+  padding-block: 1.6rem;
+  border-top: 1px solid var(--vl-line);
+  align-items: start;
+}
+
+.vl-care__row:last-child {
+  border-bottom: 1px solid var(--vl-line);
+}
+
+.vl-care__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--vl-line);
+  border-radius: 999px;
+  color: var(--vl-brass);
+}
+
+.vl-care__name {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.vl-care__body {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--vl-soft);
+  max-width: 42ch;
+}
+
+.vl-care__media {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.vl-care__actions {
+  margin-top: 2.4rem;
+}
+
+/* ── Plan. The close: getaway line, numbered run, live form. ── */
+
+.vl-plan {
+  position: relative;
+  padding-block: var(--vl-rhythm);
+  border-top: 1px solid var(--vl-line);
+  background: var(--vl-paper);
+}
+
+.vl-plan__title {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: clamp(2.8rem, 7vw, 5.8rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  text-align: center;
+  margin: 2.5rem 0 0;
+}
+
+.vl-plan__title em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.vl-plan__run {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vl-plan__n {
+  font-family: var(--vl-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--vl-brass);
+}
+
+.vl-plan__name {
+  font-family: var(--vl-serif);
+  font-weight: 500;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  margin: 0.5rem 0 0;
+}
+
+.vl-plan__body {
+  margin: 0.6rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--vl-soft);
+}
+
+.vl-plan__sheet {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  background: var(--vl-card);
+  border: 1px solid var(--vl-line);
+  padding: clamp(1.75rem, 4vw, 3.25rem);
+  align-items: start;
+}
+
+.vl-field-row {
+  margin-bottom: 1.9rem;
+}
+
+.vl-field-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.vl-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vl-faint);
+  margin-bottom: 0.55rem;
+}
+
+.vl-input,
+.vl-input--affixed {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--vl-line);
+  background: transparent;
+  border-radius: 0;
+  padding: 0.55rem 0.1rem 0.7rem;
+  font-family: var(--vl-sans);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--vl-ink);
+  caret-color: var(--vl-brass);
+}
+
+.vl-input::placeholder {
+  color: #a79d88;
+  font-weight: 400;
+}
+
+.vl-input:focus {
+  outline: none;
+  border-bottom-color: var(--vl-brass);
+  border-bottom-width: 2px;
+  padding-bottom: calc(0.7rem - 1px);
+}
+
+.vl-input[aria-invalid="true"] {
+  border-bottom-color: var(--vl-refuse);
+  border-bottom-width: 2px;
+  padding-bottom: calc(0.7rem - 1px);
+}
+
+.vl-affix {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--vl-line);
+}
+
+.vl-affix:focus-within {
+  border-bottom-color: var(--vl-brass);
+  border-bottom-width: 2px;
+}
+
+.vl-affix .vl-input,
+.vl-affix .vl-input--affixed {
+  border-bottom: 0;
+  padding-bottom: 0.7rem;
+}
+
+.vl-affix .vl-input:focus,
+.vl-affix .vl-input--affixed:focus {
+  border-bottom: 0;
+  padding-bottom: 0.7rem;
+}
+
+.vl-currency {
+  font-family: var(--vl-serif);
+  font-size: 1.3rem;
+  color: var(--vl-brass);
+}
+
+.vl-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--vl-faint);
+}
+
+.vl-error {
+  margin: 0.55rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--vl-refuse);
+}
+
+.vl-form__action {
+  margin-top: 2.2rem;
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+}
+
+.vl-need {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--vl-soft);
+  min-height: 1.5em;
+}
+
+.vl-plan__map {
+  margin: 0;
+}
+
+.vl-plan__map .vl-map__frame {
+  border: 1px solid var(--vl-line);
+  background: var(--vl-paper);
+}
+
+/* The live route drawing keeps its own geometry but takes the landing's
+   stock and voice, so it reads as a plate rather than an import. */
+.vl-plan__map .tt-map__svg {
+  border: 1px solid var(--vl-line);
+  box-shadow: none;
+  background: var(--vl-paper);
+}
+
+.vl-plan__map .tt-map__caption {
+  border-left: 0;
+  padding-left: 0;
+  color: var(--vl-faint);
+  font-family: var(--vl-sans);
+}
+
+.vl-plan__map .tt-map__caption strong {
+  color: var(--vl-ink);
+}
+
+.vl-plan__fine {
+  max-width: 62ch;
+  margin: 2.5rem auto 0;
+  text-align: center;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--vl-faint);
+}
+
+/* Number inputs: the spinners break the editorial rule; the keyboard and
+   validation carry the range instead. */
+.vl-input::-webkit-outer-spin-button,
+.vl-input::-webkit-inner-spin-button,
+.vl-input--affixed::-webkit-outer-spin-button,
+.vl-input--affixed::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.vl-input[type="number"],
+.vl-input--affixed[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 960px) {
+  .vl-band__grid,
+  .vl-care__grid,
+  .vl-plan__sheet {
+    grid-template-columns: 1fr;
+  }
+
+  .vl-band--flip .vl-band__copy {
+    order: 1;
+  }
+
+  .vl-band--flip .vl-band__media {
+    order: 2;
+  }
+
+  .vl-plan__run {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .vl-intro__pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .vl-hero {
+    min-height: 100svh;
+  }
+
+  /* Portrait crops land type on open sky; the scrim carries the contrast
+     the composition cannot. */
+  .vl-hero__scrim {
+    background:
+      linear-gradient(to top, rgba(12, 9, 6, 0.82) 0%, rgba(12, 9, 6, 0.6) 48%, rgba(12, 9, 6, 0.5) 72%, rgba(12, 9, 6, 0.46) 100%);
+  }
+
+  .vl-hero__ref span:last-child {
+    display: none;
+  }
+
+  .vl-hero__actions .vl-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .vl-care__row {
+    grid-template-columns: 2.5rem 1fr;
+  }
+
+  .vl-care__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* ── Reduced motion. Everything settles to its final state. ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-js .vl-rv,
+  .vl-js .vl-mask > span,
+  .vl-js .is-in .vl-mask > span,
+  .vl-js .is-ready .vl-mask > span {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .vl-js .vl-hero__media img {
+    animation: none;
+  }
+
+  .vl-hero__media img,
+  .vl-plate__frame img,
+  .vl-field__media img {
+    transform: none;
+  }
+
+  .vl-btn svg,
+  .vl-band__link svg {
+    transition: none;
+  }
+}

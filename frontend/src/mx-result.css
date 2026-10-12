@@ -358,6 +358,11 @@
   cursor: default;
 }
 
+a.mx-rs-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
 .mx-rs-btn--primary {
   background: var(--mx-ink);
   color: var(--mx-stock);
