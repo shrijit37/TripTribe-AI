@@ -4,18 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FormEvent, KeyboardEvent } from "react";
 import AuthProviders from "@/components/AuthProviders";
-import Coastline from "@/components/Coastline";
 import { useAuth } from "@/context/AuthProvider";
 import {
   sendVerificationEmail,
   signInWithEmail,
   signUpWithEmail,
 } from "@/lib/auth-client";
-
-/* ─────────────────────────────────────────────────────────────────────────
-   Icons — drawn at 24×24, one stroke weight, round caps. No glyph standing
-   in for an icon system, on this surface or any other.
-   ───────────────────────────────────────────────────────────────────────── */
+import "../mx-auth.css";
 
 const IconRoutes = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -32,7 +27,7 @@ const IconRoutes = () => (
 const IconMail = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
-      d="M3 7h18v10H3zM3 8l9 6 9-6"
+      d="M4 6h16v12H4zM4 7l8 6 8-6"
       stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
@@ -44,9 +39,9 @@ const IconMail = () => (
 const IconArrow = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
-      d="M5 12h13m0 0-5-5m5 5-5 5"
+      d="M4 12h15m0 0-6-6m6 6-6 6"
       stroke="currentColor"
-      strokeWidth="1.7"
+      strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -56,7 +51,7 @@ const IconArrow = () => (
 const IconBack = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
-      d="M19 12H6m0 0 5-5m-5 5 5 5"
+      d="M20 12H5m0 0 6-6m-6 6 6 6"
       stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
@@ -64,20 +59,6 @@ const IconBack = () => (
     />
   </svg>
 );
-
-/* ─────────────────────────────────────────────────────────────────────────
-   The margin: what an account actually holds, and only that.
-
-   Every line here is a fact the product can back (PRODUCT.md): trips persist
-   per user and surface on the account, and the address on the account is the
-   address plans are stored against. There are no testimonials, user counts or
-   ratings anywhere on this page — none exist to print.
-
-   Email hand-off is deliberately absent. PRODUCT.md records it as intended and
-   the repo has no mail transport at all, so promising a delivered plan here
-   would be claiming an unbuilt feature. The second row states what the address
-   does today, which is what it actually does.
-   ───────────────────────────────────────────────────────────────────────── */
 
 const HOLDS = [
   {
@@ -92,10 +73,6 @@ const HOLDS = [
   },
 ];
 
-/* Auth-service errors, said in the product's voice: name the constraint, name
-   the recovery, never "invalid input". Keyed by the service's own `message`,
-   which is an open string map rather than a union: a code this page has never
-   heard of falls through to the raw message instead of failing to compile. */
 const SIGNIN_ERRORS: Record<string, string> = {
   EMAIL_NOT_VERIFIED:
     "Verify your email first — open the link the sign-up mail sent you.",
@@ -114,7 +91,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Mode = "signin" | "signup";
 
-/** The field an error is hinged to; `null` means it belongs to the sheet. */
 type Field = "email" | "password" | "confirm";
 
 const Auth = () => {
@@ -138,14 +114,10 @@ const Auth = () => {
     signup: null,
   });
 
-  // Already holding a session: there is nothing to do here, so this page gets
-  // out of the way rather than showing a form over a signed-in state.
   useEffect(() => {
     if (user) router.replace("/");
   }, [user, router]);
 
-  // Switching modes clears the verdict rather than carrying one form's error into
-  // the other's fields, and sends focus to the tab the visitor just chose.
   const changeMode = (next: Mode) => {
     setMode(next);
     setError("");
@@ -189,8 +161,6 @@ const Auth = () => {
       }
       setBusy(true);
       try {
-        // The name is optional in the UI, and the service signature requires a
-        // string — so a blank one is sent as `""`, not omitted as `undefined`.
         await signUpWithEmail(trimmed.toLowerCase(), password, fname.trim());
         setSentTo(trimmed);
       } catch (err) {
@@ -215,327 +185,275 @@ const Auth = () => {
   const isSignUp = mode === "signup";
 
   return (
-    <>
-      <main className="tt-page">
-        <section className="tt-turnstile" aria-labelledby="tt-gate-title">
-          <div className="tt-rail">
-            <div className="tt-turnstile__spread">
-              {/* ── The lobe that carries the form ─────────────────────── */}
-              <div className="tt-turnstile__lobe tt-turnstile__lobe--form">
-                <div className="tt-gate">
-                  <div className="tt-gate__head">
-                    <h1 id="tt-gate-title" className="tt-gate__title">
-                      The account
-                    </h1>
-                    <p className="tt-gate__ref">
-                      <span>TT</span>
-                      <span className="tt-gate__slash">/</span>
-                      <span>AUTH</span>
-                    </p>
-                  </div>
+    <main className="mx-au-page">
+      <div className="mx-au-grid">
+        <section className="mx-au-sheet" aria-labelledby="mx-au-gate-title">
+          <h1 id="mx-au-gate-title" className="mx-au-title">
+            The account
+          </h1>
 
-                  {/* Sign in and sign-up are two spans of one rule, not two
-                      buttons. The disc marks the span you are standing at. */}
-                  <div
-                    className="tt-segment"
-                    role="tablist"
-                    aria-label="Sign in or register"
-                    data-mode={mode}
-                  >
-                    <button
-                      type="button"
-                      role="tab"
-                      id="tt-tab-signin"
-                      className="tt-segment__tab"
-                      aria-selected={!isSignUp}
-                      aria-controls="tt-gate-panel"
-                      tabIndex={isSignUp ? -1 : 0}
-                      ref={(el) => {
-                        tabRefs.current.signin = el;
-                      }}
-                      onClick={() => changeMode("signin")}
-                      onKeyDown={onSegmentKeyDown}
-                    >
-                      Sign in
-                      <span className="tt-segment__ref" aria-hidden="true">
-                        01
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      id="tt-tab-signup"
-                      className="tt-segment__tab"
-                      aria-selected={isSignUp}
-                      aria-controls="tt-gate-panel"
-                      tabIndex={isSignUp ? 0 : -1}
-                      ref={(el) => {
-                        tabRefs.current.signup = el;
-                      }}
-                      onClick={() => changeMode("signup")}
-                      onKeyDown={onSegmentKeyDown}
-                    >
-                      Register
-                      <span className="tt-segment__ref" aria-hidden="true">
-                        02
-                      </span>
-                    </button>
-                    <span className="tt-segment__disc" aria-hidden="true" />
-                  </div>
+          <div
+            className="mx-au-segment"
+            role="tablist"
+            aria-label="Sign in or register"
+            data-mode={mode}
+          >
+            <button
+              type="button"
+              role="tab"
+              id="mx-au-tab-signin"
+              className="mx-au-tab"
+              aria-selected={!isSignUp}
+              aria-controls="mx-au-gate-panel"
+              tabIndex={isSignUp ? -1 : 0}
+              ref={(el) => {
+                tabRefs.current.signin = el;
+              }}
+              onClick={() => changeMode("signin")}
+              onKeyDown={onSegmentKeyDown}
+            >
+              Sign in
+              <span className="mx-au-tabnum" aria-hidden="true">
+                01
+              </span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="mx-au-tab-signup"
+              className="mx-au-tab"
+              aria-selected={isSignUp}
+              aria-controls="mx-au-gate-panel"
+              tabIndex={isSignUp ? 0 : -1}
+              ref={(el) => {
+                tabRefs.current.signup = el;
+              }}
+              onClick={() => changeMode("signup")}
+              onKeyDown={onSegmentKeyDown}
+            >
+              Register
+              <span className="mx-au-tabnum" aria-hidden="true">
+                02
+              </span>
+            </button>
+          </div>
 
-                  {sentTo ? (
-                    <div className="tt-gate__sent">
-                      <h2 className="tt-gate__sent-title">
-                        Check your email for the verification link
-                      </h2>
-                      <p className="tt-gate__sent-body">
-                        The auth service sent a verification link to
-                      </p>
-                      <p className="tt-gate__sent-to">{sentTo}</p>
-                      <p className="tt-gate__sent-body" style={{ marginTop: "1.1rem" }}>
-                        Open it to finish setting up the account, then sign in here.
-                      </p>
-                      <div className="tt-gate__action">
-                        <button
-                          type="button"
-                          className="tt-btn"
-                          onClick={() => {
-                            setSentTo("");
-                            changeMode("signin");
-                          }}
-                        >
-                          Go to sign in
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <form
-                      id="tt-gate-panel"
-                      role="tabpanel"
-                      aria-labelledby={isSignUp ? "tt-tab-signup" : "tt-tab-signin"}
-                      onSubmit={submit}
-                      noValidate
-                    >
-                      <AuthProviders disabled={busy} onError={setError} />
-
-                      <p className="tt-providers__or">or with email</p>
-
-                      <div className="tt-rows">
-                        {isSignUp && (
-                          <div className="tt-row">
-                            <label className="tt-row__label" htmlFor="tt-auth-name">
-                              Name
-                            </label>
-                            <input
-                              id="tt-auth-name"
-                              className="tt-row__input tt-row__input--name"
-                              type="text"
-                              autoComplete="name"
-                              placeholder="How you want to be called"
-                              value={fname}
-                              onChange={(e) => setFname(e.target.value)}
-                            />
-                          </div>
-                        )}
-
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-auth-email">
-                            Email
-                          </label>
-                          <input
-                            id="tt-auth-email"
-                            className="tt-row__input"
-                            type="email"
-                            inputMode="email"
-                            autoComplete="email"
-                            placeholder="you@example.com"
-                            value={email}
-                            aria-invalid={invalid === "email"}
-                            aria-describedby={invalid === "email" ? "tt-auth-email-error" : undefined}
-                            onChange={(e) => setEmail(e.target.value)}
-                          />
-                          {invalid === "email" && (
-                            <p className="tt-row__error" id="tt-auth-email-error" role="alert">
-                              {error}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-auth-password">
-                            Password
-                          </label>
-                          <input
-                            id="tt-auth-password"
-                            className="tt-row__input tt-row__input--secret"
-                            type="password"
-                            autoComplete={isSignUp ? "new-password" : "current-password"}
-                            placeholder="••••••••"
-                            value={password}
-                            aria-invalid={invalid === "password"}
-                            aria-describedby={
-                              invalid === "password" ? "tt-auth-password-error" : undefined
-                            }
-                            onChange={(e) => setPassword(e.target.value)}
-                          />
-                          {invalid === "password" && (
-                            <p className="tt-row__error" id="tt-auth-password-error" role="alert">
-                              {error}
-                            </p>
-                          )}
-                        </div>
-
-                        {isSignUp && (
-                          <div className="tt-row">
-                            <label className="tt-row__label" htmlFor="tt-auth-confirm">
-                              Confirm password
-                            </label>
-                            <input
-                              id="tt-auth-confirm"
-                              className="tt-row__input tt-row__input--secret"
-                              type="password"
-                              autoComplete="new-password"
-                              placeholder="••••••••"
-                              value={confirm}
-                              aria-invalid={invalid === "confirm"}
-                              aria-describedby={
-                                invalid === "confirm" ? "tt-auth-confirm-error" : undefined
-                              }
-                              onChange={(e) => setConfirm(e.target.value)}
-                            />
-                            {invalid === "confirm" && (
-                              <p
-                                className="tt-row__error"
-                                id="tt-auth-confirm-error"
-                                role="alert"
-                              >
-                                {error}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* An error with no single field to name — a provider
-                          failure, or a sheet-level rejection — lands under the
-                          whole ledger, hinged at the rule like an errata slip. */}
-                      {error && !invalid && (
-                        <p className="tt-row__error tt-row__error--sheet" role="alert">
-                          {error}
-                        </p>
-                      )}
-
-                      {/* Unverified sign-in is recoverable here, not on another
-                          page: the address is already in the field, so resend
-                          from it rather than asking for it twice. */}
-                      {!isSignUp &&
-                        error.toLowerCase().includes("verify") && (
-                          <div className="tt-gate__action">
-                            <button
-                              type="button"
-                              className="tt-nav__link tt-nav__link--quiet"
-                              disabled={resending || !EMAIL_RE.test(email.trim())}
-                              onClick={async () => {
-                                setResending(true);
-                                setResendNote("");
-                                try {
-                                  await sendVerificationEmail(email.trim().toLowerCase());
-                                  setResendNote(
-                                    `Verification link re-sent to ${email.trim()}. Open it, then sign in.`
-                                  );
-                                } catch (err) {
-                                  setResendNote(
-                                    err instanceof Error
-                                      ? err.message
-                                      : "Could not re-send that link right now."
-                                  );
-                                } finally {
-                                  setResending(false);
-                                }
-                              }}
-                            >
-                              {resending ? "Re-sending…" : "Re-send verification link"}
-                            </button>
-                            {resendNote && (
-                              <p className="tt-gate__need" role="status">
-                                {resendNote}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                      <div className="tt-gate__action">
-                        <button type="submit" className="tt-btn" disabled={busy}>
-                          {isSignUp ? "Register" : "Continue"}
-                          <IconArrow />
-                        </button>
-                        <p className="tt-gate__need">
-                          {isSignUp
-                            ? "A name is optional. The email and password are not."
-                            : "Use the same email and password you registered with."}
-                        </p>
-                        {!isSignUp && (
-                          <p className="tt-gate__need">
-                            <a href="/auth/reset">Forgot your password?</a>
-                            {" · "}
-                            <a href="/auth/verify">Verify your email</a>
-                          </p>
-                        )}
-                      </div>
-                    </form>
-                  )}
-
-                  <button
-                    type="button"
-                    className="tt-turnstile__back"
-                    onClick={() => router.push("/")}
-                  >
-                    <IconBack />
-                    Back to the route
-                  </button>
-                </div>
-              </div>
-
-              {/* ── The cut ────────────────────────────────────────────── */}
-              <div className="tt-turnstile__coast">
-                <Coastline />
-              </div>
-
-              {/* ── The margin: what an account holds ──────────────────── */}
-              <div className="tt-turnstile__lobe tt-turnstile__lobe--margin">
-                <aside className="tt-margin">
-                  <h2 className="tt-margin__title">What the account holds</h2>
-                  <p className="tt-margin__body">
-                    Planning a trip works signed out. An account is what makes the plan
-                    yours afterwards — reachable on any device, and still there when the
-                    group asks.
-                  </p>
-
-                  <ul className="tt-margin__list">
-                    {HOLDS.map(({ Icon, name, body }) => (
-                      <li className="tt-margin__item" key={name}>
-                        <span className="tt-margin__icon">
-                          <Icon />
-                        </span>
-                        <div>
-                          <h3 className="tt-margin__name">{name}</h3>
-                          <p className="tt-margin__text">{body}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p className="tt-margin__fine">
-                    Credentials are handled by the shared auth service at
-                    auth.shrijit.tech. TripTribe keeps no password of its own.
-                  </p>
-                </aside>
+          {sentTo ? (
+            <div>
+              <h2 className="mx-au-head2">Check your email for the verification link</h2>
+              <p className="mx-au-hint">The auth service sent a verification link to</p>
+              <p className="mx-au-sentto">{sentTo}</p>
+              <p className="mx-au-hint">
+                Open it to finish setting up the account, then sign in here.
+              </p>
+              <div className="mx-au-actions">
+                <button
+                  type="button"
+                  className="mx-au-btn"
+                  onClick={() => {
+                    setSentTo("");
+                    changeMode("signin");
+                  }}
+                >
+                  Go to sign in
+                </button>
               </div>
             </div>
-          </div>
+          ) : (
+            <form
+              id="mx-au-gate-panel"
+              className="mx-au-form"
+              role="tabpanel"
+              aria-labelledby={isSignUp ? "mx-au-tab-signup" : "mx-au-tab-signin"}
+              onSubmit={submit}
+              noValidate
+            >
+              <div className="mx-au-providers">
+                <AuthProviders disabled={busy} onError={setError} />
+              </div>
+
+              <p className="mx-au-or">or with email</p>
+
+              <div className="mx-au-rows">
+                {isSignUp && (
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-auth-name">Name</label>
+                    <input
+                      id="mx-au-auth-name"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="How you want to be called"
+                      value={fname}
+                      onChange={(e) => setFname(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div className="mx-au-row">
+                  <label htmlFor="mx-au-auth-email">Email</label>
+                  <input
+                    id="mx-au-auth-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    aria-invalid={invalid === "email"}
+                    aria-describedby={invalid === "email" ? "mx-au-auth-email-error" : undefined}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  {invalid === "email" && (
+                    <p className="mx-au-error" id="mx-au-auth-email-error" role="alert">
+                      {error}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mx-au-row">
+                  <label htmlFor="mx-au-auth-password">Password</label>
+                  <input
+                    id="mx-au-auth-password"
+                    className="mx-au-secret"
+                    type="password"
+                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    placeholder="••••••••"
+                    value={password}
+                    aria-invalid={invalid === "password"}
+                    aria-describedby={
+                      invalid === "password" ? "mx-au-auth-password-error" : undefined
+                    }
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  {invalid === "password" && (
+                    <p className="mx-au-error" id="mx-au-auth-password-error" role="alert">
+                      {error}
+                    </p>
+                  )}
+                </div>
+
+                {isSignUp && (
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-auth-confirm">Confirm password</label>
+                    <input
+                      id="mx-au-auth-confirm"
+                      className="mx-au-secret"
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="••••••••"
+                      value={confirm}
+                      aria-invalid={invalid === "confirm"}
+                      aria-describedby={
+                        invalid === "confirm" ? "mx-au-auth-confirm-error" : undefined
+                      }
+                      onChange={(e) => setConfirm(e.target.value)}
+                    />
+                    {invalid === "confirm" && (
+                      <p className="mx-au-error" id="mx-au-auth-confirm-error" role="alert">
+                        {error}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {error && !invalid && (
+                <p className="mx-au-error" role="alert">
+                  {error}
+                </p>
+              )}
+
+              {!isSignUp && error.toLowerCase().includes("verify") && (
+                <div className="mx-au-actions">
+                  <button
+                    type="button"
+                    className="mx-au-btn mx-au-btn--quiet"
+                    disabled={resending || !EMAIL_RE.test(email.trim())}
+                    onClick={async () => {
+                      setResending(true);
+                      setResendNote("");
+                      try {
+                        await sendVerificationEmail(email.trim().toLowerCase());
+                        setResendNote(
+                          `Verification link re-sent to ${email.trim()}. Open it, then sign in.`
+                        );
+                      } catch (err) {
+                        setResendNote(
+                          err instanceof Error
+                            ? err.message
+                            : "Could not re-send that link right now."
+                        );
+                      } finally {
+                        setResending(false);
+                      }
+                    }}
+                  >
+                    {resending ? "Re-sending…" : "Re-send verification link"}
+                  </button>
+                  {resendNote && (
+                    <p className="mx-au-note" role="status">
+                      {resendNote}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="mx-au-actions">
+                <button type="submit" className="mx-au-btn" disabled={busy}>
+                  {isSignUp ? "Register" : "Continue"}
+                  <IconArrow />
+                </button>
+                <p className="mx-au-note">
+                  {isSignUp
+                    ? "A name is optional. The email and password are not."
+                    : "Use the same email and password you registered with."}
+                </p>
+                {!isSignUp && (
+                  <p className="mx-au-note">
+                    <a href="/auth/reset">Forgot your password?</a>
+                    {" · "}
+                    <a href="/auth/verify">Verify your email</a>
+                  </p>
+                )}
+              </div>
+            </form>
+          )}
+
+          <button type="button" className="mx-au-back" onClick={() => router.push("/")}>
+            <IconBack />
+            Back to the route
+          </button>
         </section>
-      </main>
-    </>
+
+        <aside className="mx-au-margin" aria-label="What the account holds">
+          <h2 className="mx-au-head2" style={{ marginTop: 0 }}>
+            What the account holds
+          </h2>
+          <p className="mx-au-hint">
+            Planning a trip works signed out. An account is what makes the plan yours
+            afterwards — reachable on any device, and still there when the group asks.
+          </p>
+
+          <ul className="mx-au-holds">
+            {HOLDS.map(({ Icon, name, body }) => (
+              <li className="mx-au-hold" key={name}>
+                <span aria-hidden="true">
+                  <Icon />
+                </span>
+                <div>
+                  <h3 className="mx-au-holdname">{name}</h3>
+                  <p className="mx-au-holdbody">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mx-au-fine">
+            Credentials are handled by the shared auth service at auth.shrijit.tech.
+            TripTribe keeps no password of its own.
+          </p>
+        </aside>
+      </div>
+    </main>
   );
 };
 

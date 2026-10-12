@@ -136,7 +136,7 @@ export default async function CityPlacesPage({ params }: PageProps) {
               ? `${catalogue.entries.length} places in ${city}, ranked by what travellers actually rated. Every entry carries its category, its address and its score — the same places TripTribe sequences into a day-by-day route.`
               : `We are still building the list for ${city}. In the meantime, TripTribe will plan the route for you — give it the city, your budget and your days, and it will sequence the stops. `}
             {!catalogue && (
-              <Link className="tt-article__cta" href="/search">
+              <Link className="tt-article__cta" href="/plan">
                 Plan a trip to {city}
               </Link>
             )}
@@ -191,7 +191,7 @@ export default async function CityPlacesPage({ params }: PageProps) {
                 with meals picked where you will already be and a cost figure
                 that fits the budget you set.
               </p>
-              <Link className="tt-article__cta" href="/search">
+              <Link className="tt-article__cta" href="/plan">
                 Plan {city} with TripTribe
               </Link>
             </section>

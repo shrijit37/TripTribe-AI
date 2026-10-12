@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ActivityCard, { clock } from "@/components/ActivityCard";
 import HotelSection from "@/components/HotelSection";
-import { emailPlan, regenerateDay } from "@/lib/api";
+import { emailPlan, fetchCityImage, regenerateDay } from "@/lib/api";
 import { money, moneyUnit, numeric, sum } from "@/lib/money";
 import { takeResult, takeTripPlan } from "@/lib/nav";
 import type { MealName, PlanPayload } from "@/lib/types";
@@ -53,9 +53,13 @@ const Result = () => {
   const [working, setWorking] = useState<number | null>(null);
   const [replanned, setReplanned] = useState("");
 
+  // The sleeve plate: decoration, so a miss degrades to no plate at all.
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [currentDay, setCurrentDay] = useState<number | null>(null);
+
   // `react-router`'s `location.state` has no App Router equivalent. The plan
   // is parked in `sessionStorage` by whoever handed it over — a plan just
-  // generated on /search, or a saved trip reopened from the account drawer —
+  // generated on /plan, or a saved trip reopened from the account drawer —
   // and each key is claimed once, so a hard reload still finds the plan. A
   // direct visit finds neither and gets the empty state below.
   //
@@ -72,25 +76,55 @@ const Result = () => {
     setPlan(takeResult() ?? takeTripPlan());
   }, []);
 
+  const cityName = plan?.city?.name ?? "";
+  useEffect(() => {
+    if (!cityName) return;
+    let live = true;
+    fetchCityImage(cityName).then((src) => {
+      // fetchCityImage resolves with a generic placeholder when the image
+      // backend has nothing for the city. A placeholder of nowhere is worse
+      // than no plate, so only a real photograph is admitted.
+      if (live && src && !src.includes("picsum.photos")) setPhoto(src);
+    });
+    return () => {
+      live = false;
+    };
+  }, [cityName]);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-mx-day]"),
+    );
+    if (!nodes.length) return;
+    const seen = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setCurrentDay(Number((entry.target as HTMLElement).dataset.mxDay));
+          }
+        }
+      },
+      { rootMargin: "-30% 0px -60% 0px" },
+    );
+    nodes.forEach((node) => seen.observe(node));
+    return () => seen.disconnect();
+  }, [plan]);
+
   // Direct visit, or a reload after the one-shot key was spent: there is no
   // plan to render. The original read `state.city.name` off an empty object and
   // threw; saying so and offering the obvious next step beats a white screen.
   if (!plan) {
-    // `.tt-close` carries no gutter of its own — it is a band, and bands
-    // sit inside the rail. Returned bare it put its rules against the
-    // window edge and clipped its own text.
     return (
-      <div className="tt-page">
-        <div className="tt-rail">
-          <div className="tt-close">
-            <div className="tt-close__inner">
-              <p className="tt-close__line">No plan on this page.</p>
-              <p className="tt-close__fine">
-                It is handed over when a trip is generated, and lasts for this
-                tab only.
-              </p>
-            </div>
-            <Link className="tt-btn" href="/search">
+      <div className="mx-rs-page">
+        <div className="mx-rs-wrap">
+          <div className="mx-rs-empty">
+            <p className="mx-rs-empty__line">No plan on this page.</p>
+            <p className="mx-rs-empty__fine">
+              It is handed over when a trip is generated, and lasts for this
+              tab only.
+            </p>
+            <Link className="mx-rs-btn mx-rs-btn--primary" href="/plan">
               Plan a trip
             </Link>
           </div>
@@ -215,419 +249,392 @@ const Result = () => {
     : [];
 
   return (
-    <div className="tt-page">
-      <div className="tt-rail">
-        {/* The destination, named before anything is asked of it. */}
-        <section className="tt-issue">
-          <div className="tt-issue__head">
-            <h1 className="tt-display tt-issue__title">{city?.name}</h1>
-            <span className="tt-issue__ref">ISSUED WALLET · TT/WALLET</span>
-          </div>
-          {city?.description ? (
-            <p className="tt-lede tt-issue__lede">{city.description}</p>
-          ) : null}
-          {facts.length ? (
-            <dl className="tt-issue__facts">
-              {facts.map(([key, value]) => (
-                <div className="tt-issue__fact" key={key}>
-                  <dt className="tt-issue__factKey">{key}</dt>
-                  <dd className="tt-issue__factVal">{value}</dd>
+    <div className="mx-rs-page">
+      <div className="mx-rs-wrap">
+        <div className="mx-rs-layout">
+          <main>
+            {/* The sleeve: the city named before anything is asked of it. */}
+            <section className="mx-rs-sleeve" aria-label={city?.name}>
+              {photo ? (
+                <figure className="mx-rs-plate">
+                  <img
+                    src={photo}
+                    alt={`${city?.name}, in photographs`}
+                    onError={() => setPhoto(null)}
+                  />
+                </figure>
+              ) : null}
+              <div className="mx-rs-sleeve__body">
+                <h1 className="mx-rs-city">{city?.name}</h1>
+                {city?.description ? (
+                  <p className="mx-rs-lede">{city.description}</p>
+                ) : null}
+                {facts.length ? (
+                  <dl className="mx-rs-facts">
+                    {facts.map(([key, value]) => (
+                      <div className="mx-rs-facts__row" key={key}>
+                        <dt className="mx-rs-facts__key">{key}</dt>
+                        <dd className="mx-rs-facts__val">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+              </div>
+            </section>
+
+            {/* The fare ledger: the total, the four-way split, the signed
+                remainder only when nonzero, and the typical-cost comparison. */}
+            <section className="mx-rs-section" aria-label="Fare ledger">
+              <h2 className="mx-rs-section__title">The fare, worked out</h2>
+              <p className="mx-rs-balance">
+                <span className="mx-rs-balance__figure">
+                  {sum(unit, budget?.total)}
+                </span>{" "}
+                <span className="mx-rs-balance__note">
+                  {total == null
+                    ? "The solver returned no total."
+                    : `for ${days.length} ${
+                        days.length === 1 ? "day" : "days"
+                      }, everyone on it`}
+                </span>
+              </p>
+
+              {budget?.insufficientBudget ? (
+                <div className="mx-rs-verdict" role="alert">
+                  <p className="mx-rs-verdict__line">
+                    This total will not cover {city?.name} in {days.length}{" "}
+                    {days.length === 1 ? "day" : "days"}.
+                  </p>
+                  {budget.insufficientBudgetMessage ? (
+                    <p>{budget.insufficientBudgetMessage}</p>
+                  ) : null}
+                  {budget.alternativeOptions ? (
+                    <p>{budget.alternativeOptions}</p>
+                  ) : null}
                 </div>
-              ))}
-            </dl>
-          ) : null}
-        </section>
+              ) : null}
 
-        {/* The manifest from /search, filled in. Same sheet, same
-                    numbered entries, same ruled grammar — the paper is no
-                    longer a slip to be posted but the document itself, so it
-                    loses its border and runs the full rail. */}
-        <section className="tt-sheet tt-sheet--filled">
-          <div className="tt-sheet__head">
-            <h2 className="tt-sheet__title">Issued wallet</h2>
-            <span className="tt-sheet__ref">
-              TT/ROUTE <i className="tt-sheet__slash">/</i> FILLED
-            </span>
-          </div>
+              {split ? (
+                <dl className="mx-rs-split">
+                  {split.map(([label, figure]) => (
+                    <div className="mx-rs-split__row" key={label}>
+                      <dt className="mx-rs-split__key">{label}</dt>
+                      <dd className="mx-rs-split__val">{sum(unit, figure)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="mx-rs-plain">
+                  The solver returned no breakdown of the total into stay,
+                  food, doings and getting about. The total itself is not in
+                  doubt.
+                </p>
+              )}
 
-          <ol className="tt-entries">
-            {/* 01 — the money, and the verdict on it. */}
-            <li className="tt-entry">
-              <div className="tt-entry__no">01</div>
-              <div className="tt-entry__main">
-                <div className="tt-entry__label">
-                  <span className="tt-entry__ask">The trip costs under</span>
-                  <span className="tt-entry__rule">
-                    {budget?.isEstimate ? "ESTIMATE" : "AS ENTERED"}
+              {unattributed != null && unattributed !== 0 ? (
+                <p className="mx-rs-plain mx-rs-plain--signed">
+                  The breakdown accounts for{" "}
+                  {money(unit, accounted as number)}.{" "}
+                  {unattributed > 0
+                    ? `The remaining ${money(unit, unattributed)} is not attributed to a category by the solver.`
+                    : `The four categories add up to ${money(unit, -unattributed)} more than the total entered, so the split is over-stated.`}
+                </p>
+              ) : null}
+
+              {budget?.averageTotalCost ||
+              budget?.averageAccommodationCost ? (
+                <p className="mx-rs-plain">
+                  For comparison, the solver puts a typical {days.length}-day
+                  trip in {city?.name} at{" "}
+                  {numeric(budget.averageTotalCost) != null
+                    ? money(unit, numeric(budget.averageTotalCost) as number)
+                    : "an unnamed figure"}
+                  {budget.averageAccommodationCost
+                    ? `, with a night around ${money(unit, numeric(budget.averageAccommodationCost) as number)}`
+                    : ""}
+                  . Both are working estimates.
+                </p>
+              ) : null}
+            </section>
+
+            {/* The days run top to bottom, each a side of the record. */}
+            <section className="mx-rs-section" aria-label="Day by day">
+              <h2 className="mx-rs-section__title">
+                {days.length} {days.length === 1 ? "day" : "days"}, in order
+              </h2>
+              {days.length ? (
+                <ol className="mx-rs-days">
+                  {days.map((day, dayIndex) => {
+                    const ends = clock(day.endMinute);
+                    const moving = duration(day.travelMinutes);
+                    const stops = Array.isArray(day.activities)
+                      ? day.activities
+                      : [];
+                    return (
+                      <li
+                        className="mx-rs-day"
+                        key={day.day}
+                        id={`mx-rs-day-${day.day}`}
+                        data-mx-day={day.day}
+                      >
+                        <div className="mx-rs-day__head">
+                          <span className="mx-rs-day__no">
+                            DAY {String(day.day).padStart(2, "0")}
+                          </span>
+                          <span className="mx-rs-day__weekday">
+                            {day.weekday || "UNPLACED"}
+                          </span>
+                          <span className="mx-rs-day__measures">
+                            {stops.length}{" "}
+                            {stops.length === 1 ? "STOP" : "STOPS"}
+                            {moving ? ` · ${moving} MOVING` : ""}
+                            {ends ? ` · ENDS ${ends}` : ""}
+                          </span>
+                        </div>
+
+                        {stops.length ? null : (
+                          <p className="mx-rs-plain">
+                            The solver returned no stops for this day.
+                          </p>
+                        )}
+                        <ol className="mx-rs-tracks">
+                          {stops.map((stop, index) => (
+                            <ActivityCard
+                              key={`${stop.place}-${index}`}
+                              place={stop}
+                              anchor={index === 0}
+                              index={index}
+                            />
+                          ))}
+                          {MEALS.map((meal, mealIndex) => {
+                            const slot = day.meals?.[meal.key];
+                            const track = stops.length + mealIndex;
+                            return slot ? (
+                              <ActivityCard
+                                key={meal.key}
+                                place={slot}
+                                meal={meal.label}
+                                index={track}
+                              />
+                            ) : (
+                              <li className="mx-rs-track" key={meal.key}>
+                                <span
+                                  className="mx-rs-track__no"
+                                  aria-hidden="true"
+                                >
+                                  {String(track + 1).padStart(2, "0")}
+                                </span>
+                                <p className="mx-rs-track__note">
+                                  <span className="mx-rs-tag">
+                                    {meal.label}
+                                  </span>
+                                  Nothing nearby fits this meal in the hours
+                                  of this day.
+                                </p>
+                                <span className="mx-rs-track__hour">—</span>
+                              </li>
+                            );
+                          })}
+                        </ol>
+
+                        {tripId ? (
+                          <div className="mx-rs-day__rework">
+                            <button
+                              type="button"
+                              className="mx-rs-btn"
+                              disabled={working !== null}
+                              aria-busy={working === dayIndex}
+                              onClick={() => work(dayIndex, "day")}
+                            >
+                              {working === dayIndex ? "Working" : "New day"}
+                            </button>
+                            <button
+                              type="button"
+                              className="mx-rs-btn"
+                              disabled={working !== null}
+                              aria-busy={working === dayIndex}
+                              onClick={() => work(dayIndex, "meals")}
+                            >
+                              New meals
+                            </button>
+                            <button
+                              type="button"
+                              className="mx-rs-btn"
+                              disabled={working !== null}
+                              aria-busy={working === dayIndex}
+                              onClick={() => work(dayIndex, "order")}
+                            >
+                              Re-order
+                            </button>
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <p className="mx-rs-plain">
+                  The solver returned no days for this trip.
+                </p>
+              )}
+              {replanned ? (
+                <p className="mx-rs-status" role="status">
+                  {replanned}
+                </p>
+              ) : null}
+            </section>
+
+            {/* Arrival: gated on the payload, never filled in with a
+                plausible airport that might be wrong. */}
+            <section className="mx-rs-section" aria-label="Arrival">
+              <h2 className="mx-rs-section__title">How you arrive</h2>
+              {reachRows.length ? (
+                <dl className="mx-rs-reach">
+                  {reachRows.map(([mode, pair]) => (
+                    <div className="mx-rs-reach__row" key={mode}>
+                      <dt className="mx-rs-reach__mode">{mode}</dt>
+                      <dd className="mx-rs-reach__name">
+                        {pair?.[0]}
+                        {pair?.[1] ? (
+                          <span className="mx-rs-reach__detail">{pair[1]}</span>
+                        ) : null}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="mx-rs-plain">
+                  The solver does not gather transport yet, and nothing is
+                  invented here to fill the gap. Work the estimate below
+                  against the journey you actually have.
+                </p>
+              )}
+
+              <div className="mx-rs-stub" role="note">
+                <p className="mx-rs-stub__title">Need wheels?</p>
+                <p>Get a cab quote below — an external search, never a TripTribe quote.</p>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(`car rental ${city?.name ?? ""}`.trim())}`} target="_blank" rel="nofollow noopener" className="mx-rs-link">Get a cab quote · external search{" "}
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                      d="M2 6h7M6.5 3 9.5 6 6.5 9"
+                      strokeWidth="1.5"
+                      strokeLinecap="square"
+                    />
+                  </svg>
+                </a>
+                <p className="mx-rs-disclosure">Opens a Google search in a new tab. TripTribe does not set or earn this fare.</p>
+              </div>
+              <div className="mx-rs-calc">
+                <p className="mx-rs-calc__title">Getting there and back</p>
+                <p className="mx-rs-calc__note">
+                  You name the four figures; the sheet does the arithmetic.
+                  Nothing here is a quote.
+                </p>
+                <div className="mx-rs-calc__fields">
+                  {(
+                    [
+                      ["Distance", distance, setDistance, "km", "mx-rs-calc-distance"],
+                      ["Mileage", mileage, setMileage, "km per litre", "mx-rs-calc-mileage"],
+                      ["Fuel price", fuel, setFuel, `${unit} a litre`, "mx-rs-calc-fuel"],
+                      ["Tolls", tolls, setTolls, unit, "mx-rs-calc-tolls"],
+                    ] as const
+                  ).map(([label, value, set, suffix, id]) => (
+                    <label className="mx-rs-field" key={label} htmlFor={id}>
+                      <span className="mx-rs-field__label">{label}</span>
+                      <span className="mx-rs-field__input">
+                        <input
+                          id={id}
+                          inputMode="decimal"
+                          value={value}
+                          onChange={(event) => set(event.target.value)}
+                          aria-label={`${label} in ${suffix}`}
+                        />
+                        <span className="mx-rs-field__suffix">{suffix}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mx-rs-calc__out">
+                  <span className="mx-rs-calc__outkey">
+                    ESTIMATED FUEL + TOLLS
                   </span>
-                </div>
-
-                {/* The total is the first term of the balance the
-                                    contract promises, and the refusal below names
-                                    it, so it is printed whether or not the solver
-                                    broke it down. */}
-                <p className="tt-balance-line">
-                  <span className="tt-balance-line__figure">
-                    {sum(unit, budget?.total)}
-                  </span>{" "}
-                  <span className="tt-balance-line__note">
-                    {total == null
-                      ? "The solver returned no total."
-                      : `for ${days.length} ${
-                          days.length === 1 ? "day" : "days"
-                        }, everyone on it`}
+                  <span
+                    className="mx-rs-calc__figure"
+                    data-empty={estimate == null}
+                  >
+                    {estimate == null ? "—" : money(unit, estimate)}
                   </span>
                 </p>
-
-                {budget?.insufficientBudget ? (
-                  /* Vermilion only ever marks a refused value, and
-                                       only ever on lifted slip stock — the one
-                                       thing on /result that lifts. */
-                  <div className="tt-verdict" role="alert">
-                    <p className="tt-verdict__line">
-                      This total will not cover {city?.name} in {days.length}{" "}
-                      {days.length === 1 ? "day" : "days"}.
-                    </p>
-                    {budget.insufficientBudgetMessage ? (
-                      <p className="tt-verdict__body">
-                        {budget.insufficientBudgetMessage}
-                      </p>
-                    ) : null}
-                    {budget.alternativeOptions ? (
-                      <p className="tt-verdict__body">
-                        {budget.alternativeOptions}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {split ? (
-                  <dl className="tt-split">
-                    {split.map(([label, figure]) => (
-                      <div className="tt-split__row" key={label}>
-                        <dt className="tt-split__key">{label}</dt>
-                        <dd className="tt-split__val">{sum(unit, figure)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : (
-                  <p className="tt-entry__plain">
-                    The solver returned no breakdown of the total into stay,
-                    food, doings and getting about. The total itself is not in
-                    doubt.
-                  </p>
-                )}
-
-                {/* The split is worked out; the total is the number
-                                    that was entered. When the two disagree the sheet
-                                    says so rather than letting four tidy figures
-                                    imply they account for the whole thing. */}
-                {unattributed != null && unattributed !== 0 ? (
-                  <p className="tt-entry__plain">
-                    The breakdown accounts for{" "}
-                    {money(unit, accounted as number)}.{" "}
-                    {unattributed > 0
-                      ? `The remaining ${money(unit, unattributed)} is not attributed to a category by the solver.`
-                      : `The four categories add up to ${money(unit, -unattributed)} more than the total entered, so the split is over-stated.`}
-                  </p>
-                ) : null}
-
-                {budget?.averageTotalCost ||
-                budget?.averageAccommodationCost ? (
-                  <p className="tt-entry__plain">
-                    For comparison, the solver puts a typical {days.length}-day
-                    trip in {city?.name} at{" "}
-                    {numeric(budget.averageTotalCost) != null
-                      ? money(unit, numeric(budget.averageTotalCost) as number)
-                      : "an unnamed figure"}
-                    {budget.averageAccommodationCost
-                      ? `, with a night around ${money(unit, numeric(budget.averageAccommodationCost) as number)}`
-                      : ""}
-                    . Both are working estimates.
-                  </p>
-                ) : null}
               </div>
-            </li>
+            </section>
 
-            {/* 02 — the route, as a run of days rather than a
-                                 switcher. Tabs hid all but one day behind a
-                                 control that looked like navigation; a day is a
-                                 route, and a route reads top to bottom. */}
-            <li className="tt-entry">
-              <div className="tt-entry__no">02</div>
-              <div className="tt-entry__main">
-                <div className="tt-entry__label">
-                  <span className="tt-entry__ask">The route runs</span>
-                  <span className="tt-entry__rule">
-                    {days.length} {days.length === 1 ? "DAY" : "DAYS"}
-                  </span>
-                </div>
+            <section className="mx-rs-section" aria-label="Before you go">
+              <h2 className="mx-rs-section__title">Before you go</h2>
+              {tips.length ? (
+                <ol className="mx-rs-tips">
+                  {tips.map((tip, index) => (
+                    <li className="mx-rs-tip" key={index}>
+                      {tip}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mx-rs-plain">
+                  The solver returned no notes for this city. The sheet stands
+                  without them.
+                </p>
+              )}
+            </section>
 
-                {days.length ? (
-                  <ol className="tt-days">
-                    {days.map((day) => {
-                      const ends = clock(day.endMinute);
-                      const moving = duration(day.travelMinutes);
-                      const stops = Array.isArray(day.activities)
-                        ? day.activities
-                        : [];
-                      return (
-                        <li className="tt-day" key={day.day}>
-                          <div className="tt-day__head">
-                            <span className="tt-day__no">
-                              DAY {String(day.day).padStart(2, "0")}
-                            </span>
-                            {/* An empty weekday is an honest gap, not a
-                                blank: the solver could not place the day on a
-                                calendar, and saying "DAY 04" alone says so. */}
-                            <span className="tt-day__weekday">
-                              {day.weekday || "UNPLACED"}
-                            </span>
-                            <span className="tt-day__measures">
-                              {stops.length}{" "}
-                              {stops.length === 1 ? "STOP" : "STOPS"}
-                              {moving ? ` · ${moving} MOVING` : ""}
-                              {ends ? ` · ENDS ${ends}` : ""}
-                            </span>
-                          </div>
+            <section className="mx-rs-section" aria-label="Where you would sleep">
+              <h2 className="mx-rs-section__title">Where you would sleep</h2>
+              <HotelSection plan={plan} unit={unit} />
+            </section>
 
-                          {stops.length ? (
-                            <ol className="tt-stops">
-                              {stops.map((stop, index) => (
-                                <ActivityCard
-                                  key={`${stop.place}-${index}`}
-                                  place={stop}
-                                  anchor={index === 0}
-                                />
-                              ))}
-                            </ol>
-                          ) : (
-                            <p className="tt-entry__plain">
-                              The solver returned no stops for this day.
-                            </p>
-                          )}
+            <div className="mx-rs-balanceband">
+              <p className="mx-rs-balanceband__line">
+                {city?.name} · {days.length} {days.length === 1 ? "DAY" : "DAYS"}{" "}
+                · {sum(unit, budget?.total)} ESTIMATED
+              </p>
+              <p className="mx-rs-balanceband__note">
+                Hand this to whoever you are travelling with. Nothing on it is
+                booked, quoted or held — it is a route and an estimate, and every
+                cost on it was worked out from the total entered on the sheet before
+                it. Stay stubs link to live prices on Google Hotels; TripTribe may earn a fee on those links.
+              </p>
+            </div>
 
-                          <ol className="tt-meals">
-                            {MEALS.map((meal) => {
-                              const slot = day.meals?.[meal.key];
-                              return slot ? (
-                                <ActivityCard
-                                  key={meal.key}
-                                  place={slot}
-                                  meal={meal.label}
-                                />
-                              ) : (
-                                <li
-                                  className="tt-stop tt-stop--absent"
-                                  key={meal.key}
-                                >
-                                  <span className="tt-stop__hour">—</span>
-                                  <p className="tt-stop__none">
-                                    <span className="tt-stop__tag">
-                                      {meal.label}
-                                    </span>
-                                    Nothing nearby fits this meal in the hours
-                                    of this day.
-                                  </p>
-                                </li>
-                              );
-                            })}
-                          </ol>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                ) : (
-                  <p className="tt-entry__plain">
-                    The solver returned no days for this trip.
-                  </p>
-                )}
-              </div>
-            </li>
-
-            {/* 03 — arrival. Gated on the payload, never filled in
-                                 with a plausible airport that might be wrong. */}
-            <li className="tt-entry">
-              <div className="tt-entry__no">03</div>
-              <div className="tt-entry__main">
-                <div className="tt-entry__label">
-                  <span className="tt-entry__ask">How you arrive</span>
-                  <span className="tt-entry__rule">
-                    {reachRows.length ? "GATHERED" : "NOT GATHERED"}
-                  </span>
-                </div>
-
-                {reachRows.length ? (
-                  <dl className="tt-reach">
-                    {reachRows.map(([mode, pair]) => (
-                      <div className="tt-reach__row" key={mode}>
-                        <dt className="tt-reach__mode">{mode}</dt>
-                        <dd className="tt-reach__name">
-                          {pair?.[0]}
-                          {pair?.[1] ? (
-                            <span className="tt-reach__detail">{pair[1]}</span>
-                          ) : null}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : (
-                  <p className="tt-entry__plain">
-                    The solver does not gather transport yet, and nothing is
-                    invented here to fill the gap. Work the estimate below
-                    against the journey you actually have.
-                  </p>
-                )}
-
-                <div className="tw-stub" role="note">
-                  <p className="tt-calc__title">Need wheels?</p>
-                  <p className="tt-calc__note">Get a cab quote below — an external search, never a TripTribe quote.</p>
-                  <a href={`https://www.google.com/search?q=${encodeURIComponent(`car rental ${city?.name ?? ""}`.trim())}`} target="_blank" rel="nofollow noopener">Get a cab quote · external search</a>
-                  <p className="tw-disclosure">Opens a Google search in a new tab. TripTribe does not set or earn this fare.</p>
-                </div>
-                <div className="tt-calc">
-                  <p className="tt-calc__title">Getting there and back</p>
-                  <p className="tt-calc__note">
-                    You name the four figures; the sheet does the arithmetic.
-                    Nothing here is a quote.
-                  </p>
-                  <div className="tt-calc__fields">
-                    {(
-                      [
-                        ["Distance", distance, setDistance, "km"],
-                        ["Mileage", mileage, setMileage, "km per litre"],
-                        ["Fuel price", fuel, setFuel, `${unit} a litre`],
-                        ["Tolls", tolls, setTolls, unit],
-                      ] as const
-                    ).map(([label, value, set, suffix]) => (
-                      <label className="tt-calc__field" key={label}>
-                        <span className="tt-calc__label">{label}</span>
-                        <span className="tt-calc__input">
-                          <input
-                            className="tt-calc__box"
-                            inputMode="decimal"
-                            value={value}
-                            onChange={(event) => set(event.target.value)}
-                            aria-label={`${label} in ${suffix}`}
-                          />
-                          <span className="tt-calc__suffix">{suffix}</span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  <p className="tt-calc__out">
-                    <span className="tt-calc__outKey">
-                      ESTIMATED FUEL + TOLLS
-                    </span>
-                    <span
-                      className="tt-calc__figure"
-                      data-empty={estimate == null}
-                    >
-                      {estimate == null ? "—" : money(unit, estimate)}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </li>
-
-            {/* 04 — tips. These used to sit inside a
-                                 `Reach && …` block, so they vanished every time
-                                 the solver left transport null — which is always,
-                                 today. The condition gated the wrong thing. */}
-            <li className="tt-entry">
-              <div className="tt-entry__no">04</div>
-              <div className="tt-entry__main">
-                <div className="tt-entry__label">
-                  <span className="tt-entry__ask">Before you go</span>
-                  <span className="tt-entry__rule">
-                    {tips.length} {tips.length === 1 ? "NOTE" : "NOTES"}
-                  </span>
-                </div>
-                {tips.length ? (
-                  <ol className="tt-tips">
-                    {tips.map((tip, index) => (
-                      <li className="tt-tip" key={index}>
-                        {tip}
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <p className="tt-entry__plain">
-                    The solver returned no notes for this city. The sheet stands
-                    without them.
-                  </p>
-                )}
-              </div>
-            </li>
-
-            {/* 05 — where the nights go. */}
-            <li className="tt-entry">
-              <div className="tt-entry__no">05</div>
-              <div className="tt-entry__main">
-                <div className="tt-entry__label">
-                  <span className="tt-entry__ask">Where you would sleep</span>
-                  <span className="tt-entry__rule">
-                    {Array.isArray(plan.hotels)
-                      ? `${plan.hotels.length} WORKED OUT`
-                      : "NOT WORKED OUT"}
-                  </span>
-                </div>
-                <HotelSection plan={plan} unit={unit} />
-              </div>
-            </li>
-          </ol>
-
-          {/* The balance the sheet closes on: the three entries the
-                        visitor filled in, restated as issued figures. */}
-          <div className="tt-balance">
-            <span className="tt-balance__key">ISSUED</span>
-            <span className="tt-balance__val">
-              {city?.name} · {days.length} {days.length === 1 ? "DAY" : "DAYS"}{" "}
-              · {sum(unit, budget?.total)} ESTIMATED
-            </span>
-          </div>
-          <p className="tt-balance__note">
-            Hand this to whoever you are travelling with. Nothing on it is
-            booked, quoted or held — it is a route and an estimate, and every
-            cost on it was worked out from the total entered on the sheet before
-            it. Stay stubs link to live prices on Google Hotels; TripTribe may earn a fee on those links.
-          </p>
-
-          {/* 06 — the hand-off. The sheet exists to be given away, so
-                        the giving is on the sheet. Every control here reports a
-                        real state: what the server said, or that it said nothing
-                        because this plan predates the feature. */}
-          <div className="tt-entry tt-entry--handoff">
-            <div className="tt-entry__no">06</div>
-            <div className="tt-entry__main">
-              <div className="tt-entry__label">
-                <span className="tt-entry__ask">Handing it over</span>
-                <span className="tt-entry__rule">
-                  {tripId ? "AVAILABLE" : "NOT ON THIS SHEET"}
-                </span>
-              </div>
-
+            <section className="mx-rs-section" aria-label="Handing it over">
+              <h2 className="mx-rs-section__title">Handing it over</h2>
               {tripId ? (
                 <>
-                  <div className="tt-field__affix">
-                    <input
-                      id="tt-handoff-address"
-                      className="tt-field__input tt-field__input--fig"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                      value={address}
-                      aria-describedby="tt-handoff-hint"
-                      onChange={(event) => setAddress(event.target.value)}
-                    />
-                  </div>
-                  <p className="tt-field__hint" id="tt-handoff-hint">
+                  <label
+                    className="mx-rs-field"
+                    htmlFor="mx-rs-handoff-address"
+                  >
+                    <span className="mx-rs-field__label">Send to</span>
+                    <span className="mx-rs-field__input">
+                      <input
+                        id="mx-rs-handoff-address"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        value={address}
+                        aria-describedby="mx-rs-handoff-hint"
+                        onChange={(event) => setAddress(event.target.value)}
+                      />
+                    </span>
+                  </label>
+                  <p
+                    className="mx-rs-handoff__hint"
+                    id="mx-rs-handoff-hint"
+                  >
                     The sheet as it stands, sent as text and as a page. Leave
                     blank to send it to your account address.
                   </p>
-                  <div className="tt-handoff__run">
+                  <div className="mx-rs-handoff__run">
                     <button
-                      className="tt-btn tt-btn--quiet"
+                      className="mx-rs-btn mx-rs-btn--primary"
                       type="button"
                       disabled={sending}
                       onClick={hand}
@@ -635,71 +642,53 @@ const Result = () => {
                       {sending ? "Sending" : "Send the sheet"}
                     </button>
                     {handed && (
-                      <p className="tt-handoff__said" role="status">
+                      <p className="mx-rs-status" role="status">
                         {handed}
                       </p>
                     )}
                   </div>
+                  <p className="mx-rs-handoff__hint">
+                    Uses the places already saved with this trip, so working a
+                    day again costs nothing and changes nothing else. The
+                    estimate is recalculated for the whole trip.
+                  </p>
                 </>
               ) : (
-                <p className="tt-field__hint">
+                <p className="mx-rs-handoff__hint">
                   This sheet was issued before sending and re-planning existed,
                   so it carries no handle. Plan the trip again to get both.
                 </p>
               )}
+            </section>
 
-              {tripId && (
-                <div className="tt-rework">
-                  <p className="tt-rework__title">Work a day again</p>
-                  <p className="tt-field__hint">
-                    Uses the places already saved with this trip, so it costs
-                    nothing and changes nothing else. The estimate is
-                    recalculated for the whole trip.
-                  </p>
-                  <ul className="tt-rework__list">
-                    {days.map((day, index) => (
-                      <li className="tt-rework__row" key={day.day}>
-                        <span className="tt-rework__day">Day {day.day}</span>
-                        <span className="tt-rework__acts">
-                          <button
-                            type="button"
-                            className="tt-rework__btn"
-                            disabled={working !== null}
-                            aria-busy={working === index}
-                            onClick={() => work(index, "day")}
-                          >
-                            {working === index ? "Working" : "New day"}
-                          </button>
-                          <button
-                            type="button"
-                            className="tt-rework__btn"
-                            disabled={working !== null}
-                            onClick={() => work(index, "meals")}
-                          >
-                            New meals
-                          </button>
-                          <button
-                            type="button"
-                            className="tt-rework__btn"
-                            disabled={working !== null}
-                            onClick={() => work(index, "order")}
-                          >
-                            Re-order
-                          </button>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  {replanned && (
-                    <p className="tt-rework__said" role="status">
-                      {replanned}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+            <footer className="mx-rs-footnote">
+              {budget?.isEstimate ? (
+                <p>Worked as an estimate from the total entered.</p>
+              ) : null}
+              {plan.cached ? (
+                <p>Served from the last day&apos;s answer for this trip.</p>
+              ) : null}
+            </footer>
+          </main>
+
+          {days.length > 1 ? (
+            <nav className="mx-rs-index" aria-label="Days">
+              <p className="mx-rs-index__title">ON THIS SIDE</p>
+              <ol>
+                {days.map((day) => (
+                  <li key={day.day}>
+                    <a
+                      href={`#mx-rs-day-${day.day}`}
+                      aria-current={currentDay === day.day}
+                    >
+                      DAY {String(day.day).padStart(2, "0")}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          ) : null}
+        </div>
       </div>
     </div>
   );

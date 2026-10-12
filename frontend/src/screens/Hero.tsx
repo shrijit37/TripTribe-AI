@@ -247,7 +247,7 @@ const Hero = () => {
                     days: String(dayNum),
                     budget: String(budgetNum),
                   });
-                  router.push('/search');
+                  router.push('/plan');
                 }}
                 noValidate
               >

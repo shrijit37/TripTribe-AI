@@ -3,17 +3,11 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Coastline from "@/components/Coastline";
 import { requestPasswordReset, resetPassword } from "@/lib/auth-client";
+import "../mx-auth.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * `/auth/reset` — two spans of one rule, like `/auth` itself.
- * Without `?token`: request the link (always answers "sent" wording that does
- * not reveal whether the address is registered). With `?token`: set the new
- * password. Token failures name the recovery: request a fresh link.
- */
 export default function Reset({ token }: { token?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -74,154 +68,124 @@ export default function Reset({ token }: { token?: string }) {
   };
 
   return (
-    <main className="tt-page">
-      <section className="tt-turnstile" aria-labelledby="tt-reset-title">
-        <div className="tt-rail">
-          <div className="tt-turnstile__spread">
-            <div className="tt-turnstile__lobe tt-turnstile__lobe--form">
-              <div className="tt-gate">
-                <div className="tt-gate__head">
-                  <h1 id="tt-reset-title" className="tt-gate__title">
-                    Reset your password
-                  </h1>
-                  <p className="tt-gate__ref">
-                    <span>TT</span>
-                    <span className="tt-gate__slash">/</span>
-                    <span>AUTH</span>
-                  </p>
-                </div>
+    <main className="mx-au-page">
+      <div className="mx-au-grid">
+        <section className="mx-au-sheet" aria-labelledby="mx-au-reset-title">
+          <h1 id="mx-au-reset-title" className="mx-au-title">
+            Reset your password
+          </h1>
 
-                {done ? (
-                  <div className="tt-gate__sent">
-                    <h2 className="tt-gate__sent-title">Password set — sign in</h2>
-                    <p className="tt-gate__sent-body">
-                      Use the new password with the same email you registered with.
-                    </p>
-                    <div className="tt-gate__action">
-                      <button type="button" className="tt-btn" onClick={() => router.push("/auth")}>
-                        Go to sign in
-                      </button>
-                    </div>
-                  </div>
-                ) : token ? (
-                  <form onSubmit={confirmReset} noValidate>
-                    <div className="tt-rows">
-                      <div className="tt-row">
-                        <label className="tt-row__label" htmlFor="tt-reset-password">
-                          New password
-                        </label>
-                        <input
-                          id="tt-reset-password"
-                          className="tt-row__input tt-row__input--secret"
-                          type="password"
-                          autoComplete="new-password"
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-                      </div>
-                      <div className="tt-row">
-                        <label className="tt-row__label" htmlFor="tt-reset-confirm">
-                          Confirm password
-                        </label>
-                        <input
-                          id="tt-reset-confirm"
-                          className="tt-row__input tt-row__input--secret"
-                          type="password"
-                          autoComplete="new-password"
-                          placeholder="••••••••"
-                          value={confirm}
-                          onChange={(e) => setConfirm(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    {error && (
-                      <p className="tt-row__error tt-row__error--sheet" role="alert">
-                        {error}
-                      </p>
-                    )}
-                    <div className="tt-gate__action">
-                      <button type="submit" className="tt-btn" disabled={busy}>
-                        {busy ? "Setting…" : "Set new password"}
-                      </button>
-                      <p className="tt-gate__need">
-                        Links expire — a rejected link needs a fresh request, not a retry.
-                      </p>
-                    </div>
-                  </form>
-                ) : sentTo ? (
-                  <div className="tt-gate__sent">
-                    <h2 className="tt-gate__sent-title">Check your email</h2>
-                    <p className="tt-gate__sent-body">
-                      If that address is registered, a reset link is on its way to
-                    </p>
-                    <p className="tt-gate__sent-to">{sentTo}</p>
-                    <p className="tt-gate__sent-body" style={{ marginTop: "1.1rem" }}>
-                      Open it to set a new password.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={request} noValidate>
-                    <div className="tt-rows">
-                      <div className="tt-row">
-                        <label className="tt-row__label" htmlFor="tt-reset-email">
-                          Email
-                        </label>
-                        <input
-                          id="tt-reset-email"
-                          className="tt-row__input"
-                          type="email"
-                          inputMode="email"
-                          autoComplete="email"
-                          placeholder="you@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    {error && (
-                      <p className="tt-row__error tt-row__error--sheet" role="alert">
-                        {error}
-                      </p>
-                    )}
-                    <div className="tt-gate__action">
-                      <button type="submit" className="tt-btn" disabled={busy}>
-                        {busy ? "Sending…" : "Send reset link"}
-                      </button>
-                      <p className="tt-gate__need">
-                        One link per request — the newest link is the one that counts.
-                      </p>
-                    </div>
-                  </form>
-                )}
-
-                <button
-                  type="button"
-                  className="tt-turnstile__back"
-                  onClick={() => router.push("/auth")}
-                >
-                  Back to the account
+          {done ? (
+            <div>
+              <h2 className="mx-au-head2">Password set — sign in</h2>
+              <p className="mx-au-hint">
+                Use the new password with the same email you registered with.
+              </p>
+              <div className="mx-au-actions">
+                <button type="button" className="mx-au-btn" onClick={() => router.push("/auth")}>
+                  Go to sign in
                 </button>
               </div>
             </div>
-
-            <div className="tt-turnstile__coast">
-              <Coastline />
-            </div>
-
-            <div className="tt-turnstile__lobe tt-turnstile__lobe--margin">
-              <aside className="tt-margin">
-                <h2 className="tt-margin__title">What resets, what doesn&apos;t</h2>
-                <p className="tt-margin__body">
-                  The link changes the password on the shared auth service — your
-                  trips stay filed under the same address. TripTribe keeps no
-                  password of its own, so there is nothing else to update.
+          ) : token ? (
+            <form onSubmit={confirmReset} noValidate>
+              <div className="mx-au-rows">
+                <div className="mx-au-row">
+                  <label htmlFor="mx-au-reset-password">New password</label>
+                  <input
+                    id="mx-au-reset-password"
+                    className="mx-au-secret"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="mx-au-row">
+                  <label htmlFor="mx-au-reset-confirm">Confirm password</label>
+                  <input
+                    id="mx-au-reset-confirm"
+                    className="mx-au-secret"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                  />
+                </div>
+              </div>
+              {error && (
+                <p className="mx-au-error" role="alert">
+                  {error}
                 </p>
-              </aside>
+              )}
+              <div className="mx-au-actions">
+                <button type="submit" className="mx-au-btn" disabled={busy}>
+                  {busy ? "Setting…" : "Set new password"}
+                </button>
+                <p className="mx-au-note">
+                  Links expire — a rejected link needs a fresh request, not a retry.
+                </p>
+              </div>
+            </form>
+          ) : sentTo ? (
+            <div>
+              <h2 className="mx-au-head2">Check your email</h2>
+              <p className="mx-au-hint">
+                If that address is registered, a reset link is on its way to
+              </p>
+              <p className="mx-au-sentto">{sentTo}</p>
+              <p className="mx-au-hint">Open it to set a new password.</p>
             </div>
-          </div>
-        </div>
-      </section>
+          ) : (
+            <form onSubmit={request} noValidate>
+              <div className="mx-au-rows">
+                <div className="mx-au-row">
+                  <label htmlFor="mx-au-reset-email">Email</label>
+                  <input
+                    id="mx-au-reset-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+              {error && (
+                <p className="mx-au-error" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="mx-au-actions">
+                <button type="submit" className="mx-au-btn" disabled={busy}>
+                  {busy ? "Sending…" : "Send reset link"}
+                </button>
+                <p className="mx-au-note">
+                  One link per request — the newest link is the one that counts.
+                </p>
+              </div>
+            </form>
+          )}
+
+          <button type="button" className="mx-au-back" onClick={() => router.push("/auth")}>
+            Back to the account
+          </button>
+        </section>
+
+        <aside className="mx-au-margin" aria-label="What resets, what doesn't">
+          <h2 className="mx-au-head2" style={{ marginTop: 0 }}>
+            What resets, what doesn&apos;t
+          </h2>
+          <p className="mx-au-hint">
+            The link changes the password on the shared auth service — your trips stay
+            filed under the same address. TripTribe keeps no password of its own, so there
+            is nothing else to update.
+          </p>
+        </aside>
+      </div>
     </main>
   );
 }

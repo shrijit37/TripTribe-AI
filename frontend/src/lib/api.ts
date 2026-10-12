@@ -38,11 +38,15 @@ export class PlanRequestError extends Error {
   }
 }
 
-export async function postItinerary(input: PlanRequest): Promise<PlanPayload> {
+export async function postItinerary(
+  input: PlanRequest,
+  options?: { signal?: AbortSignal },
+): Promise<PlanPayload> {
   const res = await fetch("/api/plan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
 
   if (!res.ok) {

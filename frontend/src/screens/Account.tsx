@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Coastline from "@/components/Coastline";
 import { useAuth } from "@/context/AuthProvider";
 import {
   changePassword,
@@ -12,14 +11,8 @@ import {
 } from "@/lib/auth-client";
 import { deleteProfile, fetchProfile, updateProfile } from "@/lib/api";
 import type { UserProfile } from "@/lib/types";
+import "../mx-auth.css";
 
-/**
- * `/account` — profile, password, and delete.
- * The drawer keeps the trips ledger; this page owns everything else the
- * legacy `PUT /profile` accepted (`fname`, `lname`, `userInterest`,
- * `userAddress`), in the same turnstile grammar as `/auth`. Identity
- * (`authId`, `email`) is read-only: it comes from the session cookie.
- */
 export default function Account() {
   const router = useRouter();
   const { user, loading, logout, refresh } = useAuth();
@@ -159,8 +152,8 @@ export default function Account() {
 
   if (loading || (!user && status === "loading")) {
     return (
-      <main className="tt-page">
-        <p className="tt-gate__need" role="status">
+      <main className="mx-au-page">
+        <p className="mx-au-note" role="status">
           Loading your account…
         </p>
       </main>
@@ -168,243 +161,207 @@ export default function Account() {
   }
 
   return (
-    <main className="tt-page">
-      <section className="tt-turnstile" aria-labelledby="tt-account-title">
-        <div className="tt-rail">
-          <div className="tt-turnstile__spread">
-            <div className="tt-turnstile__lobe tt-turnstile__lobe--form">
-              <div className="tt-gate">
-                <div className="tt-gate__head">
-                  <h1 id="tt-account-title" className="tt-gate__title">
-                    Your account
-                  </h1>
-                  <p className="tt-gate__ref">
-                    <span>TT</span>
-                    <span className="tt-gate__slash">/</span>
-                    <span>ACCOUNT</span>
+    <main className="mx-au-page">
+      <div className="mx-au-grid">
+        <section className="mx-au-sheet" aria-labelledby="mx-au-account-title">
+          <h1 id="mx-au-account-title" className="mx-au-title">
+            Your account
+          </h1>
+
+          {status === "loading" && (
+            <p className="mx-au-note" role="status">
+              Loading your profile…
+            </p>
+          )}
+
+          {status === "error" && (
+            <>
+              <p className="mx-au-error" role="alert">
+                Your profile could not be loaded — the service did not answer.
+              </p>
+              <div className="mx-au-actions">
+                <button
+                  type="button"
+                  className="mx-au-btn"
+                  onClick={() => window.location.reload()}
+                >
+                  Try again
+                </button>
+              </div>
+            </>
+          )}
+
+          {status === "ready" && profile && (
+            <>
+              <p className="mx-au-hint">
+                Signed in as {profile.email} — the address your trips are filed under. It
+                cannot be changed here.
+              </p>
+
+              <form onSubmit={save} noValidate>
+                <div className="mx-au-rows">
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-fname">Name</label>
+                    <input
+                      id="mx-au-acct-fname"
+                      type="text"
+                      autoComplete="given-name"
+                      value={fname}
+                      onChange={(e) => setFname(e.target.value)}
+                    />
+                  </div>
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-lname">Last name</label>
+                    <input
+                      id="mx-au-acct-lname"
+                      type="text"
+                      autoComplete="family-name"
+                      placeholder="Optional"
+                      value={lname}
+                      onChange={(e) => setLname(e.target.value)}
+                    />
+                  </div>
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-interests">Interests</label>
+                    <input
+                      id="mx-au-acct-interests"
+                      type="text"
+                      placeholder="Temples, street food, viewpoints"
+                      value={interests}
+                      onChange={(e) => setInterests(e.target.value)}
+                    />
+                  </div>
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-address">Address</label>
+                    <input
+                      id="mx-au-acct-address"
+                      type="text"
+                      autoComplete="street-address"
+                      placeholder="Where plans reach you"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {note && (
+                  <p className="mx-au-note" role="status">
+                    {note}
+                  </p>
+                )}
+                <div className="mx-au-actions">
+                  <button type="submit" className="mx-au-btn" disabled={saving}>
+                    {saving ? "Saving…" : "Save profile"}
+                  </button>
+                  <p className="mx-au-note">
+                    Interests are comma-separated, up to 20. They shape nothing yet — they
+                    are kept for the planner to use.
                   </p>
                 </div>
+              </form>
 
-                {status === "loading" && (
-                  <p className="tt-gate__need" role="status">
-                    Loading your profile…
+              <hr className="mx-au-rule" />
+
+              <form onSubmit={savePassword} noValidate>
+                <h2 className="mx-au-head2">Password</h2>
+                <div className="mx-au-rows">
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-current">Current password</label>
+                    <input
+                      id="mx-au-acct-current"
+                      className="mx-au-secret"
+                      type="password"
+                      autoComplete="current-password"
+                      value={current}
+                      onChange={(e) => setCurrent(e.target.value)}
+                    />
+                  </div>
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-next">New password</label>
+                    <input
+                      id="mx-au-acct-next"
+                      className="mx-au-secret"
+                      type="password"
+                      autoComplete="new-password"
+                      value={next}
+                      onChange={(e) => setNext(e.target.value)}
+                    />
+                  </div>
+                  <div className="mx-au-row">
+                    <label htmlFor="mx-au-acct-confirm">Confirm new password</label>
+                    <input
+                      id="mx-au-acct-confirm"
+                      className="mx-au-secret"
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {pwNote && (
+                  <p className="mx-au-note" role="status">
+                    {pwNote}
                   </p>
                 )}
+                <div className="mx-au-actions">
+                  <button type="submit" className="mx-au-btn" disabled={pwBusy}>
+                    {pwBusy ? "Changing…" : "Change password"}
+                  </button>
+                </div>
+              </form>
 
-                {status === "error" && (
-                  <>
-                    <p className="tt-row__error tt-row__error--sheet" role="alert">
-                      Your profile could not be loaded — the service did not answer.
-                    </p>
-                    <div className="tt-gate__action">
-                      <button
-                        type="button"
-                        className="tt-btn"
-                        onClick={() => window.location.reload()}
-                      >
-                        Try again
-                      </button>
-                    </div>
-                  </>
-                )}
+              <hr className="mx-au-rule" />
 
-                {status === "ready" && profile && (
-                  <>
-                    <p className="tt-gate__need">
-                      Signed in as {profile.email} — the address your trips are filed
-                      under. It cannot be changed here.
-                    </p>
-
-                    <form onSubmit={save} noValidate>
-                      <div className="tt-rows">
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-fname">
-                            Name
-                          </label>
-                          <input
-                            id="tt-acct-fname"
-                            className="tt-row__input tt-row__input--name"
-                            type="text"
-                            autoComplete="given-name"
-                            value={fname}
-                            onChange={(e) => setFname(e.target.value)}
-                          />
-                        </div>
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-lname">
-                            Last name
-                          </label>
-                          <input
-                            id="tt-acct-lname"
-                            className="tt-row__input"
-                            type="text"
-                            autoComplete="family-name"
-                            placeholder="Optional"
-                            value={lname}
-                            onChange={(e) => setLname(e.target.value)}
-                          />
-                        </div>
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-interests">
-                            Interests
-                          </label>
-                          <input
-                            id="tt-acct-interests"
-                            className="tt-row__input"
-                            type="text"
-                            placeholder="Temples, street food, viewpoints"
-                            value={interests}
-                            onChange={(e) => setInterests(e.target.value)}
-                          />
-                        </div>
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-address">
-                            Address
-                          </label>
-                          <input
-                            id="tt-acct-address"
-                            className="tt-row__input"
-                            type="text"
-                            autoComplete="street-address"
-                            placeholder="Where plans reach you"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      {note && (
-                        <p className="tt-gate__need" role="status">
-                          {note}
-                        </p>
-                      )}
-                      <div className="tt-gate__action">
-                        <button type="submit" className="tt-btn" disabled={saving}>
-                          {saving ? "Saving…" : "Save profile"}
-                        </button>
-                        <p className="tt-gate__need">
-                          Interests are comma-separated, up to 20. They shape nothing yet —
-                          they are kept for the planner to use.
-                        </p>
-                      </div>
-                    </form>
-
-                    <form onSubmit={savePassword} noValidate>
-                      <h2 className="tt-margin__name" style={{ marginTop: "2rem" }}>
-                        Password
-                      </h2>
-                      <div className="tt-rows">
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-current">
-                            Current password
-                          </label>
-                          <input
-                            id="tt-acct-current"
-                            className="tt-row__input tt-row__input--secret"
-                            type="password"
-                            autoComplete="current-password"
-                            value={current}
-                            onChange={(e) => setCurrent(e.target.value)}
-                          />
-                        </div>
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-next">
-                            New password
-                          </label>
-                          <input
-                            id="tt-acct-next"
-                            className="tt-row__input tt-row__input--secret"
-                            type="password"
-                            autoComplete="new-password"
-                            value={next}
-                            onChange={(e) => setNext(e.target.value)}
-                          />
-                        </div>
-                        <div className="tt-row">
-                          <label className="tt-row__label" htmlFor="tt-acct-confirm">
-                            Confirm new password
-                          </label>
-                          <input
-                            id="tt-acct-confirm"
-                            className="tt-row__input tt-row__input--secret"
-                            type="password"
-                            autoComplete="new-password"
-                            value={confirm}
-                            onChange={(e) => setConfirm(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      {pwNote && (
-                        <p className="tt-gate__need" role="status">
-                          {pwNote}
-                        </p>
-                      )}
-                      <div className="tt-gate__action">
-                        <button type="submit" className="tt-btn" disabled={pwBusy}>
-                          {pwBusy ? "Changing…" : "Change password"}
-                        </button>
-                      </div>
-                    </form>
-
-                    <h2 className="tt-margin__name" style={{ marginTop: "2rem" }}>
-                      Delete account
-                    </h2>
-                    <p className="tt-gate__need">
-                      Removes your profile and every trip filed under it. This cannot be
-                      undone.
-                    </p>
-                    {delNote && (
-                      <p className="tt-row__error tt-row__error--sheet" role="alert">
-                        {delNote}
-                      </p>
-                    )}
-                    <div className="tt-gate__action">
-                      <button
-                        type="button"
-                        className="tt-btn"
-                        disabled={delBusy}
-                        onClick={destroy}
-                      >
-                        {delBusy ? "Deleting…" : armed ? "Confirm delete" : "Delete account"}
-                      </button>
-                      {armed && !delBusy && (
-                        <p className="tt-gate__need">
-                          One more click deletes everything.{" "}
-                          <button
-                            type="button"
-                            className="tt-nav__link tt-nav__link--quiet"
-                            onClick={() => setArmed(false)}
-                          >
-                            Keep my account
-                          </button>
-                        </p>
-                      )}
-                    </div>
-                  </>
+              <h2 className="mx-au-head2">Delete account</h2>
+              <p className="mx-au-hint">
+                Removes your profile and every trip filed under it. This cannot be undone.
+              </p>
+              {delNote && (
+                <p className="mx-au-error" role="alert">
+                  {delNote}
+                </p>
+              )}
+              <div className="mx-au-actions">
+                <button
+                  type="button"
+                  className={armed ? "mx-au-btn mx-au-btn--danger-armed" : "mx-au-btn mx-au-btn--danger"}
+                  disabled={delBusy}
+                  onClick={destroy}
+                >
+                  {delBusy ? "Deleting…" : armed ? "Confirm delete" : "Delete account"}
+                </button>
+                {armed && !delBusy && (
+                  <p className="mx-au-note">
+                    One more click deletes everything.{" "}
+                    <button
+                      type="button"
+                      className="mx-au-footlink"
+                      onClick={() => setArmed(false)}
+                    >
+                      Keep my account
+                    </button>
+                  </p>
                 )}
               </div>
-            </div>
+            </>
+          )}
+        </section>
 
-            <div className="tt-turnstile__coast">
-              <Coastline />
-            </div>
-
-            <div className="tt-turnstile__lobe tt-turnstile__lobe--margin">
-              <aside className="tt-margin">
-                <h2 className="tt-margin__title">What lives here</h2>
-                <p className="tt-margin__body">
-                  The name the group sees, the interests the planner will use, and the
-                  address trips are filed under. Trips themselves stay in the account
-                  drawer — this page never moves a plan.
-                </p>
-                <p className="tt-margin__fine">
-                  Credentials live on the shared auth service. Changing the password
-                  signs out every other device.
-                </p>
-              </aside>
-            </div>
-          </div>
-        </div>
-      </section>
+        <aside className="mx-au-margin" aria-label="What lives here">
+          <h2 className="mx-au-head2" style={{ marginTop: 0 }}>
+            What lives here
+          </h2>
+          <p className="mx-au-hint">
+            The name the group sees, the interests the planner will use, and the address
+            trips are filed under. Trips themselves stay in the account drawer — this page
+            never moves a plan.
+          </p>
+          <p className="mx-au-fine">
+            Credentials live on the shared auth service. Changing the password signs out
+            every other device.
+          </p>
+        </aside>
+      </div>
     </main>
   );
 }

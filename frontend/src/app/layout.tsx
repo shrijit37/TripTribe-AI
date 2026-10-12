@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "@/index.css";
+import "@/mx-plan.css";
+import "@/mx-chrome.css";
+import "@/mx-result.css";
+import "@/mx-auth.css";
 import AppProviders from "@/components/AppProviders";
 
 /**

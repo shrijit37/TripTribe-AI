@@ -1,461 +1,454 @@
 ---
 name: TripTribe
-description: Booking a trip is issuing a wallet — coupon stock, carrier navy, carbon-red fares.
+description: Dubbing a trip is cutting a mixtape — ballpoint ink, inlay stock, one red stripe.
 colors:
-  paper: "#faf8f2"
-  coupon: "#ffffff"
-  paper-press: "#ece7d9"
-  band-1: "#e3e4dc"
-  band-2: "#d7d9cf"
-  band-3: "#c9cdc1"
-  band-4: "#b9bfb1"
-  ink: "#14181c"
-  ink-soft: "#3d454c"
-  ink-faint: "#525a61"
-  ink-map: "#394146"
-  rule: "rgba(20, 24, 28, 0.16)"
-  rule-strong: "rgba(20, 24, 28, 0.34)"
-  rule-hair: "rgba(20, 24, 28, 0.09)"
-  perforation: "rgba(20, 24, 28, 0.35)"
-  navy: "#12305e"
-  navy-deep: "#0c2347"
-  navy-wash: "rgba(29, 78, 140, 0.1)"
-  vermilion: "#b8341a"
-  fare: "#7a1f2b"
+  stock: "#f4f1e6"
+  card: "#faf7ec"
+  ink: "#1b3fb0"
+  ink-soft: "color-mix(in srgb, #1b3fb0 72%, #f4f1e6)"
+  pencil: "#6f6f6a"
+  accent: "#d23c2a"
+  line: "rgba(27, 63, 176, 0.28)"
+  line-soft: "rgba(27, 63, 176, 0.14)"
 typography:
   display:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
-    fontSize: "clamp(2.75rem, 7.2vw, 5.5rem)"
+    fontFamily: "'Caveat', cursive"
+    fontSize: "clamp(40px, 5vw, 64px)"
     fontWeight: 700
-    lineHeight: 0.96
-    letterSpacing: "-0.028em"
+    lineHeight: 1.02
   headline:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
-    fontSize: "clamp(1.75rem, 3.4vw, 2.6rem)"
-    fontWeight: 600
-    lineHeight: 1.05
-    letterSpacing: "-0.018em"
-  title:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
-    fontSize: "clamp(1.3rem, 2vw, 1.6rem)"
-    fontWeight: 600
-    lineHeight: 1.15
-    letterSpacing: "-0.012em"
-  action:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
-    fontSize: "1rem"
-    fontWeight: 600
+    fontFamily: "'Caveat', cursive"
+    fontSize: "clamp(2.75rem, 8vw, 4.5rem)"
+    fontWeight: 700
     lineHeight: 1
-    letterSpacing: "0.01em"
-  body-large:
-    fontFamily: "'Barlow', system-ui, sans-serif"
-    fontSize: "clamp(1.05rem, 1.35vw, 1.25rem)"
+  title:
+    fontFamily: "'Shadows Into Light', cursive"
+    fontSize: "1.75rem"
     fontWeight: 400
-    lineHeight: 1.62
+    lineHeight: 1.1
+  hand-action:
+    fontFamily: "'Caveat', cursive"
+    fontSize: "1.5rem"
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: "0.04em"
   body:
     fontFamily: "'Barlow', system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.6
+  body-large:
+    fontFamily: "'Shadows Into Light', cursive"
+    fontSize: "1.25rem"
+    fontWeight: 400
+    lineHeight: 1.4
+  action:
+    fontFamily: "'Barlow', system-ui, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 600
+    lineHeight: 1.4
   label:
     fontFamily: "'Martian Mono', ui-monospace, monospace"
-    fontSize: "0.66rem"
+    fontSize: "0.75rem"
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: "0.14em"
+    letterSpacing: "0.08em"
   figure:
     fontFamily: "'Martian Mono', ui-monospace, monospace"
-    fontSize: "clamp(1.15rem, 1.8vw, 1.5rem)"
+    fontSize: "1.375rem"
     fontWeight: 600
     lineHeight: 1.25
-    letterSpacing: "-0.01em"
-  tab:
-    fontFamily: "'Martian Mono', ui-monospace, monospace"
-    fontSize: "0.72rem"
-    fontWeight: 600
-    lineHeight: 1.4
-    letterSpacing: "0.14em"
-  restraint:
-    fontFamily: "'Martian Mono', ui-monospace, monospace"
-    fontSize: "0.6rem"
-    fontWeight: 600
-    lineHeight: 1.4
-    letterSpacing: "0.12em"
-  verdict:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', sans-serif"
-    fontSize: "1.12rem"
-    fontWeight: 600
-    lineHeight: 1.28
-    letterSpacing: "normal"
 rounded:
   sharp: "0px"
-  ring: "1px"
 spacing:
-  rail: "1320px"
-  gutter: "clamp(1.25rem, 4vw, 4.5rem)"
-  rhythm: "clamp(4.5rem, 9vw, 8.5rem)"
-  sheet: "clamp(1.5rem, 3.5vw, 3rem)"
-  sheet-manifest: "clamp(1.4rem, 3vw, 2.25rem)"
-  verdict: "1.35rem 1.5rem 1.45rem"
-  stub: "0.9rem 1rem"
+  rail: "75ch"
+  page: "68rem"
+  gutter: "clamp(16px, 4vw, 56px)"
+  sheet: "1.25rem"
+  index: "9rem"
 components:
-  button-primary:
-    backgroundColor: "{colors.navy}"
-    textColor: "#ffffff"
+  button-dub:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.stock}"
+    typography: "{typography.hand-action}"
+    rounded: "{rounded.sharp}"
+    padding: "12px 26px"
+  button-standard:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.stock}"
     typography: "{typography.action}"
     rounded: "{rounded.sharp}"
-    padding: "0.85rem 1.5rem"
-  button-primary-hover:
-    backgroundColor: "{colors.navy-deep}"
-    textColor: "#ffffff"
+    padding: "0.7rem 1.4rem"
   button-quiet:
     backgroundColor: "transparent"
     textColor: "{colors.ink}"
+    typography: "{typography.action}"
     rounded: "{rounded.sharp}"
-    padding: "0.55rem 1rem"
-  day-tab:
-    backgroundColor: "{colors.navy}"
-    textColor: "#ffffff"
-    typography: "{typography.tab}"
-    rounded: "{rounded.sharp}"
-    padding: "0.3rem 0.7rem"
-  day-coupon:
-    backgroundColor: "{colors.coupon}"
-    rounded: "{rounded.sharp}"
-  stub:
-    backgroundColor: "{colors.coupon}"
+    padding: "0.5rem 1rem"
+  chip:
+    backgroundColor: "transparent"
     textColor: "{colors.ink}"
     rounded: "{rounded.sharp}"
-    padding: "{spacing.stub}"
-  verdict-slip:
-    backgroundColor: "{colors.coupon}"
-    textColor: "{colors.vermilion}"
-    typography: "{typography.verdict}"
+    padding: "8px 14px"
+  chip-on:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.stock}"
     rounded: "{rounded.sharp}"
-    padding: "{spacing.verdict}"
-  ledger-figure:
-    textColor: "{colors.fare}"
-    typography: "{typography.figure}"
+    padding: "8px 14px"
+  input-entry:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sharp}"
+    padding: "4px 2px"
+  section-card:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sharp}"
+    padding: "{spacing.sheet}"
+  day-card:
+    backgroundColor: "{colors.stock}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sharp}"
+  verdict:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.accent}"
+    rounded: "{rounded.sharp}"
+    padding: "0.9rem 1rem"
+  segment-tab-on:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.stock}"
+    rounded: "{rounded.sharp}"
+    padding: "0.7rem 1rem"
 ---
 
 # Design System: TripTribe
 
-> **Scope.** This document describes the world as built: the ticket wallet on
-> `/search` (`frontend/src/screens/Search.tsx`) and `/result`
+> **Scope.** This document scans the shipped mixtape world: `/plan`
+> (`frontend/src/screens/Plan.tsx`, `frontend/src/mx-plan.css`), the SIDE-A
+> generating screen in the same files, `/result`
 > (`frontend/src/screens/Result.tsx`, `ActivityCard.tsx`, `HotelSection.tsx`,
-> `frontend/src/lib/money.ts`) and the coupon-stock tokens in
-> `frontend/src/index.css` (`--tt-*`). It is a scan of shipped code, not an
-> intention. It supersedes the earlier map-stock/contour-band language: the
-> page ground is coupon stock, the day grounds are white coupons, and the
-> hypsometric tints survive only inside the landing map drawing.
+> `frontend/src/mx-result.css`), and the shared chrome — navbar/footer
+> (`Navbar.tsx`, `Footer.tsx`, `mx-chrome.css`), auth/verify/reset/account
+> (`Auth.tsx`, `Verify.tsx`, `Reset.tsx`, `Account.tsx`, `AccountDrawer.tsx`,
+> `mx-auth.css`), with type self-hosted under `frontend/public/fonts/`
+> (`--mx-*` tokens live in `mx-plan.css`; nothing else redefines them). It
+> supersedes the ticket-wallet contract: `/search` now permanently redirects
+> to `/plan` (`frontend/src/app/search/page.tsx`). The landing body
+> (`screens/Hero.tsx`) and city-article pages still render the old `tt-*`
+> system pending a later pass — recorded below as carried drift, not canon.
 
 ## Overview
 
-**Creative North Star: "The Ticket Wallet"**
+**Creative North Star: "The Day's Mixtape"**
 
-Booking a trip is issuing a wallet. `/search` is the counter where the
-organiser books the route — three numbered entries on one manifest coupon,
-frank about what the wallet will hold and how the money works. `/result` is
-the issued wallet: the same sheet filled in, a run of day coupons torn off in
-sequence, the fare ledger ruled at its foot, partner stubs riding along as
-visibly external coupons. The category default for an AI trip planner is a
-rounded card grid with a pill CTA and a photograph. This world refuses all
-three: square coupons, dashed perforation, ruled fare boxes, and no image
-anywhere — the city is named in the display face, not shown.
+Planning a trip is dubbing a tape the organiser hands to the group. `/plan`
+is the counter where the tape is ordered — three entries ruled on the
+j-card's inner fold, the destination arriving as a pinned photograph, the
+dubbing block frank about estimates. The generating screen flips the card to
+SIDE A and inks the wait honestly: an elapsed tape counter and narration,
+never faked per-day completion. `/result` is the dubbed box set: each day a
+side, every stop a track with its running time at the margin, the fare ledger
+the tape length the trip must fit.
 
-The restraint is load-bearing. Coupon-stock white (`#ffffff`) on a warm paper
-ground (`#faf8f2`), carrier navy (`#12305e`) for the product acting, carbon
-red (`#7a1f2b`) for fare figures, vermilion (`#b8341a`) only for refused
-values. Type does the work a card grid would do: a condensed transit face for
-signage, a humanist sans for reading, one monospace for measurement.
+The world is dubbed-tape ephemera: lined inlay-stock ground, ballpoint-blue
+ink, pencil-gray tentative marks, one TDK-red brand stripe as the only
+printed accent. Hand-lettered block caps do the naming, Barlow does the
+reading, Martian Mono does the measuring. Standard web controls throughout —
+the world lends type, palette, density, and one signature move only, never
+control costumes: every target keeps 44px, every corner stays square.
 
 **Key Characteristics:**
-- One object, two states: the blank manifest lifts off the stock, the issued
-  wallet runs the full rail with no border and no fill.
-- Day coupons tear apart on dashed perforation under navy tabbed heads.
-- Fare figures print in carbon red; vermilion means "refused value", never
-  decoration.
-- Square corners, tabular figures, uppercase mono labels at wide tracking.
-- Partner stubs are outbound coupons with one affiliate disclosure per wallet.
+- One j-card, two states: the ruled inner fold where the tape is ordered,
+  the flipped SIDE-A card while the planner works the real wait.
+- Day sides run top to bottom, never tabs; every stop timed, right-aligned
+  tabular, every day fitted to its daylight.
+- TDK red refuses and nothing else; pencil gray marks what is tentative, an
+  em dash marks what was never gathered.
+- The destination arrives as a real pinned photograph or not at all — never
+  a stock thumb.
+- Partner stubs are honest outbound links with their disclosure on the
+  sleeve, never quotes.
 
 ## Colors
 
-Coupon stock plus three inks with fixed jobs: navy acts, carbon red prices,
-vermilion refuses. No gradient anywhere in the system.
+Lined inlay stock plus ballpoint ink with one printed red. No gradient
+anywhere in the system.
 
 ### Primary
-- **Carrier navy** (`#12305e`): the issuing block (**Issue the route**), the
-  day tabs, the ₹ affix, stub and stay links, step numerals, focus ring,
-  selection. Its deep partner `#0c2347` is the hover state of anything already
-  navy. Never a large background wash, never a heading colour.
-- **Carbon-red fare** (`#7a1f2b`): fare figures only — `.tt-split__val`,
-  `.tt-balance-line__figure`, and a non-empty `.tt-calc__figure`. It prices;
-  it never refuses.
-- **Vermilion** (`#b8341a`): reserved, with no exceptions, for a value the
-  product turns down — `.tt-field__error` text and its 6px square bullet, the
-  2px input rule when `aria-invalid="true"`, the verdict line. It appears
-  nowhere else.
+- **Ballpoint ink** (`#1b3fb0`): everything that acts or names — spine rail,
+  day-side heads, the dub block, chips switched on, links, focus rings. Its
+  72% mix toward stock (`color-mix(in srgb, #1b3fb0 72%, #f4f1e6)`, `#435fb4`
+  where a flat fallback is needed) carries hints, ledes, notes, and
+  disclosures.
+- **TDK red** (`#d23c2a`): the brand stripe and the refused value — field
+  errors, `aria-invalid` rules, the fare verdict box. It stripes; it refuses;
+  it never decorates.
+
+### Secondary
+- **Pencil gray** (`#6f6f6a`): tentative marks only. Whatever is drawn in
+  pencil may be wrong; whatever is inked is meant.
 
 ### Neutral
-- **Paper** (`#faf8f2`): the page ground. Warm, not white; the coupons read as
-  coupons only against it.
-- **Coupon white** (`#ffffff`): sheets, day coupons, stubs. One white for every
-  detachable object.
-- **Pressed stock** (`#ece7d9`): the estimate calculator panel and the
-  scrollbar track. The darkest ground text sits on.
-- **Ink** (`#14181c`): body and heading text, the 2px section rule.
-- **Ink, soft** (`#3d454c`): reading matter that recedes — ledes, notes,
-  disclosures. 7.1:1 on pressed stock.
-- **Ink, faint** (`#525a61`): labels, hints, references, absent measurements.
-  5.1:1 on pressed stock — the tier that sets the measured floor.
-- **Ink, map** (`#394146`): marginalia inside the landing map drawing only.
-- **Hypsometric bands** `#e3e4dc` → `#d7d9cf` → `#c9cdc1` → `#b9bfb1`: retained
-  as tokens for the landing map drawing. They no longer ground days or sheets.
+- **Inlay stock** (`#f4f1e6`): the page ground, ruled with the soft line
+  every 34px on `/plan`. Warm, lined — the cards read as cards only
+  against it.
+- **Card stock** (`#faf7ec`): sheets, sections, stubs. One lighter stock for
+  every detachable object.
+- **Ruled lines** (`rgba(27, 63, 176, 0.28)` full, `0.14` soft): separation
+  is always a rule in the ink, never a fill or a shadow.
 
 ### Named Rules
-- **The Three-Ink Rule.** Navy acts, carbon red prices, vermilion refuses. If
-  a fourth saturated colour appears, the screen has stopped meaning anything.
-- **The Verdict Rule.** Vermilion is never an accent, never a hover, never a
-  highlight. If nothing is wrong with the visitor's input, vermilion does not
-  exist.
-- **The Darkest-Ground Rule.** Any ink must clear 4.5:1 against the darkest
-  ground it can land on. Vermilion renders on sheet stock at 5.10:1 under a
-  2px terminal rule — never on pressed stock, never on a band.
-- **The Foreign-Mark Exemption.** The rule governs colour we choose. A third
-  party's mark (Google/GitHub provider buttons) is exempt only as a logo, at
-  no other size and in no other colour, carrying no state.
-- **The Flat Print Rule.** Separation is drawn with ink at low alpha (hair 9%,
-  rule 16%, strong rule 34%) and dashed perforation — never with fills,
-  glass, or shadow, except the one Sheet device.
+- **The One-Stripe Rule.** TDK red appears as the brand stripe, the refusal,
+  and the auth sheet's top edge. A fourth appearance means the screen has
+  stopped meaning anything.
+- **The Refusal-Is-Red Rule.** A refused value is set in TDK red and a red
+  rule; a blank entry is pencil-soft ink behind an em dash. Only a filled
+  entry that fails earns red.
+- **The Ink-Mix Rule.** Receding reading matter is the 72% ink mix, never a
+  gray from outside the world. If it is not blue at some strength, it does
+  not belong on the sleeve.
 
 ## Typography
 
-**Display Font:** Barlow Semi Condensed, self-hosted (weights 500/600/700)
+**Display Font:** Caveat, self-hosted (weights 500/600/700, latin +
+latin-ext woff2, `font-display: swap`)
+**Second Hand:** Shadows Into Light, self-hosted (weight 400) — section
+titles, ledes, hold names
 **Body Font:** Barlow, self-hosted (weights 400/500/600)
-**Label/Mono Font:** Martian Mono, self-hosted (weights 400/600)
+**Label/Mono Font:** Martian Mono, self-hosted (weights 400/600) — every
+running time, figure, reference, and label, always `tabular-nums`
 
-**Character:** The condensed face is transit signage — display lines, entry
-asks, stop places, button labels. Barlow carries sentences. Martian Mono
-carries anything measured: day counts, rupee figures, reference codes, tabs,
-restraints. All three are self-hosted woff2 under `frontend/public/fonts/`
-with `font-display: swap`; no CDN type.
+**Character:** The hands name things — side heads, track cities, the dub
+block, the wordmark. Barlow carries sentences. Martian Mono carries anything
+measured: tape counters, hours, rupee figures, `SIDE A` rails, `TT/ROUTE`
+marks. No CDN type; `barlow-sc-*` woff2 files ship on disk but the mixtape
+world never calls them.
 
 ### Hierarchy
-- **Display** (700, `clamp(2.75rem, 7.2vw, 5.5rem)` / 0.96, −0.028em): the
-  thesis line (`Book the route, not the list.`) and the issued city name. One
-  per screen, never centred.
-- **Headline** (600, `clamp(1.75rem, 3.4vw, 2.6rem)` / 1.05): section headings
-  on the 2px ink rule.
-- **Title** (600, `clamp(1.3rem, 2vw, 1.6rem)` / 1.15): stay names, stop
-  places, sheet titles.
-- **Body large** (400, `clamp(1.05rem, 1.35vw, 1.25rem)` / 1.62, max 66ch):
-  ledes.
-- **Body** (400, `1rem` / 1.6, max 68ch): notes, disclosures, verdict bodies.
-- **Action** (600, `1rem`, +0.01em): button and issuing-block labels.
-- **Label** (mono 600, `0.66rem`, +0.14em, uppercase): entry labels, reference
-  marks (`TT/ROUTE / MANIFEST`, `ISSUED WALLET · TT/WALLET`).
-- **Tab** (mono 600, `0.72rem`, +0.14em): the navy day tabs (`DAY 01`).
-- **Figure** (mono 600, `clamp(1.15rem, 1.8vw, 1.5rem)`, `tabular-nums`): days
-  and budget inputs, the ₹ affix, ledger totals. Tabular is mandatory.
-- **Restraint** (mono 600, `0.6rem`, +0.12em): contract limits (`1 TO 60`,
-  `ESTIMATE`, `AS ENTERED`).
-- **Verdict** (display 600, `1.12rem`): the refusal line. Vermilion takes this
-  voice and nothing else: no stripe, no chip, no icon.
+- **Display** (Caveat 700, `clamp(40px, 5vw, 64px)` / 1.02): the plan title
+  (`The trip on one tape.`, underlined emphasis), one per screen.
+- **Headline** (Caveat 700, `clamp(2.75rem, 8vw, 4.5rem)` / 1): the sleeve
+  city name on `/result`, the navbar wordmark at `1.75rem`.
+- **Title** (Shadows 400, `1.75rem` / 1.1): result section titles (`The fare,
+  worked out`, `How you arrive`), auth second heads, hold names at
+  `1.35rem`.
+- **Hand action** (Caveat 700, `1.5rem`, +0.04em): the dub block (`Dub this
+  trip`), the day numbers (`SIDE 01` voice at `1.6rem` in day heads).
+- **Body** (Barlow 400, `1rem` / 1.6, max 75ch): notes, disclosures, tips,
+  track notes.
+- **Body large** (Shadows 400, `1.25rem`): the plan lede, the empty-destination
+  line — tentative matter in the second hand.
+- **Action** (Barlow 600, `1rem`): strip, auth, and result buttons.
+- **Label** (mono 600, `0.75rem`, +0.08em, uppercase): entry labels (`THE
+  CITY IS`), fact keys, tape refs. The plan rows set it at `12px` / +1.5px.
+- **Figure** (mono 600, `1.375rem`, tabular): budget and day entries
+  (`22px` in the ruled inputs with a mono mark affix), the balance figure at
+  `1.75rem`, track hours at `0.85rem` right-aligned.
 
 ### Named Rules
-- **The Measuring-Face Rule.** Mono is for measurement, codes and figures.
-  A sentence read as prose is Barlow; a longer mono string is in the wrong
-  face.
-- **The Transit Signage Rule.** Signs are condensed, upright, tight tracking.
-  Positive tracking is a mono-label device. Nothing asks for an italic cut —
-  the roster ships upright only, so absences read in upright `ink-faint`.
-- **The Refusal-is-Type Rule.** A refusal is set, not shown. Vermilion claims
-  its lines in type on the sheet's own stock, never on a coloured panel.
-- **The Blank-Is-Not-Refused Rule.** An entry left blank reads in `ink-faint`
-  behind the same em dash every absent measurement carries. Only a filled
-  entry that fails earns vermilion — on the message, its square, and the
-  field rule.
+- **The Hands-Name Rule.** A name is hand-lettered; a sentence is Barlow; a
+  measurement is mono. A long mono string is prose in the wrong face.
+- **The Tabular Rule.** Every time and every figure sets `tabular-nums` and
+  right-aligns in its column. The signature move only works if the column
+  holds still.
+- **The Missing-Mark Rule.** An hour never gathered prints `—`; an unplaced
+  weekday prints `UNPLACED`; a blank entry prints `— ` before its hint. Gaps
+  are stamped, never smoothed over.
 
 ## Layout
 
-One rail: `1320px` maximum, centred, fluid gutter
-`clamp(1.25rem, 4vw, 4.5rem)`. One rhythm token,
-`clamp(4.5rem, 9vw, 8.5rem)`, pads the bottom of each major band. Text
-measures stay narrow: lede 66ch, body 68ch, disclosures 62ch.
+One rail: `75ch` maximum for plan and result reading matter (`68rem` for the
+auth gate), centred, fluid gutter `clamp(16px, 4vw, 56px)`.
 
-- **`/search` counter.** One column below 900px (about, sheet, carry list
-  stacked). From 900px, two columns `1.12fr / 1fr`: the manifest sheet alone
-  in column one, the issue line above the `TT/CARRY` list in column two. From
-  1180px, three columns `0.84fr / 1.2fr / 0.88fr`: issue, raised sheet, carry
-  list. All tracks are `minmax(0, …)` so a long mono reference never blows
-  out a column.
-- **`/result` wallet.** One column, full rail, top to bottom — never tabs. The
-  issued sheet carries entries 01–06 in fixed order: money, route, arrival,
-  notes, sleep, hand-off. Order is the argument.
-- **Inside the sheet.** Entries grid `2.5rem minmax(0, 1fr)` (2rem below
-  899px): mono number, uppercase display ask, answer. Stop rows grid
-  `5.5rem minmax(0, 1fr)`, collapsing to one column with the figure on its own
-  line. Stay rows `minmax(0, 1fr) auto`, figures dropping to their own line
-  below 600px. Calculator fields run four-up, pairing two-by-two from 1179px
-  so a label and its unit always travel together. Day measures drop to their
-  own line rather than squeeze.
-- **No image on either screen.** The city is named in type with destination
-  facts; every figure is drawn in rules and stock tints.
+- **`/plan` inner fold.** A 92px ink spine rail (rotated hand title, mono
+  `SIDE A` / plan ref, 6px accent stripe at the foot) beside the main column
+  (`28px` top, `64px` bottom). From 1000px the main becomes a `1.4fr / 1fr`
+  grid: title, lede, and destination strip span both columns; the form runs
+  column one, the pinned carry notes ride sticky (`top: 16px`) in column two.
+  The three entries are ruled rows (`140–200px / 1fr`); conditions fill an
+  `auto-fill minmax(180px, 1fr)` grid; interest chips wrap at 8px gaps.
+- **Generating (SIDE A).** The same spine in card stock on ink: plan ref,
+  city line, a cassette with two spools, the `MM:SS` tape counter, live
+  narration, the honest-wait note, and the abort control.
+- **`/result` box set.** A 4px accent rule caps the page. Sleeve header
+  (photo plate at `16 / 7`, hand city, lede, ruled fact rows with `8rem`
+  mono keys), fare ledger, day sides, arrival, notes, stay stubs, balance
+  band, hand-off — top to bottom, never tabs. From `60rem` a `1fr / 9rem`
+  grid carries a sticky side index. Tracks grid `2.25rem minmax(0, 1fr)
+  auto`: number, place + note + flags, hour at the margin.
+- **Auth gate.** Sheet (card stock, 5px accent top edge) beside the margin
+  card; `7fr / 5fr` from `56rem`. The account drawer is `min(24rem, 100vw)`,
+  docked right over an ink scrim.
+- **Chrome.** The navbar strip is stock with one ruled bottom hairline
+  (hand wordmark, mono `TT/ROUTE`, actions pushed right); the colophon is
+  stock with one ruled top hairline over a `75ch` inner.
 
 ## Elevation & Depth
 
-There is exactly one shadow, `--tt-lift` (`0 1px 2px rgba(20,24,28,0.06),
-0 12px 32px -12px rgba(20,24,28,0.22)`): a sheet resting on a surface, never
-a hard zero-blur block, never an interactive cue. It lifts the blank manifest
-sheet and the verdict slip — a refusal is the one thing on a signed sheet
-that earns a raise. The issued wallet itself is flat: borderless, fill-less,
-separated by hairlines and perforation. The calculator sits *into* the paper
-on pressed stock rather than lifting. Everything else separates by tonal
-layering.
+Flat stock, ruled separation, ink fills. There is no `box-shadow` anywhere
+in the mixtape stylesheets: depth is drawn with 2px rules (destination
+strip, conditions head, balance band), 1px ruled rows (full and soft line),
+ink-filled panels (spine rail, day-side heads, chips and tabs switched on),
+and the card-stock lift of sheets against lined stock. Focus is a 3px solid
+ink outline at 2px offset on every control — the one glow the world allows,
+and it means keyboard, never hover.
 
 ### Named Rules
-- **The Shadow-Budget Rule.** Two surfaces are lifted: the blank sheet and
-  the verdict slip. A third needs a material reason, not a preference.
-- **The Soft-Join Rule.** No blur-heavy glows, no glass, no backdrop filters.
+- **The Flat-Stock Rule.** Nothing lifts. If separation needs emphasis, use
+  a heavier rule or an ink fill, not a shadow.
+- **The Motion-Is-Honest Rule.** The only animation is the cassette spools
+  spinning while generation runs (gated behind
+  `prefers-reduced-motion: no-preference`); chrome kills all animation under
+  `reduce`. Motion reports work in progress, never decorates.
 
 ## Shapes
 
-Square. No radius token; `border-radius: 0` on sheets, coupons, stubs, tabs.
-The sole exception is `1px` on the global `:focus-visible` outline.
+Square. `border-radius: 0` on every sheet, card, chip, button, input, pin,
+and drawer — the sole radius in the world is the photographic pin's 56px
+square plate with its 2px ink frame.
 
-Separation is ruled, not boxed: 2px solid ink caps a section or the ledger;
-1px at 34% alpha rules sheet heads and stub borders; 1px at 16% rules item
-edges; 1px at 9% rules field rows and fine print. Between day coupons, one
-device only: **2px dashed perforation** at 35% ink across the coupon top
-(`.tt-day:first-child` carries none — the first coupon is still attached to
-the sheet).
+Separation is ruled, not boxed: 2px solid line caps the destination strip,
+the conditions block, and the balance band; 4–6px of solid accent marks the
+spine stripe, the result page head, and the auth sheet edge; 1px full and
+soft lines rule rows and hairlines. Inputs are ruled baselines (2px ink
+under plan entries) or 1px line boxes on card stock (condition cells, auth
+fields); interest chips wear a 1.5px ink stroke and fill solid when on.
 
 ## Components
 
 ### Buttons
-- **Shape:** square (0px). The issuing block is the loudest object on the
-  counter.
-- **Primary:** navy fill, white action-face label, 1px navy border,
-  `0.85rem 1.5rem`, arrow gap `0.7rem`.
-- **Hover / Focus:** fill and border go navy-deep, lift `translateY(-1px)`
-  over 0.25s on `--tt-ease` (`cubic-bezier(0.16, 0.84, 0.44, 1)`); arrow slides
-  `translateX(3px)`. `:active` returns to rest. Global focus is a 3px navy
-  outline at 2px offset; form fields carry focus on their own rule instead
-  (navy 2px rule plus `0 2px 0 0` navy shadow).
-- **Quiet:** transparent with a 1px ink border, ink label, `0.55rem 1rem`;
-  hover fills ink with paper-lift text. The hand-off sits in this voice —
-  reading the sheet is the primary action, not sending it.
-- **Never disabled at the counter.** The issue button stays live; an unfilled
-  field is answered with a refusal naming what to do, not a dead control.
+- **Shape:** square (0px), 44px minimum height everywhere (`52px` for the
+  dub block). Disabled sits at 0.55 opacity; nothing else changes.
+- **Dub (primary):** ink fill, stock label in Caveat 700 `24px` (+1px),
+  `12px 26px`, no border. The loudest object on the counter.
+- **Standard:** ink fill, stock label in Barlow 600 `1rem`, 1px ink border,
+  `0.7rem 1.4rem` — strip actions, auth submits, result primaries.
+- **Quiet:** transparent, ink label, 1px line-to-ink border. The hand-off
+  sits in this voice — reading the sleeve is the action, not sending it.
+- **Focus:** 3px ink outline at 2px offset, on every variant. No hover
+  costume is specified beyond the fill the code already carries.
 
-### The manifest sheet — one component, two states
-A ledger of numbered entries between a rule-strong head and an issuing foot.
-- **Blank** (`/search`): white, 1px `rule-strong` border, the Sheet shadow,
-  `clamp(1.4rem, 3vw, 2.25rem)` padding. Head reads `TT/ROUTE / MANIFEST`
-  with the slash in navy. Three entries — the city is, the trip costs under,
-  you have — each an instruction, not a noun, with restraint stamps beside
-  the ask.
-- **Issued** (`/result`, `.tt-sheet--filled`): `border: 0`, `background: none`,
-  `padding: 0`, full rail. Head becomes `TT/ROUTE / FILLED`; entries answer in
-  `ink-soft` body capped at 62ch. Six entries, fixed order: 01 money and its
-  verdict, 02 the route as a run of day coupons, 03 arrival, 04 notes, 05
-  sleep, 06 the hand-off.
+### Chips
+- **Style:** transparent, 1.5px ink border, ink Barlow `15px`, `8px 14px`,
+  square. On (`data-on="true"`) fills ink with stock text. Interest picks
+  and nothing else.
 
-### Day coupons (`.tt-day`)
-White coupons on the paper ground, torn apart by the dashed perforation —
-this supersedes the earlier alternating tint grounds; no band sits under a
-coupon. The head is a flex row: the **navy tab** (white mono `DAY 01`,
-`.3rem .7rem`, +0.14em), the weekday in display 600 (`UNPLACED` when the
-solver could not place it), the measure (`6 STOPS · 11 H 30 MIN`) in faint
-mono pushed to the far end. Stops and meals share one ruled list — a meal is
-a stop that happens at an hour — each a `5.5rem / 1fr` row with the hour in
-faint mono tabular and the place in display 600. Flags (`HELD 40 MIN`,
-`OPENS LATER`) are faint mono stamps. An hour never gathered prints `—` in
-faint ink, never a fabricated time; an empty day says so upright.
+### The inner fold — entries and destination
+- **Entries:** three ruled rows, mono uppercase label left, answer right.
+  The city answers in Caveat 600 `26px`; budget and days answer in mono
+  tabular `22px` with a mono mark affix (`₹` / currency) and a Barlow unit
+  tail (`days, the whole trip`).
+- **Destination strip:** 2px rules top and bottom, 56px square pin with a
+  2px ink frame beside the hand-set city name. The pin renders only for a
+  real photograph (`/api/plan/image`, 30-day cache, `picsum.photos`
+  placeholders refused); otherwise the second hand says the city is not
+  pictured yet.
 
-### Fare ledger (`.tt-split`) and balance (`.tt-balance`)
-Always visible, argued never asserted. A 2px ink rule caps the ledger; each
-category is a ruled row with an uppercase display key left and a mono tabular
-**carbon-red** figure right. Four categories — stay, food, doings, getting
-about — then the total, then, only when the arithmetic demands it, one
-sign-branched sentence: a positive remainder is unattributed by the solver, a
-negative one means the split is over-stated. An exact sheet says nothing. No
-breakdown from the solver is said out loud rather than invented. The sheet
-closes on the `ISSUED` balance line — city, days, estimated total — and one
-soft note carrying the estimates disclaimer.
+### SIDE-A generating card
+Ink spine, stock-capped title, cassette with two spools (one spinning),
+`MM:SS` mono tape counter ticking the real elapsed wait, narration lines,
+and an abort control that kills the in-flight plan request. It owns the
+honest wait: elapsed time and in-progress narration, never faked per-day
+completion. `role="status"`, `aria-live="polite"`.
 
-### Verdict slip (`.tt-verdict`)
-The only raised refusal in the world: white, the Sheet shadow,
-`1.35rem 1.5rem 1.45rem`. Exists only when the budget is refused — one
-display-600 vermilion line, solver message and alternatives as body copy and
-ruled rows. It reports; it does not apologise and offers no retry styling.
+### Day sides (`.mx-rs-day`)
+Card-ink head: hand day number (`1.6rem`), mono weekday (`UNPLACED` when the
+solver could not place it), mono measures (`6 STOPS · 11 H 30 MIN`) pushed
+right. Tracks share one ruled list — a meal is a stop that happens at an
+hour — each a `2.25rem / 1fr / auto` row: faint mono number, Barlow 600
+place with soft note and mono flag stamps (`HELD 40 MIN`), tabular hour at
+the margin or `—` with its reason. Rework controls ride the foot in the
+standard button voices.
 
-### Partner stubs (`.tw-stub`, `.tt-stay__link`)
-Visibly external coupons riding the wallet: white, 1px rule-strong border,
-radius 0, `0.9rem 1rem`, `margin-top: 1rem`. Links are navy 600 to real
-destinations (Google Hotels with hotel + city in the query; a ride-search
-query beside the fuel estimator) — `_blank`, `nofollow noopener`, each
-labelled external, never a quote. Stay links speak in mono uppercase
-(`.7rem`, +0.1em, navy). One `.tw-disclosure` per wallet (`.78rem`,
-ink-soft, 62ch): live prices open elsewhere, estimates are worked from the
-entered total, TripTribe may earn a fee on outward stay links. The stay list
-leads with its caveat — figures are worked out, never quoted — and an empty
-shortlist names the city rather than showing a bare heading.
+### Fare ledger and balance
+Always visible, argued never asserted. A 2px ink rule caps the balance band
+(mono `1.75rem` figure, soft note); the split lists stay/food/doings/getting
+about with mono tabular figures right. Only when the arithmetic demands it,
+one signed sentence: a positive remainder is unattributed by the solver, a
+negative one means the split is over-stated. `Budget.breakdown` is the only
+source of a per-category figure — without it the foot shows the total and
+the remainder only. The verdict box (2px accent border, accent line, card
+ground, `role="alert"`) exists only when the budget is refused.
+
+### Partner stubs, calculator, hand-off
+- **Stubs:** stay links and the cab quote are square outbound links
+  (`_blank`, `nofollow noopener`, labelled external with an arrow glyph),
+  never prices. The stay list leads with its caveat; an empty shortlist
+  names the city rather than showing a bare heading.
+- **Road-trip calculator:** four visitor-named figures (distance, mileage,
+  fuel price, tolls); the sheet does the arithmetic, prints `—` until all
+  four are named. Nothing there is a quote.
+- **Hand-off:** email field plus send control in the sheet's own ruled
+  vocabulary; send states (sent, sending, refused) report in soft ink. The
+  balance band closes every sleeve: city · days · estimated total, then the
+  estimates note and the stay-links fee line.
 
 ### Inputs / Fields
-No box: transparent fill, a 1px ink bottom rule only, `0.25rem 0 0.5rem`
-padding, mono label above at `0.66rem` / +0.14em uppercase in faint ink. City
-is display 600 (a place name is a name); days and budget are mono 600 tabular
-with a navy ₹ affix. Placeholders are faint ink at full opacity — never
-greyed. Hints are faint `0.78rem`, replaced by the error line when refused.
-Spin buttons are removed globally.
+Plan entries are ruled baselines (transparent, 2px ink rule, square);
+condition cells and auth fields are 1px line boxes on card/stock. Labels are
+mono uppercase; placeholders hold full opacity in the 85% ink mix; spin
+buttons are removed globally. `aria-invalid` earns a 2px accent rule (auth)
+or an accent message (plan) — and only then.
 
-### Closing band (`.tt-close`)
-The last line: 2px ink rule, display closing line, faint fine print under its
-own hairline. It carries no gutter of its own — always wrapped in
-`.tt-page` / `.tt-rail`, never returned bare.
+### Navigation
+The strip: hand wordmark (`1.75rem`), mono `TT/ROUTE` ref, standard and
+quiet buttons, 44px targets, ink focus rings, wrapping flex. The colophon:
+hand mark, mono ref, 75ch soft note, mono contact line, mono legal line.
+The auth segment is a two-cell mono-numbered tab pair; the selected tab is
+an ink fill with a stock label.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** print coupons white on the `#faf8f2` ground. One white, one ground.
-- **Do** spend navy on the issue, the tabs, and reference/data marks only.
-- **Do** price every fare figure in carbon red on white or pressed grounds.
-- **Do** tear day coupons on the 2px dashed perforation under navy tabs.
-- **Do** separate the rest with hairlines, and cap headings and the ledger
-  with the 2px ink rule.
-- **Do** keep corners at 0px and figures in mono with `tabular-nums`.
-- **Do** argue a number: breakdown, total, and the signed remainder when they
-  disagree. Print `—` with a reason before a plausible number.
-- **Do** format the currency the payload names (`Budget.currency`,
-  `city.Currency`) and fall back to ₹ — never apply a rate the repo holds.
-- **Do** gate blocks on data that exists, never on a field the solver hasn't
-  gathered. Render the payload; blank the gap.
-- **Do** carry the estimates disclaimer on every surface showing a plan, and
-  one affiliate disclosure per wallet.
-- **Do** keep the hand-off on the sheet in the sheet's own hairline
-  vocabulary, and report a failed send in faint ink — never vermilion.
+- **Do** print card stock on the `#f4f1e6` ground, ruled with the ink lines.
+  One stock, one card, one ink.
+- **Do** spend ink on what acts and names, pencil on what is tentative, red
+  on the stripe and the refusal.
+- **Do** keep corners at 0px and every time and figure in tabular mono,
+  right-aligned in its column.
+- **Do** stamp the gap: `—` with a reason, `UNPLACED`, the solver-does-not-
+  gather line — before a plausible anything.
+- **Do** argue a number: breakdown, total, and the signed remainder when
+  they disagree. No `Budget.breakdown`, no invented split.
+- **Do** cost in the payload's currency (`Budget.currency`,
+  `city.Currency`), worked from the entered total — never a rate the repo
+  holds.
+- **Do** carry the estimates note on the dub block and every plan surface,
+  one affiliate disclosure per wallet, and the cab-search disclosure beside
+  its stub.
+- **Do** admit only a real destination photograph to the plate; leave the
+  pin off otherwise.
+- **Do** keep `/search` a permanent redirect to `/plan` and the canonical
+  tag on `/plan`.
 
 ### Don't:
-- **Don't** use vermilion for anything but a refused value, or on any ground
-  but sheet stock.
-- **Don't** put a band tint under a coupon, a control, or a stub. Bands live
-  inside the landing map drawing.
-- **Don't** add a radius, a gradient, glass, an emoji, a tab switcher for
-  days, or a stepper for three entries.
-- **Don't** add a second shadow or lift the issued wallet. Flat, ruled,
-  perforated.
+- **Don't** use TDK red for anything but the stripe, the sheet edge, and a
+  refused value.
+- **Don't** add a radius, a gradient, a shadow, glass, an emoji, a tab
+  switcher for days, or a stepper for three entries.
+- **Don't** invent a figure, a currency, a quote, an arrival, or a
+  photograph the solver didn't return. Stubs link out; they never print
+  prices.
+- **Don't** fake the wait: no per-day completion, no narration ahead of the
+  planner, no completion state the request hasn't reached.
 - **Don't** invent proof — no testimonials, ratings, counts, or press
   (PRODUCT.md: zero proof assets exist).
-- **Don't** invent a figure, a currency, a quote, or an arrival the solver
-  didn't return. External stubs link out; they never print prices.
 - **Don't** restyle the landing hero distortion block. Fixed by owner
   instruction — a boundary, not a precedent.
-- **Don't** treat this file as enforced. daisyUI and Tailwind remain
-  installed; nothing stops the next route from reaching past the tokens. Read
-  this file before writing a route, and when the code disagrees, report the
+- **Don't** treat this file as enforced. Tooling and tokens remain
+  installed; nothing stops the next route from reaching past them. Read this
+  file before writing a route, and when the code disagrees, report the
   code — don't copy it.
 
 ### Drift carried, not canonized
-- `--tt-vermilion-wash` is declared in `:root` and used by nothing. It is a
-  dead token, not an available colour.
+- The landing body (`screens/Hero.tsx`, 72 `tt-` references) and the
+  city-article pages (`app/cities`, `app/best-places-to-visit-in`) still
+  render the old ticket-wallet `tt-*` system pending a later pass. It is the
+  old world, not an available alternative.
+- `--tt-vermilion-wash` is dead: zero declarations, zero references
+  repo-wide. It is not an available colour.
+- The email hand-off draft is untouched: the `triptribe-itinerary` Resend
+  template exists for preview/manual sends only, and
+  `frontend/src/server/domain/mail.ts` still speaks the old map-stock /
+  vermilion / prussian language in its comments. Code-rendered mail is the
+  shipping path.

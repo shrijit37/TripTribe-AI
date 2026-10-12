@@ -3,28 +3,11 @@
 import { sum } from "@/lib/money";
 import type { PlanPayload } from "@/lib/types";
 
-/**
- * The hotel shortlist for the plan Result is already holding.
- *
- * It used to read the plan off the router's location state, which every
- * component in the tree could read without consuming it. The App Router
- * substitute is a one-shot `sessionStorage` claim, and two components
- * claiming it independently meant whichever mounted second got nothing —
- * Result showed the itinerary and this showed "No hotel data available" for
- * the very same plan. So the plan is passed down from the one component that
- * claims it.
- *
- * The rows are ruled rather than tiled. A shortlist that costs money is a list
- * to be compared down a column, not a row of posters, and every figure in it
- * is a worked estimate — which is why the caveat sits above the list instead
- * of under a badge.
- */
 const HotelSection = ({
     plan,
     unit,
 }: {
     plan: PlanPayload;
-    /** The currency the payload itself names, already reduced to a unit. */
     unit: string;
 }) => {
     const hotels = Array.isArray(plan.hotels) ? plan.hotels : [];
@@ -32,7 +15,7 @@ const HotelSection = ({
 
     if (!hotels.length) {
         return (
-            <p className="tt-stay__none">
+            <p className="mx-rs-stay__caveat">
                 No stay was worked out for {where} inside the figure you
                 entered. That is a gap in the sheet, not a recommendation —
                 nothing here is booked.
@@ -41,49 +24,58 @@ const HotelSection = ({
     }
 
     return (
-        <div className="tt-stay">
-            <p className="tt-stay__caveat">
+        <div>
+            <p className="mx-rs-stay__caveat">
                 Every figure below is worked out from the total you entered, not
                 quoted from a booking site. Treat them as a shortlist to check,
                 never as rates to rely on.
             </p>
-            <ol className="tt-stay__list">
+            <ol className="mx-rs-stay__list">
                 {hotels.map((hotel) => (
-                    <li className="tt-stay__item" key={hotel.placeId ?? hotel.hotelName}>
-                        <div className="tt-stay__main">
-                            <h4 className="tt-stay__name">{hotel.hotelName}</h4>
+                    <li className="mx-rs-stay__item" key={hotel.placeId ?? hotel.hotelName}>
+                        <div className="mx-rs-stay__main">
+                            <h4 className="mx-rs-stay__name">{hotel.hotelName}</h4>
                             {hotel.location ? (
-                                <p className="tt-stay__where">{hotel.location}</p>
+                                <p className="mx-rs-stay__where">{hotel.location}</p>
                             ) : null}
                         </div>
-                        <a
-                            className="tt-stay__link"
-                            href={`https://www.google.com/travel/hotels?q=${encodeURIComponent(`${hotel.hotelName} ${plan.city?.name ?? ""}`.trim())}`}
-                            target="_blank"
-                            rel="nofollow noopener"
-                        >
-                            Check live price · opens Google Hotels
-                        </a>
-                        <span className="tt-stay__figures">
+                        <span className="mx-rs-stay__figures">
                             {hotel.rating ? (
-                                <span className="tt-stay__figure">
-                                    <span className="tt-stay__figureKey">RATING</span>
+                                <span>
+                                    <span className="mx-rs-stay__figurekey">
+                                        RATING
+                                    </span>
                                     {hotel.rating}
                                 </span>
                             ) : null}
                             {hotel.prices ? (
-                                <span className="tt-stay__figure">
-                                    <span className="tt-stay__figureKey">
+                                <span>
+                                    <span className="mx-rs-stay__figurekey">
                                         A NIGHT
                                     </span>
                                     {sum(unit, hotel.prices)}
                                 </span>
                             ) : null}
                         </span>
+                        <a
+                            className="mx-rs-link"
+                            href={`https://www.google.com/travel/hotels?q=${encodeURIComponent(`${hotel.hotelName} ${plan.city?.name ?? ""}`.trim())}`}
+                            target="_blank"
+                            rel="nofollow noopener"
+                        >
+                            Check live price · opens Google Hotels{" "}
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                <path
+                                    d="M2 6h7M6.5 3 9.5 6 6.5 9"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="square"
+                                />
+                            </svg>
+                        </a>
                     </li>
                 ))}
             </ol>
-            <p className="tw-disclosure">Live prices open on Google Hotels in a new tab. Figures above are estimates worked from your total; TripTribe may earn a fee on outward stay links.</p>
+            <p className="mx-rs-disclosure">Live prices open on Google Hotels in a new tab. Figures above are estimates worked from your total; TripTribe may earn a fee on outward stay links.</p>
         </div>
     );
 };

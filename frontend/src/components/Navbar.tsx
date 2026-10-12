@@ -6,36 +6,35 @@ import AccountDrawer from "@/components/AccountDrawer";
 import { useAppSelector } from "@/store";
 
 /**
- * The supplement's running head. `Sign in` routes to `/auth`; the account drawer
- * replaces the daisyUI drawer that used to hang off an avatar here.
+ * The mixtape's running head: an inlay strip with the hand-lettered wordmark,
+ * a mono route ref, and the two standing actions. `Sign in` routes to `/auth`;
+ * the account drawer opens over the page for signed-in travellers.
  */
 const Navbar = () => {
   const router = useRouter();
   const [accountOpen, setAccountOpen] = useState(false);
   const userInfo = useAppSelector((s) => s.auth.userInfo);
 
-  const openAccount = () => setAccountOpen(true);
-
   return (
     <>
-      <nav className="tt-nav">
+      <nav className="mx-strip" aria-label="TripTribe">
         <button
           type="button"
-          className="tt-nav__mark"
+          className="mx-strip__mark"
           onClick={() => router.push("/")}
           aria-label="TripTribe, home"
         >
-          <span className="tt-nav__wordmark">TripTribe</span>
-          <span className="tt-nav__ref" aria-hidden="true">
+          <span className="mx-strip__wordmark">TripTribe</span>
+          <span className="mx-strip__ref" aria-hidden="true">
             TT/ROUTE
           </span>
         </button>
 
-        <div className="tt-nav__actions">
+        <div className="mx-strip__actions">
           <button
             type="button"
-            className="tt-nav__link"
-            onClick={() => router.push("/search")}
+            className="mx-strip__btn"
+            onClick={() => router.push("/plan")}
           >
             Plan a trip
           </button>
@@ -43,8 +42,8 @@ const Navbar = () => {
           {userInfo ? (
             <button
               type="button"
-              className="tt-nav__link tt-nav__link--quiet"
-              onClick={openAccount}
+              className="mx-strip__btn mx-strip__btn--quiet"
+              onClick={() => setAccountOpen(true)}
               aria-haspopup="dialog"
             >
               Account
@@ -52,7 +51,7 @@ const Navbar = () => {
           ) : (
             <button
               type="button"
-              className="tt-nav__link tt-nav__link--quiet"
+              className="mx-strip__btn mx-strip__btn--quiet"
               onClick={() => router.push("/auth")}
             >
               Sign in

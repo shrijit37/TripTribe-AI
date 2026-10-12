@@ -1,0 +1,139 @@
+/* The mixtape's running head and colophon. Navbar + footer only: square
+   corners, ballpoint ink on stock, one ruled hairline each. Tokens come from
+   mx-plan.css; nothing here redefines them. */
+
+.mx-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--mx-stock);
+  border-bottom: 1px solid var(--mx-line);
+}
+
+.mx-strip__mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--mx-ink);
+  cursor: pointer;
+}
+
+.mx-strip__wordmark {
+  font-family: var(--mx-hand);
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: var(--mx-ink);
+}
+
+.mx-strip__ref {
+  font-family: var(--mx-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--mx-ink-soft);
+}
+
+.mx-strip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.mx-strip__btn {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  background: var(--mx-card);
+  border: 1px solid var(--mx-ink);
+  border-radius: 0;
+  color: var(--mx-ink);
+  font-family: var(--mx-body);
+  font-size: 1rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.mx-strip__btn--quiet {
+  background: transparent;
+  border-color: var(--mx-line);
+}
+
+.mx-strip__mark:focus-visible,
+.mx-strip__btn:focus-visible,
+.mx-colophon__contact:focus-visible {
+  outline: 3px solid var(--mx-ink);
+  outline-offset: 2px;
+}
+
+.mx-colophon {
+  background: var(--mx-stock);
+  border-top: 1px solid var(--mx-line);
+  color: var(--mx-ink);
+}
+
+.mx-colophon__inner {
+  max-width: 75ch;
+  padding: 1.5rem 1rem 2rem;
+  margin: 0 auto;
+}
+
+.mx-colophon__mark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.mx-colophon__wordmark {
+  font-family: var(--mx-hand);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.mx-colophon__ref {
+  font-family: var(--mx-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--mx-ink-soft);
+}
+
+.mx-colophon__note {
+  max-width: 75ch;
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--mx-ink-soft);
+}
+
+.mx-colophon__contact {
+  display: inline-block;
+  min-height: 44px;
+  margin-top: 0.5rem;
+  line-height: 44px;
+  font-family: var(--mx-mono);
+  font-size: 0.875rem;
+  color: var(--mx-ink);
+}
+
+.mx-colophon__legal {
+  margin: 0.5rem 0 0;
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  color: var(--mx-ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-strip *,
+  .mx-colophon * {
+    animation: none;
+    transition: none;
+  }
+}

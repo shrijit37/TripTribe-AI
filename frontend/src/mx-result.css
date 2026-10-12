@@ -1,0 +1,779 @@
+/* The result box set: sleeve header, fare ledger, day sides, arrival, notes,
+   stay shortlist, balance and hand-off. Tokens and hand faces come from
+   mx-plan.css; nothing here redefines them. Ruled rows throughout, square
+   corners, one red reserved for refused values. */
+
+.mx-rs-page {
+  background: var(--mx-stock);
+  color: var(--mx-ink);
+  font-family: var(--mx-body);
+  border-top: 4px solid var(--mx-accent);
+}
+
+.mx-rs-wrap {
+  max-width: 75ch;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+.mx-rs-layout {
+  display: block;
+}
+
+@media (min-width: 60rem) {
+  .mx-rs-layout {
+    display: grid;
+    grid-template-columns: 1fr 9rem;
+    gap: 2rem;
+    align-items: start;
+  }
+}
+
+/* Sleeve header: the plate, the hand-lettered name, the lede, the facts. */
+
+.mx-rs-sleeve {
+  border: 1px solid var(--mx-line);
+  background: var(--mx-card);
+  border-radius: 0;
+}
+
+.mx-rs-plate {
+  margin: 0;
+  border-bottom: 1px solid var(--mx-line);
+}
+
+.mx-rs-plate img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.mx-rs-sleeve__body {
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.mx-rs-city {
+  font-family: var(--mx-hand);
+  font-weight: 700;
+  font-size: clamp(2.75rem, 8vw, 4.5rem);
+  line-height: 1;
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+.mx-rs-lede {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  max-width: 75ch;
+  color: var(--mx-ink);
+  margin: 0.75rem 0 0;
+}
+
+.mx-rs-facts {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--mx-line);
+}
+
+.mx-rs-facts__row {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--mx-line-soft);
+}
+
+.mx-rs-facts__key {
+  flex: 0 0 8rem;
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mx-ink-soft);
+}
+
+.mx-rs-facts__val {
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+/* Ledger + sections share one ruled grammar. */
+
+.mx-rs-section {
+  margin-top: 2rem;
+  border: 1px solid var(--mx-line);
+  background: var(--mx-card);
+  border-radius: 0;
+  padding: 1.25rem;
+}
+
+.mx-rs-section__title {
+  font-family: var(--mx-hand2);
+  font-weight: 400;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+.mx-rs-balance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 2px solid var(--mx-ink);
+  border-bottom: 1px solid var(--mx-line);
+}
+
+.mx-rs-balance__figure {
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.75rem;
+  color: var(--mx-ink);
+}
+
+.mx-rs-balance__note {
+  color: var(--mx-ink-soft);
+  font-size: 0.95rem;
+  margin: 0;
+  max-width: 75ch;
+}
+
+.mx-rs-verdict {
+  margin-top: 1rem;
+  border: 2px solid var(--mx-accent);
+  border-radius: 0;
+  padding: 0.9rem 1rem;
+  color: var(--mx-accent);
+  background: var(--mx-card);
+}
+
+.mx-rs-verdict p {
+  margin: 0;
+  max-width: 75ch;
+}
+
+.mx-rs-verdict p + p {
+  margin-top: 0.5rem;
+}
+
+.mx-rs-verdict__line {
+  font-weight: 600;
+}
+
+.mx-rs-split {
+  margin: 1rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--mx-line);
+}
+
+.mx-rs-split__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--mx-line-soft);
+}
+
+.mx-rs-split__key {
+  color: var(--mx-ink-soft);
+}
+
+.mx-rs-split__val {
+  margin: 0;
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--mx-ink);
+}
+
+.mx-rs-plain {
+  color: var(--mx-ink-soft);
+  line-height: 1.6;
+  max-width: 75ch;
+  margin: 0.9rem 0 0;
+}
+
+.mx-rs-plain--signed {
+  color: var(--mx-ink);
+}
+
+/* Day sides run top to bottom, never tabs. */
+
+.mx-rs-days {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.mx-rs-day {
+  border: 1px solid var(--mx-line);
+  border-radius: 0;
+  background: var(--mx-stock);
+  scroll-margin-top: 1rem;
+}
+
+.mx-rs-day + .mx-rs-day {
+  margin-top: 1.25rem;
+}
+
+.mx-rs-day__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.9rem;
+  padding: 0.7rem 1rem;
+  background: var(--mx-ink);
+  color: var(--mx-stock);
+}
+
+.mx-rs-day__no {
+  font-family: var(--mx-hand);
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.mx-rs-day__weekday {
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.mx-rs-day__measures {
+  margin-left: auto;
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mx-rs-tracks {
+  list-style: none;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+.mx-rs-track {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--mx-line-soft);
+}
+
+.mx-rs-track:last-child {
+  border-bottom: 0;
+}
+
+.mx-rs-track__no {
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  color: var(--mx-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.mx-rs-track__main {
+  min-width: 0;
+}
+
+.mx-rs-track__place {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--mx-ink);
+  max-width: 75ch;
+}
+
+.mx-rs-track__note {
+  margin: 0.2rem 0 0;
+  color: var(--mx-ink-soft);
+  line-height: 1.55;
+  max-width: 75ch;
+}
+
+.mx-rs-track__flag {
+  margin: 0.2rem 0 0;
+  font-family: var(--mx-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--mx-ink-soft);
+}
+
+.mx-rs-track__hour {
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--mx-ink);
+  font-size: 0.85rem;
+}
+
+.mx-rs-tag {
+  display: inline-block;
+  font-family: var(--mx-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--mx-line);
+  border-radius: 0;
+  padding: 0.1rem 0.4rem;
+  margin-right: 0.5rem;
+  color: var(--mx-ink-soft);
+}
+
+.mx-rs-day__rework {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem 1rem;
+  border-top: 1px solid var(--mx-line-soft);
+}
+
+/* Controls: real buttons and inputs, 44px targets, ballpoint rings. */
+
+.mx-rs-btn {
+  appearance: none;
+  border: 2px solid var(--mx-ink);
+  border-radius: 0;
+  background: var(--mx-stock);
+  color: var(--mx-ink);
+  font-family: var(--mx-body);
+  font-weight: 600;
+  font-size: 1rem;
+  min-height: 44px;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+}
+
+.mx-rs-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mx-rs-btn--primary {
+  background: var(--mx-ink);
+  color: var(--mx-stock);
+}
+
+.mx-rs-status {
+  margin: 0.75rem 0 0;
+  color: var(--mx-ink-soft);
+  max-width: 75ch;
+}
+
+/* Sticky side index: navigation, not animation, so it stays under
+   reduced-motion. */
+
+.mx-rs-index {
+  display: none;
+}
+
+@media (min-width: 60rem) {
+  .mx-rs-index {
+    display: block;
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--mx-line);
+    border-radius: 0;
+    background: var(--mx-card);
+    padding: 0.75rem;
+  }
+
+  .mx-rs-index__title {
+    font-family: var(--mx-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--mx-ink-soft);
+    margin: 0 0 0.5rem;
+  }
+
+  .mx-rs-index ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mx-rs-index a {
+    display: block;
+    min-height: 44px;
+    line-height: 44px;
+    font-family: var(--mx-mono);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--mx-ink-soft);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    padding-left: 0.6rem;
+  }
+
+  .mx-rs-index a[aria-current="true"] {
+    color: var(--mx-ink);
+    border-left-color: var(--mx-ink);
+    font-weight: 600;
+  }
+}
+
+/* Arrival: gated rows, cab stub, fuel arithmetic. */
+
+.mx-rs-reach {
+  margin: 1rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--mx-line);
+}
+
+.mx-rs-reach__row {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--mx-line-soft);
+}
+
+.mx-rs-reach__mode {
+  flex: 0 0 6rem;
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mx-ink-soft);
+}
+
+.mx-rs-reach__name {
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+.mx-rs-reach__detail {
+  display: block;
+  color: var(--mx-ink-soft);
+  font-size: 0.9rem;
+}
+
+.mx-rs-stub {
+  margin-top: 1.25rem;
+  border: 1px dashed var(--mx-line);
+  border-radius: 0;
+  padding: 0.9rem 1rem;
+}
+
+.mx-rs-stub__title {
+  font-family: var(--mx-hand2);
+  font-size: 1.4rem;
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+.mx-rs-stub p {
+  margin: 0.4rem 0 0;
+  color: var(--mx-ink-soft);
+  max-width: 75ch;
+}
+
+.mx-rs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  color: var(--mx-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mx-rs-link svg {
+  flex: 0 0 auto;
+  stroke: currentColor;
+}
+
+.mx-rs-disclosure {
+  font-size: 0.85rem;
+  color: var(--mx-ink-soft);
+  max-width: 75ch;
+}
+
+.mx-rs-calc {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--mx-line);
+  padding-top: 1rem;
+}
+
+.mx-rs-calc__title {
+  font-family: var(--mx-hand2);
+  font-size: 1.4rem;
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+.mx-rs-calc__note {
+  margin: 0.3rem 0 0;
+  color: var(--mx-ink-soft);
+  max-width: 75ch;
+}
+
+.mx-rs-calc__fields {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+@media (min-width: 40rem) {
+  .mx-rs-calc__fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.mx-rs-field {
+  display: block;
+}
+
+.mx-rs-field__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: var(--mx-ink);
+}
+
+.mx-rs-field__input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mx-rs-field__input input {
+  min-height: 44px;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--mx-line);
+  border-radius: 0;
+  background: var(--mx-stock);
+  color: var(--mx-ink);
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.mx-rs-field__suffix {
+  font-size: 0.85rem;
+  color: var(--mx-ink-soft);
+  white-space: nowrap;
+}
+
+.mx-rs-calc__out {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0.7rem 0;
+  border-top: 2px solid var(--mx-ink);
+}
+
+.mx-rs-calc__outkey {
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--mx-ink-soft);
+}
+
+.mx-rs-calc__figure {
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: var(--mx-ink);
+}
+
+/* Tips, stay, balance, hand-off, footnote, empty state. */
+
+.mx-rs-tips {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--mx-line);
+  counter-reset: mx-rs-tip;
+}
+
+.mx-rs-tip {
+  counter-increment: mx-rs-tip;
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--mx-line-soft);
+  color: var(--mx-ink);
+  line-height: 1.55;
+  max-width: 75ch;
+}
+
+.mx-rs-tip::before {
+  content: counter(mx-rs-tip, decimal-leading-zero);
+  font-family: var(--mx-mono);
+  font-size: 0.75rem;
+  color: var(--mx-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.mx-rs-stay__caveat {
+  margin: 0.9rem 0 0;
+  color: var(--mx-ink-soft);
+  line-height: 1.6;
+  max-width: 75ch;
+}
+
+.mx-rs-stay__list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--mx-line);
+}
+
+.mx-rs-stay__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--mx-line-soft);
+}
+
+.mx-rs-stay__main {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.mx-rs-stay__name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--mx-ink);
+}
+
+.mx-rs-stay__where {
+  margin: 0.15rem 0 0;
+  color: var(--mx-ink-soft);
+  font-size: 0.92rem;
+}
+
+.mx-rs-stay__figures {
+  display: flex;
+  gap: 1.25rem;
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--mx-ink);
+}
+
+.mx-rs-stay__figurekey {
+  color: var(--mx-ink-soft);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  margin-right: 0.4rem;
+}
+
+.mx-rs-balanceband {
+  margin-top: 2rem;
+  border-top: 2px solid var(--mx-ink);
+  padding-top: 0.9rem;
+}
+
+.mx-rs-balanceband__line {
+  font-family: var(--mx-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: var(--mx-ink);
+  margin: 0;
+}
+
+.mx-rs-balanceband__note {
+  color: var(--mx-ink-soft);
+  line-height: 1.6;
+  max-width: 75ch;
+  margin: 0.6rem 0 0;
+  font-size: 0.95rem;
+}
+
+.mx-rs-handoff__hint {
+  color: var(--mx-ink-soft);
+  max-width: 75ch;
+  margin: 0.6rem 0 0;
+  line-height: 1.6;
+}
+
+.mx-rs-handoff__run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.mx-rs-footnote {
+  margin-top: 2rem;
+  border-top: 1px solid var(--mx-line);
+  padding-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--mx-ink-soft);
+  max-width: 75ch;
+}
+
+.mx-rs-footnote p {
+  margin: 0;
+}
+
+.mx-rs-footnote p + p {
+  margin-top: 0.4rem;
+}
+
+.mx-rs-empty {
+  border: 1px solid var(--mx-line);
+  border-radius: 0;
+  background: var(--mx-card);
+  padding: 2.5rem 1.5rem;
+  text-align: left;
+}
+
+.mx-rs-empty__line {
+  font-family: var(--mx-hand);
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--mx-ink);
+}
+
+.mx-rs-empty__fine {
+  color: var(--mx-ink-soft);
+  margin: 0.6rem 0 1.25rem;
+  max-width: 75ch;
+}
+
+.mx-rs-page :focus-visible {
+  outline: 3px solid var(--mx-ink);
+  outline-offset: 2px;
+}
+
+.mx-rs-page input::placeholder {
+  color: color-mix(in srgb, var(--mx-ink) 85%, var(--mx-stock));
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-rs-page *,
+  .mx-rs-page *::before,
+  .mx-rs-page *::after {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
