@@ -59,19 +59,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # Infisical is the single source of truth for every key. The frontend
-      # key lives in the frontend project (pinned by .infisical.json);
-      # GH secrets must not duplicate it, or the two silently drift.
-      - name: Fetch frontend keys from Infisical
-        uses: Infisical/secrets-action@v1.0.18
-        with:
-          method: universal
-          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
-          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
-          project-id: 9541bd35-aa6f-4719-b663-ec7ec99b8073
-          env-slug: prod
-          domain: https://secrets.shrijit.tech
-          export-type: env
+      # Doppler is the single source of truth for every key. The browser-side
+      # Places key lives in `platform`/`prd` as TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY
+      # (distinct from the server key TRIPTRIBE_GOOGLE_PLACES_API_KEY); GH
+      # secrets must not duplicate it, or the two silently drift.
+      - uses: dopplerhq/cli-action@v4
+      - name: Fetch frontend keys from Doppler
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          set -euo pipefail
+          val=$(doppler secrets get TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY --plain --silent)
+          [ -n "$val" ] || { echo "TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY empty in Doppler" >&2; exit 1; }
+          echo "VITE_GOOGLE_PLACES_API_KEY=$val" >> "$GITHUB_ENV"
       # One image. The API is a route handler in this app, so there is no
       # second image to build, pull, configure or point Dokploy at — and no way
       # for the two to disagree about a URL again. The previous build baked
@@ -103,42 +103,30 @@ jobs:
       SHA: ${{ needs.build.outputs.sha }}
       APP_ID: ${{ vars.DOKPLOY_WEB_APP_ID }}
     steps:
-      # `shrijit-esdk`, not the frontend project the build job reads: the
-      # app's own keys live here (README, `scripts/infisical-env.sh`). Reading
-      # the frontend project instead would silently point the server at the
-      # autocomplete key instead of the Places key.
+      # The app's own keys (server Places key, Mongo URI, OpenAI key/model)
+      # live in Doppler `platform`/`prd` under the `TRIPTRIBE_` prefix. The
+      # `TRIPTRIBE_` filter is the check that matters: the config holds every
+      # other product's keys too, and none of those values should be in this
+      # job's environment even briefly.
       #
-      # A read-only service token, not the machine identity the build job uses:
-      # that identity is not a member of esdk, and adding it would hand the
-      # build read access to every other product in the vault. The build job's
-      # frontend fetch is unaffected — that identity still only sees the
-      # frontend project.
-      #
-      # The token is what scopes this fetch, not the URL: this Infisical
-      # version resolves the project from the bearer token, and a service
-      # token is already bound to one project and one environment.
-      # `workspaceId` is here to say which project is meant — read it as a
-      # comment, not as a check. The `TRIPTRIBE_` filter is the check that
-      # matters: the vault holds 53 keys across eight other products, and none
-      # of those values should be in this job's environment even briefly.
-      # (`DOKPLOY_API_KEY` lives in that same vault and is already a repo
-      # secret here, so the token widens nothing this job could not read.)
-      - name: Fetch app keys from Infisical (shrijit-esdk, prod)
+      # The service token scopes this fetch to one project + config; the
+      # browser-side key the build job reads is deliberately a different key
+      # (TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY), not this server key.
+      - uses: dopplerhq/cli-action@v4
+      - name: Fetch app keys from Doppler (TRIPTRIBE_*)
         env:
-          INFISICAL_ESDK_TOKEN: ${{ secrets.INFISICAL_ESDK_TOKEN }}
-          WORKSPACE: 1a39a192-cf29-4ec9-812f-94c35cce34f2
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           set -euo pipefail
-          payload=$(curl -fsS -H "Authorization: Bearer $INFISICAL_ESDK_TOKEN" \
-            "https://secrets.shrijit.tech/api/v3/secrets/raw?workspaceId=$WORKSPACE&envSlug=prod&secretPath=/&recursive=false")
-          count=$(printf '%s' "$payload" | jq -r '[.secrets[] | select(.secretKey | startswith("TRIPTRIBE_"))] | length')
-          [ "$count" -gt 0 ] || { echo "esdk prod returned no TRIPTRIBE_* keys" >&2; exit 1; }
+          payload=$(doppler secrets download --no-file --format json --silent)
+          count=$(printf '%s' "$payload" | jq -r '[to_entries[] | select(.key | startswith("TRIPTRIBE_"))] | length')
+          [ "$count" -gt 0 ] || { echo "Doppler prd returned no TRIPTRIBE_* keys" >&2; exit 1; }
           # `::add-mask::` is a workflow command and goes to stdout; putting it
           # in $GITHUB_ENV makes the runner parse it as KEY=value and fail the
           # step with "Unable to process file command 'env'".
-          printf '%s' "$payload" | jq -r '.secrets[] | select(.secretKey | startswith("TRIPTRIBE_")) | "::add-mask::\(.secretValue)"'
-          printf '%s' "$payload" | jq -r '.secrets[] | select(.secretKey | startswith("TRIPTRIBE_")) | "\(.secretKey)=\(.secretValue)"' >> "$GITHUB_ENV"
-          echo "fetched $count TRIPTRIBE_* keys from esdk prod"
+          printf '%s' "$payload" | jq -r 'to_entries[] | select(.key | startswith("TRIPTRIBE_")) | "::add-mask::\(.value)"'
+          printf '%s' "$payload" | jq -r 'to_entries[] | select(.key | startswith("TRIPTRIBE_")) | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+          echo "fetched $count TRIPTRIBE_* keys from Doppler prd"
       # Dokploy authenticates GHCR pulls with a long-lived pull token kept
       # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
       # it expires after the job and silently breaks every later pull.
@@ -151,10 +139,10 @@ jobs:
       # there. The public session endpoint is the only correct value now that
       # the backend and the web app are one process.
       #
-      # `RESEND_*` are deliberately absent: they do not exist in Infisical prod,
-      # and a reference Dokploy cannot resolve aborts the deployment. The email
-      # hand-off is documented as degrading without them, so the app degrades
-      # instead of the deploy.
+      # `RESEND_*` are deliberately absent: they do not exist in the Doppler
+      # config, and a reference Dokploy cannot resolve aborts the deployment. The
+      # email hand-off is documented as degrading without them, so the app
+      # degrades instead of the deploy.
       # One application, one environment block.
       #
       # `AUTH_URL` used to point at `http://app-copy-mobile-transmitter-zblo2d:8080`
@@ -163,7 +151,7 @@ jobs:
       # there. The public session endpoint is the only correct value now that
       # the backend and the web app are one process.
       #
-      # Values are resolved here rather than left as `${vault.infisical-prod.X}}`
+      # Values are resolved here rather than left as `${vault.<provider>.X}}`
       # references. Two separate faults came out of those references: Dokploy
       # aborts at `Initializing deployment` on a key missing from prod (three
       # deploys in a row — 395b1df, 522c265, 7a4de4c — returned success here and
@@ -174,7 +162,7 @@ jobs:
       # `RESEND_*` are deliberately absent: those keys do not exist in any
       # environment, and the email hand-off is documented as degrading without
       # them, so the app degrades instead of the deploy.
-      - name: Re-assert Dokploy env (Infisical sync wipes app env)
+      - name: Re-assert Dokploy env (provider self-sync wipes app env)
         run: |
           post_env() {
             curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
@@ -190,14 +178,14 @@ jobs:
             "${TRIPTRIBE_GOOGLE_PLACES_API_KEY:-}" "${TRIPTRIBE_GOOGLE_PLACES_API_KEY:-}" \
             "${TRIPTRIBE_GOOGLE_SEARCH_KEY:-}" "$SHA")
           # Guarded before the write, and against the string about to be POSTed:
-          # an empty value means Infisical prod does not have the key, an
+          # an empty value means the Doppler config does not have the key, an
           # unresolved reference means this step regressed to the form that
           # shipped a container which could not reach its database. Either one
           # wipes the app env on a *successful* deploy, so refuse instead.
           printf '%s\n' "$ENV" | grep -qE '^[A-Z_0-9]+=' \
             || { echo "env template is empty or malformed" >&2; exit 1; }
           if printf '%s\n' "$ENV" | grep -qE '^[A-Z_0-9]+=$|\$\{'; then
-            echo "Infisical prod has no value for a key the template needs — refusing to overwrite the app env" >&2
+            echo "Doppler prd has no value for a key the template needs — refusing to overwrite the app env" >&2
             exit 1
           fi
           jq -n --arg id "$APP_ID" --arg env "$ENV" \
