@@ -4,27 +4,37 @@
  * The Express backend grew a dozen `process.env` reads scattered across
  * controllers and services, so "which keys does this deployment have?" was only
  * answerable by grepping. This module is the single answer: it names every
- * variable, says whether it is required, and gives the /api/health route
+ * variable, says whether it is required, and gives the health route
  * something honest to report.
  *
  * Two rules, and they pull in opposite directions:
  *
  * 1. Missing keys must NOT crash the app. PRODUCT.md's promise is that the
  *    product boots degraded and says which capability is missing, rather than
- *    showing a stack trace. So nothing here throws.
+ *    showing a stack trace. So nothing here throws at import time.
  * 2. Missing keys must NOT be silently ignored. A capability that cannot run
  *    reports `missing("GOOGLE_PLACES_API_KEY")` and the caller decides: the
  *    solver returns `PLACES_NOT_CONFIGURED` (503), the narrator drops its prose
  *    and the plan still renders.
  *
- * `required: true` means "the app cannot serve a single plan without this" —
- * MONGO_URI is the only one, because without a database nothing can be saved
- * and the health route cannot answer.
+ * The database and auth moved from MongoDB + a shared Better Auth hub to the
+ * fleet Supabase project. SUPABASE_URL and SUPABASE_PUBLISHABLE are public
+ * values and ship with safe baked-in fallbacks; only the service-role
+ * SUPABASE_SECRET is required, and it is read at request time (never baked into
+ * the client bundle or the image).
  */
+
+/** Public, safe-to-commit defaults for the fleet Supabase gateway. */
+export const SUPABASE_URL_FALLBACK =
+  "https://supabase.shrijit.tech/rjrynmjugsxuytpotfma";
+export const SUPABASE_PUBLISHABLE_FALLBACK =
+  "sb_publishable_gB-4dti01NmMggaCj-o2cY-YsmWkw2_SxAiBHKaIoYQ_CyNbUZzt";
 
 /** Names of every variable, as a union, so a typo is a compile error. */
 export type EnvKey =
-  | "MONGO_URI"
+  | "SUPABASE_URL"
+  | "SUPABASE_PUBLISHABLE"
+  | "SUPABASE_SECRET"
   | "GOOGLE_PLACES_API_KEY"
   | "GOOGLE_ROUTES_API_KEY"
   | "GOOGLE_CUSTOM_SEARCH_API_KEY"
@@ -32,7 +42,6 @@ export type EnvKey =
   | "OPENAI_BASE_URL"
   | "OPENAI_MODEL"
   | "NARRATOR_MODEL"
-  | "AUTH_URL"
   | "RESEND_API_KEY"
   | "RESEND_FROM"
   | "APP_VERSION"
@@ -46,7 +55,15 @@ export type EnvKey =
  * fallback at all; `fallback` documents what happens when it is absent.
  */
 export const ENV_SPEC = {
-  MONGO_URI: { required: true, fallback: "no database — nothing can be saved" },
+  SUPABASE_URL: { required: false, fallback: SUPABASE_URL_FALLBACK },
+  SUPABASE_PUBLISHABLE: {
+    required: false,
+    fallback: "bundled fleet publishable (anon) key",
+  },
+  SUPABASE_SECRET: {
+    required: true,
+    fallback: "no database writes — service role key missing",
+  },
   GOOGLE_PLACES_API_KEY: {
     required: false,
     fallback: "solver returns PLACES_NOT_CONFIGURED (503)",
@@ -73,7 +90,6 @@ export const ENV_SPEC = {
     fallback: "google/gemini-2.0-flash-lite-001",
   },
   NARRATOR_MODEL: { required: false, fallback: "OPENAI_MODEL" },
-  AUTH_URL: { required: false, fallback: "https://auth.shrijit.tech" },
   RESEND_API_KEY: {
     required: false,
     fallback: "email hand-off is unavailable",
@@ -112,7 +128,7 @@ export const optional = (key: EnvKey): string | null =>
 
 /**
  * The value, or a thrown error naming the variable. Use only where there is no
- * degraded mode — today that is `MONGO_URI` and nowhere else.
+ * degraded mode — today that is `SUPABASE_SECRET` and nowhere else.
  */
 export function required(key: EnvKey): string {
   const value = trimmed(process.env[key]);
@@ -123,6 +139,12 @@ export function required(key: EnvKey): string {
   }
   return value;
 }
+
+/** Public values with baked-in safe fallbacks, for server and client setup. */
+export const supabaseUrl = (): string =>
+  optional("SUPABASE_URL") ?? SUPABASE_URL_FALLBACK;
+export const supabasePublishable = (): string =>
+  optional("SUPABASE_PUBLISHABLE") ?? SUPABASE_PUBLISHABLE_FALLBACK;
 
 /** A positive integer variable, or the given default. */
 export function timeoutMs(key: EnvKey, fallback: number): number {
@@ -145,9 +167,9 @@ export function degradedCapabilities(): EnvKey[] {
 }
 
 /**
- * Whether a variable that must be present is present. Only MONGO_URI today;
- * this exists so the health route can fail rather than silently degrade on a
- * database it cannot reach.
+ * Whether a variable that must be present is present. Only SUPABASE_SECRET
+ * today; this exists so the health route can fail rather than silently
+ * degrade on a database it cannot write to.
  */
 export function unsatisfied(): EnvKey[] {
   return (Object.keys(ENV_SPEC) as EnvKey[]).filter(

@@ -1,5 +1,4 @@
 import "server-only";
-import type { ObjectId } from "mongodb";
 import type { ComposedResponse } from "@/server/domain/compose";
 import type { EnrichedPlace } from "@/server/domain/places/client";
 
@@ -23,7 +22,7 @@ export interface RecentEntry {
 }
 
 export interface UserDoc {
-  _id?: ObjectId;
+  _id?: string;
   authId: string;
   email: string;
   fname: string;
@@ -38,7 +37,7 @@ export interface UserDoc {
 
 /** One generated trip. Stored in the `itenaries` collection. */
 export interface TripDoc {
-  _id?: ObjectId;
+  _id?: string;
   /** Public id, shown in URLs and the email route. Never sequential. */
   uuid: string;
   city: string;
@@ -64,7 +63,7 @@ export interface TripDoc {
 }
 
 export interface PlaceCacheDoc {
-  _id?: ObjectId;
+  _id?: string;
   placeId: string;
   name: string;
   payload: EnrichedPlace;
