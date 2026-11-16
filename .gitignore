@@ -21,3 +21,9 @@ backend/node_modules/
 .beads/proxieddb/
 *.gate.lock*
 __pycache__/
+
+# dotenvx private keys — stored in GitHub Actions, never committed
+.env.keys
+
+# dotenvx-encrypted env — safe to commit; private key lives in GitHub Actions
+!.env.production

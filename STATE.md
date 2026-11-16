@@ -20,18 +20,16 @@ Places/Routes, signup and session from the shared Better Auth service on
 | web | `triptribe-web-acbq9o` | https://triptribe.shrijit.tech | `GET /api/health` |
 
 Image: `ghcr.io/shrijit37/triptribe-ai-web:<sha>`, multi-arch, built on GH
-Actions. Secrets from Infisical: `shrijit-esdk` prod (`1a39a192-…`) for the
-app's own keys (`TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`,
-`TRIPTRIBE_GOOGLE_*`), the frontend project for the build-time
-`VITE_GOOGLE_PLACES_API_KEY`. The deploy job reads the vault and posts
-**values**; `${{vault.infisical-prod.…}}` references do not reach the container
-and a reference Dokploy cannot resolve aborts the deployment at
-`Initializing deployment` while every API call still reports success
-(`TripTribe-AI-usl`).
+Actions. Secrets from Doppler: one config (`platform` / `prd`) for the app's
+own keys (`TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`, `TRIPTRIBE_GOOGLE_*`)
+and the build-time browser key `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY`. The
+deploy job reads the config and posts **values**; `${{vault.doppler-prod.…}}`
+references do not reach the container and a reference Dokploy cannot resolve
+aborts the deployment at `Initializing deployment` while every API call still
+reports success (`TripTribe-AI-usl`).
 
-The app's own keys are fetched with a read-only `shrijit-esdk` prod service
-token (`INFISICAL_ESDK_TOKEN`), not with the build job's `INFISICAL_CLIENT_ID`,
-which is deliberately not a member of that project — see `DEPLOY.md`.
+The app's own keys are fetched with a read-only, config-scoped Doppler service
+token (`DOPPLER_TOKEN`) — see `DEPLOY.md`.
 
 Two services used to exist, and having two is what caused most of the
 operational defects this change set out to fix:

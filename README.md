@@ -53,33 +53,32 @@ window whose slot is taken has no `role` and is still a meal.
 ## Prerequisites
 
 - Node.js 24 (Active LTS) and npm
-- Infisical CLI, logged in to the instance that owns the vault
-  (`infisical login`; the CLI profile already points at `https://secrets.shrijit.tech/api`)
+- Doppler CLI, logged in (`doppler login`; the local scripts read project
+  `platform`, config `prd`)
 - A local MongoDB (only `scripts/dev-mongo.sh` needs it)
 
-## Secrets: how Infisical is wired
+## Secrets: how Doppler is wired
 
-Secrets live in Infisical, not in `.env` files. Two separate Infisical
-projects are involved:
+Secrets live in Doppler, not in `.env` files. One config holds everything:
 
-| Project | ID | Holds |
+| Config | Scope | Holds |
 |---|---|---|
-| `shrijit-esdk` (prod env) | `1a39a192-cf29-4ec9-812f-94c35cce34f2` | `TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_KEY`, `TRIPTRIBE_GOOGLE_SEARCH_KEY` (plus `TRIPTRIBE_JWT_SECRET`, unused — see below) |
-| frontend project | `9541bd35-aa6f-4719-b663-ec7ec99b8073` (`.infisical.json`) | `VITE_GOOGLE_PLACES_API_KEY`, `VITE_GOOGLE_CUSTOM_SEARCH_API_KEY` |
+| `platform` / `prd` | workspace `deployment`, one flat namespace shared with the rest of the fleet, this app's keys under `TRIPTRIBE_` | `TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_KEY`, `TRIPTRIBE_GOOGLE_SEARCH_KEY`, `TRIPTRIBE_GOOGLE_PLACES_API_KEY` (plus `TRIPTRIBE_JWT_SECRET`, unused — see below) |
+| — (browser key, same config) | read at build time and inlined | `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY` |
 
-`.infisical.json` at the repo root pins only the frontend project; the CLI
-picks it up automatically when run from `frontend/`. The other vault is
-selected by `--projectId` instead, because the root `.infisical.json` would
-otherwise shadow it.
+There is no project-pin file in the repo. Every path selects the config
+explicitly: `doppler run -p platform -c prd` locally (`scripts/dev-frontend.sh`,
+`scripts/vault-env.sh`), and a read-only, config-scoped service token
+(`DOPPLER_TOKEN`) in CI.
 
 ### The name mapping
 
-Production never passes raw vault key names to the app. The deploy job
+Production never passes raw Doppler key names to the app. The deploy job
 (`.github/workflows/deploy.yml`) renames them when it writes the Dokploy app
-env, and `scripts/infisical-env.sh` applies the same renames locally, so the
+env, and `scripts/vault-env.sh` applies the same renames locally, so the
 code reads identical variable names in both environments.
 
-| Vault key | Env var the app reads | Read by |
+| Doppler key | Env var the app reads | Read by |
 |---|---|---|
 | `TRIPTRIBE_MONGO_URI` | `MONGO_URI` | `frontend/src/server/db/mongo.ts` |
 | `TRIPTRIBE_OPENAI_KEY` | `OPENAI_KEY` | `frontend/src/server/domain/narrate.ts` |
@@ -87,15 +86,15 @@ code reads identical variable names in both environments.
 | `TRIPTRIBE_GOOGLE_PLACES_API_KEY` | `GOOGLE_PLACES_API_KEY`, `GOOGLE_ROUTES_API_KEY` | `frontend/src/server/domain/places/` |
 | `TRIPTRIBE_RESEND_API_KEY` | `RESEND_API_KEY` | `frontend/src/server/domain/mail.ts` |
 | — (not a secret) | `AUTH_URL` — see below | `frontend/src/server/auth/session.ts` |
-| `VITE_GOOGLE_PLACES_API_KEY` | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` | `frontend/src/lib/maps.ts` |
+| `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY` | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` | `frontend/src/lib/maps.ts` |
 
 Secrets are injected as process env only — nothing is written to disk, and
 no script echoes a secret value.
 
-`TRIPTRIBE_JWT_SECRET` exists in the vault but nothing reads it: no code
+`TRIPTRIBE_JWT_SECRET` exists in Doppler but nothing reads it: no code
 references `JWT_SECRET`, and the deploy job never sets it. It is a leftover
 from the pre-Better-Auth setup, when this app issued its own JWTs. It is safe
-to remove from the vault.
+to remove from Doppler.
 
 ## Local development
 
@@ -105,7 +104,7 @@ Two terminals, or run them in the background:
 # 1. local MongoDB (data in ~/.local/share/triptribe-mongo)
 ./scripts/dev-mongo.sh
 
-# 2. the app on :3000, env from both Infisical projects
+# 2. the app on :3000, env from Doppler (`platform` / `prd`)
 ./scripts/dev-frontend.sh
 ```
 
@@ -161,7 +160,7 @@ a Dokploy swarm service name. It resolves only inside the prod swarm; from
 this workstation the name does not resolve and the public port is closed.
 Local runs therefore default to `mongodb://127.0.0.1:27017/triptribe_ai_local`
 so prod data is never written from a dev machine. Pass `--vault-mongo` to
-`scripts/infisical-env.sh` if you ever need the vault value verbatim (it
+`scripts/vault-env.sh` if you ever need the vault value verbatim (it
 will not connect from here).
 
 ## Known local/prod differences
@@ -180,19 +179,19 @@ will not connect from here).
   `OPENAI_BASE_URL` and `OPENAI_MODEL`, falling back to OpenRouter and
   `google/gemini-2.0-flash-lite-001` when unset. It currently points at the
   gateway `https://gateway.shrijit.tech/v1` with model `big-pickle`, sourced
-  from the vault as `TRIPTRIBE_OPENAI_BASE_URL` / `TRIPTRIBE_OPENAI_MODEL`.
-  Any OpenAI-compatible endpoint works; switching provider is a vault edit
+  from Doppler as `TRIPTRIBE_OPENAI_BASE_URL` / `TRIPTRIBE_OPENAI_MODEL`.
+  Any OpenAI-compatible endpoint works; switching provider is a Doppler edit
   plus a redeploy, with no code change. The narrator only writes descriptions
   for place ids the solver already chose — it cannot change the plan, so a
   model that wraps its output in prose degrades to un-narrated stops rather
   than breaking the route.
-- **Google keys expire.** The Places key in the vault expired once already
+- **Google keys expire.** The Places key in Doppler expired once already
   and silently broke autocomplete while everything else looked fine. Check
   the key with a Geocoding call before blaming the app; see Troubleshooting.
 - **Frontend build-time values.** `NEXT_PUBLIC_*` are inlined into the client
   bundle by `frontend/Dockerfile` at CI build time, so changing one requires a
-  rebuild. Both CI and local read the same Infisical frontend project
-  (`9541bd35-…`), so local and prod agree; `NEXT_PUBLIC_AUTH_URL` and
+  rebuild. Both CI and local read the same Doppler config (`platform`/`prd`),
+  so local and prod agree; `NEXT_PUBLIC_AUTH_URL` and
   `NEXT_PUBLIC_SITE_URL` are non-secret build args set inline in `deploy.yml`
   and must be kept in step with `frontend/.env.example`.
   Every other key is read at request time, never at build time — a missing key
@@ -207,20 +206,20 @@ this app has actually hit. `STATE.md` has the live topology.
 
 In short: push to `main`. CI builds one multi-arch image
 (`ghcr.io/shrijit37/triptribe-ai-web:<sha>`), re-asserts the Dokploy env
-(Infisical's own sync wipes it), redeploys the one app, and waits for
+(a vault-provider self-sync wipes it), redeploys the one app, and waits for
 `/api/health` to report **this** SHA as its `version` — health alone is not
 enough, because the previous container keeps serving while the new one starts.
 
-Every key comes from Infisical — none from GH secrets. GH secrets hold only the
-deploy credentials (`INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET`,
-`DOKPLOY_API_KEY`, `GHCR_PULL_TOKEN`). If you add a key, add it to Infisical
+Every key comes from Doppler — none from GH secrets. GH secrets hold only the
+deploy credentials (`DOPPLER_TOKEN`, `DOKPLOY_API_KEY`,
+`GHCR_PULL_TOKEN`). If you add a key, add it to Doppler
 and never to a GH secret: a duplicated key drifts, and a GH secret set but empty
 bakes an empty value into the image.
 
 ## Troubleshooting
 
-- **`infisical-env: export failed`** — run `infisical login`; the CLI profile
-  must target the instance that owns the vault.
+- **`vault-env: download failed`** — run `doppler login`; the CLI must be
+  authenticated against the workspace that owns `platform` / `prd`.
 - **`/api/health` returns 503** — the database is down. Check
   `~/.local/share/triptribe-mongo/log/mongod.log`. The body also lists every
   capability as `up` / `missing` / `estimated` / `skipped` / `unavailable`, so

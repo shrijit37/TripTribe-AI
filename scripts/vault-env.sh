@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Resolve TripTribe env vars from Infisical, mirroring production exactly.
+# Resolve TripTribe env vars from Doppler, mirroring production exactly.
 #
 # Production (Dokploy + .github/workflows/deploy.yml) does NOT hand the app
 # the raw vault key names. The deploy job maps the shared `TRIPTRIBE_*` vault
@@ -15,11 +15,11 @@
 # container see identically named variables. Secrets are only ever held in
 # process env: nothing is written to disk, nothing is echoed.
 #
-# Usage: source scripts/infisical-env.sh [--vault-mongo]
+# Usage: source scripts/vault-env.sh [--vault-mongo]
 #
 # Overridable:
-#   TRIPTRIBE_INFISICAL_PROJECT_ID  vault project (prod default)
-#   TRIPTRIBE_INFISICAL_ENV         environment slug (prod default)
+#   TRIPTRIBE_DOPPLER_PROJECT       Doppler project (platform default)
+#   TRIPTRIBE_DOPPLER_CONFIG        Doppler config (prd default)
 #   TRIPTRIBE_LOCAL_MONGO_URI       local database (default below)
 #   TRIPTRIBE_AUTH_URL              auth base URL for local runs
 #   --vault-mongo                   use the prod vault MONGO_URI (only
@@ -33,8 +33,8 @@
 #   RESEND_FROM                   <- TRIPTRIBE_RESEND_FROM
 #                                   reachable from inside the prod swarm)
 
-TRIPTRIBE_INFISICAL_PROJECT_ID="${TRIPTRIBE_INFISICAL_PROJECT_ID:-1a39a192-cf29-4ec9-812f-94c35cce34f2}"
-TRIPTRIBE_INFISICAL_ENV="${TRIPTRIBE_INFISICAL_ENV:-prod}"
+TRIPTRIBE_DOPPLER_PROJECT="${TRIPTRIBE_DOPPLER_PROJECT:-platform}"
+TRIPTRIBE_DOPPLER_CONFIG="${TRIPTRIBE_DOPPLER_CONFIG:-prd}"
 TRIPTRIBE_LOCAL_MONGO_URI="${TRIPTRIBE_LOCAL_MONGO_URI:-mongodb://127.0.0.1:27017/triptribe_ai_local}"
 # Prod points this at internal swarm DNS (http://app-copy-mobile-transmitter-zblo2d:8080).
 # That name does not resolve off the server; the public URL is the same service.
@@ -48,33 +48,34 @@ __triptribe_use_vault_mongo=false
 for __triptribe_arg in "$@"; do
   case "$__triptribe_arg" in
     --vault-mongo) __triptribe_use_vault_mongo=true ;;
-    *) echo "infisical-env: unknown argument: $__triptribe_arg" >&2; return 1 2>/dev/null || exit 1 ;;
+    *) echo "vault-env: unknown argument: $__triptribe_arg" >&2; return 1 2>/dev/null || exit 1 ;;
   esac
 done
 
-command -v infisical >/dev/null 2>&1 || {
-  echo "infisical-env: infisical CLI not found on PATH" >&2
+command -v doppler >/dev/null 2>&1 || {
+  echo "vault-env: doppler CLI not found on PATH" >&2
   return 1 2>/dev/null || exit 1
 }
 
 # Single API round trip, then read keys out of the JSON in memory.
 __triptribe_secrets="$(
-  infisical export \
-    --projectId="$TRIPTRIBE_INFISICAL_PROJECT_ID" \
-    --env="$TRIPTRIBE_INFISICAL_ENV" \
-    --format=json \
+  doppler secrets download \
+    -p "$TRIPTRIBE_DOPPLER_PROJECT" \
+    -c "$TRIPTRIBE_DOPPLER_CONFIG" \
+    --no-file \
+    --format json \
     --silent 2>/dev/null
 )" || {
-  echo "infisical-env: export failed for project $TRIPTRIBE_INFISICAL_PROJECT_ID" \
-    "env '$TRIPTRIBE_INFISICAL_ENV' — run 'infisical login', and confirm" \
-    "with 'infisical profile list' that the CLI targets the instance" \
-    "owning this vault" >&2
+  echo "vault-env: download failed for project $TRIPTRIBE_DOPPLER_PROJECT" \
+    "config '$TRIPTRIBE_DOPPLER_CONFIG' — run 'doppler login', and confirm" \
+    "with 'doppler configs' that the CLI is authenticated against the" \
+    "workspace owning this config" >&2
   return 1 2>/dev/null || exit 1
 }
 
 __triptribe_get() {
   printf '%s' "$__triptribe_secrets" |
-    jq -r --arg k "$1" 'map(select(.key == $k)) | .[-1].value // ""'
+    jq -r --arg k "$1" '.[$k] // ""'
 }
 
 MONGO_URI="$(__triptribe_get TRIPTRIBE_MONGO_URI)"
@@ -96,8 +97,8 @@ GOOGLE_ROUTES_API_KEY="$GOOGLE_PLACES_API_KEY"
 # both read as unrelated bugs otherwise.
 __triptribe_require() {
   if [ -z "$2" ]; then
-    echo "infisical-env: required vault key '$1' is missing or empty in" \
-      "$TRIPTRIBE_INFISICAL_PROJECT_ID/$TRIPTRIBE_INFISICAL_ENV" >&2
+    echo "vault-env: required vault key '$1' is missing or empty in" \
+      "$TRIPTRIBE_DOPPLER_PROJECT/$TRIPTRIBE_DOPPLER_CONFIG" >&2
     return 1
   fi
 }
@@ -107,7 +108,7 @@ __triptribe_require() {
 __triptribe_warn_placeholder() {
   case "$2" in
     REPLACE_ME*)
-      echo "infisical-env: $1 is a REPLACE_ME placeholder — features using" \
+      echo "vault-env: $1 is a REPLACE_ME placeholder — features using" \
         "it will fail at request time (prod degrades the same way)" >&2
       ;;
   esac
@@ -124,7 +125,7 @@ __triptribe_warn_placeholder GOOGLE_CUSTOM_SEARCH_API_KEY "$GOOGLE_CUSTOM_SEARCH
 # leaves the API up and only itinerary generation unconfigured, which matches
 # how the app degrades in production — so warn rather than exit.
 if [ -z "$GOOGLE_PLACES_API_KEY" ]; then
-  echo "infisical-env: TRIPTRIBE_GOOGLE_PLACES_API_KEY is missing — grounded" \
+  echo "vault-env: TRIPTRIBE_GOOGLE_PLACES_API_KEY is missing — grounded" \
     "itinerary generation will report 'not configured' at request time" >&2
 fi
 __triptribe_warn_placeholder GOOGLE_PLACES_API_KEY "$GOOGLE_PLACES_API_KEY"
@@ -134,7 +135,7 @@ __triptribe_warn_placeholder GOOGLE_PLACES_API_KEY "$GOOGLE_PLACES_API_KEY"
 # OpenRouter while looking configured.
 if [ -n "$OPENAI_BASE_URL" ] || [ -n "$OPENAI_MODEL" ]; then
   if [ -z "$OPENAI_BASE_URL" ] || [ -z "$OPENAI_MODEL" ]; then
-    echo "infisical-env: OPENAI_BASE_URL and OPENAI_MODEL must both be set" \
+    echo "vault-env: OPENAI_BASE_URL and OPENAI_MODEL must both be set" \
       "for a non-OpenRouter gateway; one alone was found" >&2
     return 1 2>/dev/null || exit 1
   fi
@@ -145,7 +146,7 @@ fi
 RESEND_API_KEY="$(__triptribe_get TRIPTRIBE_RESEND_API_KEY)"
 RESEND_FROM="$(__triptribe_get TRIPTRIBE_RESEND_FROM)"
 if [ -z "$RESEND_API_KEY" ]; then
-  echo "infisical-env: TRIPTRIBE_RESEND_API_KEY is missing — the email hand-off" \
+  echo "vault-env: TRIPTRIBE_RESEND_API_KEY is missing — the email hand-off" \
     "will report 'not available right now'" >&2
 fi
 
@@ -163,5 +164,5 @@ export MONGO_URI OPENAI_KEY GOOGLE_CUSTOM_SEARCH_API_KEY OPENAI_BASE_URL \
 
 unset __triptribe_secrets __triptribe_get __triptribe_use_vault_mongo __triptribe_arg \
   __triptribe_require __triptribe_warn_placeholder
-unset TRIPTRIBE_INFISICAL_PROJECT_ID TRIPTRIBE_INFISICAL_ENV \
+unset TRIPTRIBE_DOPPLER_PROJECT TRIPTRIBE_DOPPLER_CONFIG \
   TRIPTRIBE_LOCAL_MONGO_URI TRIPTRIBE_AUTH_URL

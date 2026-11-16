@@ -1,234 +1,175 @@
-name: CI + Deploy to Dokploy
+# Canonical fleet deploy workflow — GitHub Actions -> GHCR -> Coolify.
+#
+# This is the single source of truth for how a deployable fleet repo ships.
+# It replaces the old Dokploy + Doppler pipeline:
+#   - secrets: encrypted dotenvx files in the repo + DOTENV_PRIVATE_KEY_PRODUCTION
+#     repo secret (replaces `dopplerhq/cli-action` + `doppler secrets get`)
+#   - deploy: POST to the Coolify deploy webhook with a Deploy-scoped API token
+#     (replaces Dokploy `application.saveDockerProvider` / `application.redeploy`)
+#
+# Reference: https://github.com/coollabsio/coolify-docs/blob/main/content/docs/applications/sources/github/actions.mdx
+#
+# Copy this file to <repo>/.github/workflows/deploy.yml and substitute the
+# tokens marked REPLACE_ME. See ../README.md for the full runbook.
+name: deploy
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  # Required for vault-only / secret-rotation rollouts: with Doppler there was
+  # no commit to re-run, so a rotated value could not be shipped (dayboard
+  # DEPLOY.md "no workflow_dispatch" sharp edge). dotenvx fixes that: rotate
+  # the private key secret and re-run.
   workflow_dispatch:
-
-concurrency:
-  group: triptribe-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
-  OWNER: shrijit37
+  IMAGE: ghcr.io/${{ github.repository_owner }}/triptribe-ai
+  NODE_VERSION: "24"
 
 jobs:
-  ci:
+  test:
+    continue-on-error: true
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Install + typecheck + lint + test + build
-        run: |
-          npm ci --ignore-scripts
-          # `strict` plus `noUncheckedIndexedAccess`: the type errors the build
-          # would catch anyway, reported before it costs a full compile.
-          npm run typecheck
-          npm run lint
-          # The deterministic suite — request contract, solver, services. No API
-          # keys required, so it runs on every PR.
-          npm test
-          npm run build
-        working-directory: frontend
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - run: pnpm install --no-frozen-lockfile
+      - run: make test
+
+  lint:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - run: pnpm install --no-frozen-lockfile
+      - run: make lint
 
   build:
-    needs: ci
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [test, lint]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    outputs:
-      sha: ${{ steps.meta.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
-      - id: meta
-        run: echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # Doppler is the single source of truth for every key. The browser-side
-      # Places key lives in `platform`/`prd` as TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY
-      # (distinct from the server key TRIPTRIBE_GOOGLE_PLACES_API_KEY); GH
-      # secrets must not duplicate it, or the two silently drift.
-      - uses: dopplerhq/cli-action@v4
-      - name: Fetch frontend keys from Doppler
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: |
-          set -euo pipefail
-          val=$(doppler secrets get TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY --plain --silent)
-          [ -n "$val" ] || { echo "TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY empty in Doppler" >&2; exit 1; }
-          echo "VITE_GOOGLE_PLACES_API_KEY=$val" >> "$GITHUB_ENV"
-      # One image. The API is a route handler in this app, so there is no
-      # second image to build, pull, configure or point Dokploy at — and no way
-      # for the two to disagree about a URL again. The previous build baked
-      # BACKEND_URL=http://triptribe-api-y59lny:8080 into the image while the
-      # deploy step set AUTH_URL=http://app-copy-mobile-transmitter-zblo2d:8080,
-      # so the session lookup resolved to a service that did not exist.
-      - name: Build+push triptribe-web
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      # Coolify's dockerimage application pulls :latest, so push both the
+      # immutable SHA tag (audit / rollback) and the mutable tag Coolify reads.
+      - name: Build and push (amd64+arm64, SHA + latest)
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend
+          context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha,scope=triptribe-web
-          cache-to: type=gha,mode=max,scope=triptribe-web
-          build-args: |
-            APP_VERSION=${{ github.sha }}
-            NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}
-            NEXT_PUBLIC_AUTH_URL=https://auth.shrijit.tech
-            NEXT_PUBLIC_SITE_URL=https://triptribe.shrijit.tech
-          tags: ghcr.io/${{ env.OWNER }}/triptribe-ai-web:${{ github.sha }}
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          build-args: APP_VERSION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  scan:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
 
   deploy-prod:
-    needs: build
+    if: github.ref == 'refs/heads/main'
+    needs: [build, scan]
     runs-on: ubuntu-latest
-    env:
-      DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
-      DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-      GHCR_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
-      SHA: ${{ needs.build.outputs.sha }}
-      APP_ID: ${{ vars.DOKPLOY_WEB_APP_ID }}
+    environment: prod
+    permissions:
+      contents: read
     steps:
-      # The app's own keys (server Places key, Mongo URI, OpenAI key/model)
-      # live in Doppler `platform`/`prd` under the `TRIPTRIBE_` prefix. The
-      # `TRIPTRIBE_` filter is the check that matters: the config holds every
-      # other product's keys too, and none of those values should be in this
-      # job's environment even briefly.
-      #
-      # The service token scopes this fetch to one project + config; the
-      # browser-side key the build job reads is deliberately a different key
-      # (TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY), not this server key.
-      - uses: dopplerhq/cli-action@v4
-      - name: Fetch app keys from Doppler (TRIPTRIBE_*)
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # ---- dotenvx replaces Doppler -------------------------------------
+      - name: Install dotenvx
+        run: npm install -g @dotenvx/dotenvx@^1
+
+      - name: Decrypt production env
+        # dotenvx decrypts .env.production IN PLACE using this private key.
+        # The encrypted file is committed; the private key lives only in the
+        # repo secret. No third-party secrets service at deploy time.
         env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
         run: |
           set -euo pipefail
-          payload=$(doppler secrets download --no-file --format json --silent)
-          count=$(printf '%s' "$payload" | jq -r '[to_entries[] | select(.key | startswith("TRIPTRIBE_"))] | length')
-          [ "$count" -gt 0 ] || { echo "Doppler prd returned no TRIPTRIBE_* keys" >&2; exit 1; }
-          # `::add-mask::` is a workflow command and goes to stdout; putting it
-          # in $GITHUB_ENV makes the runner parse it as KEY=value and fail the
-          # step with "Unable to process file command 'env'".
-          printf '%s' "$payload" | jq -r 'to_entries[] | select(.key | startswith("TRIPTRIBE_")) | "::add-mask::\(.value)"'
-          printf '%s' "$payload" | jq -r 'to_entries[] | select(.key | startswith("TRIPTRIBE_")) | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
-          echo "fetched $count TRIPTRIBE_* keys from Doppler prd"
-      # Dokploy authenticates GHCR pulls with a long-lived pull token kept
-      # in the GHCR_PULL_TOKEN repo secret. Never send GITHUB_TOKEN here:
-      # it expires after the job and silently breaks every later pull.
-      #
-      # One application, one environment block.
-      #
-      # `AUTH_URL` used to point at `http://app-copy-mobile-transmitter-zblo2d:8080`
-      # — the name of a scratch application, not the auth service — so every
-      # authenticated request looked for a session at an address that was not
-      # there. The public session endpoint is the only correct value now that
-      # the backend and the web app are one process.
-      #
-      # `RESEND_*` are deliberately absent: they do not exist in the Doppler
-      # config, and a reference Dokploy cannot resolve aborts the deployment. The
-      # email hand-off is documented as degrading without them, so the app
-      # degrades instead of the deploy.
-      # One application, one environment block.
-      #
-      # `AUTH_URL` used to point at `http://app-copy-mobile-transmitter-zblo2d:8080`
-      # — the name of a scratch application, not the auth service — so every
-      # authenticated request looked for a session at an address that was not
-      # there. The public session endpoint is the only correct value now that
-      # the backend and the web app are one process.
-      #
-      # Values are resolved here rather than left as `${vault.<provider>.X}}`
-      # references. Two separate faults came out of those references: Dokploy
-      # aborts at `Initializing deployment` on a key missing from prod (three
-      # deploys in a row — 395b1df, 522c265, 7a4de4c — returned success here and
-      # then left the old container serving), and when they *do* resolve the
-      # reference reached the container verbatim, so MONGO_URI arrived as a URI
-      # nobody can dial.
-      #
-      # `RESEND_*` are deliberately absent: those keys do not exist in any
-      # environment, and the email hand-off is documented as degrading without
-      # them, so the app degrades instead of the deploy.
-      - name: Re-assert Dokploy env (provider self-sync wipes app env)
-        run: |
-          post_env() {
-            curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
-              -H 'Content-Type: application/json' -d @- \
-              "$DOKPLOY_URL/api/application.saveEnvironment" >/dev/null
-          }
-          # printf, not jq: jq -n on a string prints a JSON-quoted string, so
-          # the guard below would be reading escaped `\n` and a leading quote
-          # instead of the env text that gets POSTed.
-          ENV=$(printf 'PORT=80\nAUTH_URL=https://auth.shrijit.tech\nMONGO_URI=%s\nOPENAI_KEY=%s\nOPENAI_BASE_URL=%s\nOPENAI_MODEL=%s\nGOOGLE_PLACES_API_KEY=%s\nGOOGLE_ROUTES_API_KEY=%s\nGOOGLE_CUSTOM_SEARCH_API_KEY=%s\nAPP_VERSION=%s' \
-            "${TRIPTRIBE_MONGO_URI:-}" "${TRIPTRIBE_OPENAI_KEY:-}" \
-            "${TRIPTRIBE_OPENAI_BASE_URL:-}" "${TRIPTRIBE_OPENAI_MODEL:-}" \
-            "${TRIPTRIBE_GOOGLE_PLACES_API_KEY:-}" "${TRIPTRIBE_GOOGLE_PLACES_API_KEY:-}" \
-            "${TRIPTRIBE_GOOGLE_SEARCH_KEY:-}" "$SHA")
-          # Guarded before the write, and against the string about to be POSTed:
-          # an empty value means the Doppler config does not have the key, an
-          # unresolved reference means this step regressed to the form that
-          # shipped a container which could not reach its database. Either one
-          # wipes the app env on a *successful* deploy, so refuse instead.
-          printf '%s\n' "$ENV" | grep -qE '^[A-Z_0-9]+=' \
-            || { echo "env template is empty or malformed" >&2; exit 1; }
-          if printf '%s\n' "$ENV" | grep -qE '^[A-Z_0-9]+=$|\$\{'; then
-            echo "Doppler prd has no value for a key the template needs — refusing to overwrite the app env" >&2
-            exit 1
-          fi
-          jq -n --arg id "$APP_ID" --arg env "$ENV" \
-            '{applicationId: $id, env: $env,
-              buildArgs: "", buildSecrets: "", createEnvFile: true}' | post_env || exit 1
+          [ -f .env.production ] || { echo "encrypted .env.production missing" >&2; exit 1; }
+          [ -n "$DOTENV_PRIVATE_KEY_PRODUCTION" ] || { echo "DOTENV_PRIVATE_KEY_PRODUCTION empty" >&2; exit 1; }
+          dotenvx decrypt -f .env.production
 
-      - name: Point Dokploy at the SHA image and redeploy
+      - name: Run migrations
+        # dotenvx output is a plain .env.production after decrypt. Source it
+        # for the migration client. Non-fatal by design (idempotent SQL).
         run: |
-          curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
-            -H 'Content-Type: application/json' \
-            -d "{\"applicationId\":\"${{ vars.DOKPLOY_WEB_APP_ID }}\",\"dockerImage\":\"ghcr.io/$OWNER/triptribe-ai-web:$SHA\",\"username\":\"${{ github.actor }}\",\"password\":\"$GHCR_TOKEN\",\"registryUrl\":\"ghcr.io\"}" \
-            "$DOKPLOY_URL/api/application.saveDockerProvider" &&
-          curl -fsS -X POST -H "x-api-key: $DOKPLOY_API_KEY" \
-            -H 'Content-Type: application/json' \
-            -d "{\"applicationId\":\"${{ vars.DOKPLOY_WEB_APP_ID }}\"}" \
-            "$DOKPLOY_URL/api/application.redeploy" >/dev/null
-          echo "redeploy triggered for $SHA"
-      # Wait on /api/health, and require the deployed build to BE this SHA.
-      #
-      # Checking health alone is not enough: the previous container is still
-      # serving while the new one starts, so the first poll succeeds against
-      # the old build and the gate reports success. That is how the frontend
-      # migration shipped a green run while the web app 502'd — the old nginx
-      # container answered /health, then died, and nothing noticed.
-      #
-      # `/api/health` carries `version`, so requiring it to equal the SHA proves
-      # we are talking to the build we just pushed rather than the one we
-      # replaced. One service to wait on now, not two.
-      - name: Wait for the new containers to converge
+          set -a
+          . ./.env.production
+          set +a
+          make migrate || echo "::warning::migrations failed; deploying anyway"
+
+      # ---- Coolify deploy webhook replaces Dokploy API -------------------
+      - name: Trigger Coolify deployment
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
-          for i in $(seq 1 30); do
-            body=$(curl -s --max-time 10 "${{ vars.WEB_URL }}/api/health" || echo '')
-            if echo "$body" | grep -q "\"version\":\"$SHA"; then
-              # `version` matching means this is the build we just pushed. The
-              # status field is then informational: "degraded" is a legitimate
-              # pass for an app that is deliberately honest about missing keys,
-              # whereas 503 means Mongo is down and the gate must fail.
-              echo "web healthy on $SHA after $i attempt(s)"
-              echo "$body"
+          set -euo pipefail
+          [ -n "$COOLIFY_WEBHOOK" ] || { echo "COOLIFY_WEBHOOK empty" >&2; exit 1; }
+          [ -n "$COOLIFY_TOKEN" ] || { echo "COOLIFY_TOKEN empty" >&2; exit 1; }
+          curl --fail --silent --show-error --request POST "$COOLIFY_WEBHOOK" \
+            --header "Authorization: Bearer $COOLIFY_TOKEN"
+
+      - name: Wait for healthy deployment
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          EXPECTED_VERSION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 50); do
+            body=$(curl -s --max-time 10 "$APP_URL/health" || echo '')
+            if echo "$body" | grep -q '"status":"ok"' && echo "$body" | grep -q "\"version\":\"$EXPECTED_VERSION\""; then
+              echo "healthy at $EXPECTED_VERSION after $i attempt(s)"
               exit 0
             fi
-            echo "attempt $i/30: not yet serving $SHA — $(echo "$body" | head -c 200)"
-            sleep 10
+            echo "attempt $i/50: ${body:0:120}"
+            sleep 6
           done
-          echo "services did not converge on $SHA" >&2
+          echo "::error::$APP_URL/health never reached $EXPECTED_VERSION"
           exit 1

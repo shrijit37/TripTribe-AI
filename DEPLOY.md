@@ -16,8 +16,9 @@ Push to `main`. Nothing else.
 2. **`build`** — only on `push` to `refs/heads/main`. Multi-arch
    (`linux/amd64,linux/arm64`) image pushed as
    `ghcr.io/shrijit37/triptribe-ai-web:${{ github.sha }}`. Before the build it
-   pulls the frontend Infisical project with `Infisical/secrets-action@v1.0.18`
-   (`method: universal`, `export-type: env`) so the Places autocomplete key is a
+   reads the browser Places key from Doppler (`platform`/`prd`, key
+   `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY`, distinct from the server key) with
+   `doppler secrets get … --plain --silent` so the Places autocomplete key is a
    build arg rather than a GH secret.
 3. **`deploy-prod`** — `application.saveEnvironment`, then
    `application.saveDockerProvider` pointing at the SHA image, then
@@ -104,20 +105,19 @@ then died, and nothing noticed.
 
 ## Secrets
 
-Every app key comes from Infisical. **No app key is a GH secret.** A duplicated
+Every app key comes from Doppler. **No app key is a GH secret.** A duplicated
 key drifts, and a GH secret set-but-empty bakes an empty value into the image.
 
-Two Infisical projects (README):
+One Doppler config (README):
 
-| Project | ID | Holds |
+| Config | Scope | Holds |
 |---|---|---|
-| frontend project (pinned by `.infisical.json`, read in CI) | `9541bd35-aa6f-4719-b663-ec7ec99b8073`, env `prod`, domain `https://secrets.shrijit.tech` | `VITE_GOOGLE_PLACES_API_KEY`, `VITE_GOOGLE_CUSTOM_SEARCH_API_KEY` |
-| `shrijit-esdk`, prod env | `1a39a192-cf29-4ec9-812f-94c35cce34f2` | `TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`, `TRIPTRIBE_GOOGLE_PLACES_API_KEY`, `TRIPTRIBE_GOOGLE_SEARCH_KEY`, `TRIPTRIBE_JWT_SECRET` (dead) |
+| `platform` / `prd` | workspace `deployment`, one flat namespace shared with the rest of the fleet, keys prefixed per app (this app's under `TRIPTRIBE_`) | `TRIPTRIBE_MONGO_URI`, `TRIPTRIBE_OPENAI_*`, `TRIPTRIBE_GOOGLE_PLACES_API_KEY`, `TRIPTRIBE_GOOGLE_SEARCH_KEY`, `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY` (browser key, build arg), `TRIPTRIBE_JWT_SECRET` (dead) |
 
-Vault key → env var the app reads (the deploy job renames on write;
-`scripts/infisical-env.sh` applies the same renames locally):
+Doppler key → env var the app reads (the deploy job renames on write;
+`scripts/vault-env.sh` applies the same renames locally):
 
-| Vault key | App env var | Read by |
+| Doppler key | App env var | Read by |
 |---|---|---|
 | `TRIPTRIBE_MONGO_URI` | `MONGO_URI` | `src/server/db/mongo.ts` (only required key) |
 | `TRIPTRIBE_OPENAI_KEY` | `OPENAI_KEY` | `src/server/domain/narrate.ts` |
@@ -125,33 +125,36 @@ Vault key → env var the app reads (the deploy job renames on write;
 | `TRIPTRIBE_GOOGLE_PLACES_API_KEY` | `GOOGLE_PLACES_API_KEY` **and** `GOOGLE_ROUTES_API_KEY` | `src/server/domain/places/` |
 | `TRIPTRIBE_GOOGLE_SEARCH_KEY` | `GOOGLE_CUSTOM_SEARCH_API_KEY` | `src/app/api/plan/image/route.ts` |
 | — (not written) | `RESEND_API_KEY` / `RESEND_FROM` | `src/server/domain/mail.ts`, which degrades without them |
-| `VITE_GOOGLE_PLACES_API_KEY` | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` (build arg, **literal value**) | `src/lib/maps.ts` |
+| `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY` | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` (build arg, **literal value**) | `src/lib/maps.ts` |
 | — (not a secret) | `AUTH_URL`, `PORT`, `APP_VERSION` | written literally by the deploy job |
 
 **How values reach the container.** Two paths, and conflating them is the bug
 this doc exists to prevent:
 
-- **Server-side keys: values, read from the vault by the deploy job.** The job
-  reads `shrijit-esdk` prod with a read-only service token
-  (`INFISICAL_ESDK_TOKEN`, prod only — see the table below), keeps only the
-  `TRIPTRIBE_` keys out of a 53-key vault shared with eight other products,
-  builds the env block out of those values with `printf`, and POSTs *resolved
-  values* to `application.saveEnvironment`. Before the POST it refuses to
-  continue if any value the template needs is empty — an empty value means the
-  key is not in the vault, and overwriting the app env with a hole is how a
+- **Server-side keys: values, read from Doppler by the deploy job.** The job
+  runs `doppler secrets download --no-file --format json --silent` against
+  `platform`/`prd` with a read-only, config-scoped service token
+  (`DOPPLER_TOKEN` — see the table below), keeps only the `TRIPTRIBE_` keys out
+  of a config shared with eight other products, builds the env block out of
+  those values with `printf`, and POSTs *resolved values* to
+  `application.saveEnvironment`. Before the POST it refuses to continue if any
+  value the template needs is empty — an empty value means the config does not
+  have the key, and overwriting the app env with a hole is how a
   healthy-looking container ends up unable to reach its database.
 - **The Places autocomplete key: a literal value, inlined at build time.** It
-  is exported to the `build` job's environment from the *frontend* project and
-  interpolated into
+  is exported to the `build` job's environment from the same `platform`/`prd`
+  config, under `TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY`, and interpolated into
   `build-args: NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=${{ env.VITE_GOOGLE_PLACES_API_KEY }}`.
   Why: `NEXT_PUBLIC_*` is inlined into the client bundle by
   `frontend/Dockerfile` at build time, so it cannot be read from the container's
   env at all.
 
 **Vault references do not work here, and that is worth knowing.** The deploy
-job used to write each env line as the literal string
-`${{vault.infisical-prod.<KEY>}}` and let Dokploy resolve it. Both halves of
-that failed:
+job writes resolved values; it never leaves an env line as a literal
+`${{vault.doppler-prod.<KEY>}}` reference for Dokploy to resolve. Both ways that
+approached a reference failed before the Doppler cutover, under the old
+`infisical-prod` provider, and the mechanism `doppler-prod` exposes today is the
+same one:
 
 - Dokploy aborts at `Initializing deployment` with
   `Infisical: secret "TRIPTRIBE_RESEND_API_KEY" not found in environment "prod"`
@@ -174,40 +177,36 @@ into the image.
 ### Rotating a key
 
 - **Server-side key** (Mongo, OpenAI, Places/Routes, Search): edit it in
-  `shrijit-esdk` prod, then make CI re-assert the env. `application.saveEnvironment`
+  `platform`/`prd`, then make CI re-assert the env. `application.saveEnvironment`
   is re-run on every push to `main` and re-asserts the whole block rather than
-  a diff — Infisical's own sync wipes the app env, which is why the step exists.
-  To rotate without shipping code, apply the same block by hand through the
-  Dokploy UI or `application.saveEnvironment` and redeploy; the next push
-  re-derives the identical block from the vault.
-- **`VITE_GOOGLE_PLACES_API_KEY`**: same edit, but it is a build arg, so it needs
-  an image rebuild. Push (or re-run) a build; a bare env re-assert is not enough.
+  a diff — the vault provider's own sync wipes the app env, which is why the
+  step exists. To rotate without shipping code, apply the same block by hand
+  through the Dokploy UI or `application.saveEnvironment` and redeploy; the next
+  push re-derives the identical block from Doppler.
+- **`TRIPTRIBE_VITE_GOOGLE_PLACES_API_KEY`**: same edit, but it is a build arg, so
+  it needs an image rebuild. Push (or re-run) a build; a bare env re-assert is
+  not enough.
 - **`AUTH_URL`, `NEXT_PUBLIC_SITE_URL`, `PORT`, `APP_VERSION`**: set inline in
   `.github/workflows/deploy.yml` / `frontend/Dockerfile`. Keep them in step with
   `frontend/.env.example`.
-`TRIPTRIBE_JWT_SECRET` exists in the vault and nothing reads it — leftover from
+`TRIPTRIBE_JWT_SECRET` exists in Doppler and nothing reads it — leftover from
 the pre-Better-Auth setup. Safe to remove.
 
-**Service tokens to delete.** `Infisical/secrets-action@v1.0.18` cannot take a
-service token, so `deploy-prod` fetches with `curl` — which did. Several
-read-only `shrijit-esdk` prod tokens named `github-actions-deploy-prod` and
-`probe-parse` were minted on 2026-10-12 while wiring this up; only one of the
-former is the live `INFISICAL_ESDK_TOKEN` secret, and the CLI has no
-list-or-revoke command, so the rest have to go through the Infisical UI
-(project → Service Tokens). Keep exactly one `github-actions-deploy-prod`; the
-value in GitHub is the one to preserve, so compare before deleting.
-the pre-Better-Auth setup. Safe to remove.
+**Infisical service tokens to retire (history).** The Doppler cutover removed
+the `Infisical/secrets-action@v1.0.18` wiring and the `INFISICAL_ESDK_TOKEN`
+secret from the workflows, but the tokens that wiring used still exist in
+Infisical until that provider is decommissioned. Several read-only
+`shrijit-esdk` prod tokens named `github-actions-deploy-prod` and `probe-parse`
+were minted on 2026-10-12 while it was built, and the CLI has no list-or-revoke
+command, so they have to be removed through the Infisical UI (project → Service
+Tokens). Delete them all — nothing in CI reads that project any more.
 
 ## Repo configuration
 
 Settings (Settings → Secrets and variables → Actions). These are deploy
 credentials, not app secrets.
 
-| `INFISICAL_CLIENT_ID` | secret | machine identity for the **frontend project** fetch in `build` — it is not a member of `shrijit-esdk` and must not be |
-| `INFISICAL_CLIENT_SECRET` | secret | same |
-| `INFISICAL_ESDK_TOKEN` | secret | read-only service token, `shrijit-esdk` prod only, for the `deploy-prod` fetch. `Infisical/secrets-action@v1.0.18` cannot take a service token (universal/oidc/aws-iam only), so the step curls `/api/v3/secrets/raw` itself and filters to `TRIPTRIBE_*`. |
-| `INFISICAL_CLIENT_ID` | secret | machine identity for both vault fetches — the frontend project in `build`, `shrijit-esdk` in `deploy-prod` |
-| `INFISICAL_CLIENT_SECRET` | secret | same |
+| `DOPPLER_TOKEN` | secret | read-only, config-scoped Doppler service token (project `platform`, config `prd`), used by both the `build` and `deploy-prod` fetches. Replaced `INFISICAL_CLIENT_ID` / `INFISICAL_CLIENT_SECRET` / `INFISICAL_ESDK_TOKEN`, all retired with the migration. |
 | `DOKPLOY_API_KEY` | secret | `x-api-key` on all three Dokploy calls |
 | `GHCR_PULL_TOKEN` | secret | Dokploy pulling from GHCR — **long-lived**, never `GITHUB_TOKEN`, which expires after the job and silently breaks every later pull |
 | `DOKPLOY_URL` | variable | base for `/api/application.*` |
@@ -231,9 +230,9 @@ stays `push`) rather than dispatching by hand.
 
 | Symptom | Cause |
 |---|---|
-| Every Dokploy call reports success, the health gate fails, and no new container exists | The deployment aborted at `Initializing deployment` — read `deployment.readLogs` for the application. `Infisical: secret "X" not found in environment "prod"` means the app env named a key the vault does not have; the old container keeps serving and the run still looks green. This is what `395b1df`, `522c265` and `7a4de4c` all were. |
-| `/api/health` answers, but `checks.mongo: "down"` | The container holds a literal `${vault.infisical-prod.…}` string instead of a URI. Write values, not references — see *How values reach the container*. |
-| `deploy-prod` fails at *Fetch app keys* with `403 ProjectMembershipNotFound` | The identity it authenticated with is not a member of the `shrijit-esdk` project. `INFISICAL_CLIENT_ID` is deliberately not: granting it esdk would give the `build` job every other product's secrets. The fetch uses `INFISICAL_ESDK_TOKEN`; if that secret is empty or revoked, mint a new read-only prod service token and `gh secret set INFISICAL_ESDK_TOKEN`. |
+| Every Dokploy call reports success, the health gate fails, and no new container exists | The deployment aborted at `Initializing deployment` — read `deployment.readLogs` for the application. `Infisical: secret "X" not found in environment "prod"` means the app env named a key the provider did not have; the old container keeps serving and the run still looks green. This is what `395b1df`, `522c265` and `7a4de4c` all were. Resolved by the Doppler cutover: the job writes resolved values, so no reference is left for Dokploy to fail on. |
+| `/api/health` answers, but `checks.mongo: "down"` | The container holds a literal `${vault.doppler-prod.…}` string instead of a URI. Write values, not references — see *How values reach the container*. The one real occurrence was Infisical-era and was resolved by the Doppler cutover. |
+| `deploy-prod` fails at *Fetch app keys* with `403 ProjectMembershipNotFound` | History, resolved by the Doppler cutover. The old identity authenticated against an Infisical project it was deliberately not a member of (`INFISICAL_CLIENT_ID` was not in `shrijit-esdk`, so the `build` job could not read every other product's secrets). Both jobs now fetch with the single `DOPPLER_TOKEN`, so there is no per-project membership left to get wrong. |
 | `services did not converge on $SHA`, while `/health` answers 200 with a stale `version` | `saveDockerProvider` returned 200 without applying. Real occurrence (`TripTribe-AI-usl`, cutover `395b1df`, run `38171315352`): image pushed, digest `sha256:a4fd85d5…`, both Dokploy calls "successful", container never rolled. `/health` returned the *old* shape `{"status":"ok","service":"triptribe-web","version":"081534e8…","checks":{"assets":"up"}}` and `/api/health` returned Express's `Cannot GET /api/health` — proof the previous image was still live. Production stayed on the last good image and the gate failed loudly instead of reporting a false green. |
 | Old image, but `/api/health` 404s with `Cannot GET /api/health` | Same condition seen from the other side: the retired Express backend is still fronting `/api/*` through the old `rewrites()` rule. `api.triptribe.shrijit.tech` is deliberately no longer deployed; its hostname stops resolving once the old web image is replaced. |
 | Every request 502s, `/api/health` never answers | The container bound Next's default 3000 while Dokploy routed to 80. `frontend/Dockerfile` sets `PORT=80` and `HOSTNAME=0.0.0.0` for exactly this reason. |
@@ -241,7 +240,7 @@ stays `push`) rather than dispatching by hand.
 | `/api/health` returns 503 with `checks.mongo: "down"` | Mongo unreachable. `status` becomes `degraded`; nothing else works. |
 | Autocomplete attaches but returns no suggestions, everything else looks fine | The Places key expired. It has already happened once. Check it directly: `curl -s "https://maps.googleapis.com/maps/api/geocode/json?address=London&key=$KEY" \| jq -r .status` → `OK` healthy, `REQUEST_DENIED` expired or not activated. `gen_204 … ERR_BLOCKED_BY_CLIENT` in the console is an adblocker — harmless. |
 | Dokploy redeploy fails to pull | `GHCR_PULL_TOKEN` expired, or `GITHUB_TOKEN` was used instead. It must be a long-lived classic PAT with `read:packages`. |
-| A capability silently wrong in production but fine locally | `NEXT_PUBLIC_*` changed in the vault without an image rebuild, or a `NEXT_PUBLIC_*` build arg in `deploy.yml` drifted from `frontend/.env.example`. They are inlined at build time; everything else is read at request time. |
+| A capability silently wrong in production but fine locally | `NEXT_PUBLIC_*` changed in Doppler without an image rebuild, or a `NEXT_PUBLIC_*` build arg in `deploy.yml` drifted from `frontend/.env.example`. They are inlined at build time; everything else is read at request time. |
 | `AUTH_URL` points at an internal swarm name, every authenticated request 401s | `AUTH_URL` must be `https://auth.shrijit.tech`. It used to be `http://app-copy-mobile-transmitter-zblo2d:8080` — a scratch application that did not exist — while the image separately baked `BACKEND_URL=http://triptribe-api-y59lny:8080`. One process makes that class of mismatch structurally impossible. |
 
 ## What goes in git (and what never does)
@@ -249,13 +248,12 @@ stays `push`) rather than dispatching by hand.
 In git:
 
 - `.github/workflows/deploy.yml`, `frontend/Dockerfile`, `docker-compose.yaml`
-- `.infisical.json` — the frontend **project id**, which is not a secret
 - `frontend/.env.example` — placeholders only (`your_google_places_api_key_here`)
 - `STATE.md` (live topology), `README.md` (secrets wiring), this file
 
 Never in git:
 
-- any Infisical value, `.env`, or exported secret file
+- any Doppler value, `.env`, or exported secret file
 - the Dokploy API key or the GHCR pull token — GH secrets only
 - `MONGO_URI` in any form; local runs default to
   `mongodb://127.0.0.1:27017/triptribe_ai_local` so prod data is never written
