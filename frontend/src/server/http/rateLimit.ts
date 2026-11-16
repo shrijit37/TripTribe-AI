@@ -28,9 +28,10 @@ const callerKey = async (namespace: string): Promise<string> => {
     forwarded?.split(",")[0]?.trim() || jar.get("x-real-ip") || "unknown";
   // Signed-in callers share a higher bucket keyed by bucket-kind, not by the
   // cookie's value — the value never belongs in a counter key.
-  const authed = (await cookies())
-    .toString()
-    .includes("better-auth.session_token");
+  const cookieHeader = (await cookies()).toString();
+  const authed =
+    cookieHeader.includes("sb-access-token") ||
+    cookieHeader.includes("better-auth.session_token");
   return `${namespace}:${authed ? "user" : "anon"}:${ip}`;
 };
 

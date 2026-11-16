@@ -9,7 +9,7 @@ import { GET as health } from "@/app/health/route";
  * deploy gate looping over both of them to decide whether a two-container
  * deploy had converged. One route, one answer, one thing to wait on.
  *
- * The result is 503 when Mongo is unreachable and 200 otherwise. `status` is
+ * The result is 503 when Supabase is unreachable and 200 otherwise. `status` is
  * "ok" or "degraded"; "degraded" is a legitimate healthy state for an app that
  * is built to run with keys missing, and it is not the same as being down.
  */

@@ -21,8 +21,10 @@ COPY . .
 
 # NEXT_PUBLIC_* values are inlined into the client bundle at build time, so
 # they are fixed here and nowhere else.
-# NEXT_PUBLIC_AUTH_URL is the shared Better Auth service that issues the
-# .shrijit.tech session cookie (src/lib/auth-client.ts).
+# NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY point the
+# browser SDK at the fleet Supabase gateway (src/lib/supabaseClient.ts). Both
+# are public values with safe baked-in defaults; the service-role key is NOT a
+# build arg — it is read server-side at request time from the container env.
 # NEXT_PUBLIC_GOOGLE_PLACES_API_KEY powers the city autocomplete.
 #
 # There is no NEXT_PUBLIC_ITENARY_API_URL any more, and no BACKEND_URL or
@@ -30,11 +32,13 @@ COPY . .
 # routes are in this image, so the browser calls this same origin, and the
 # server calls `buildCityCatalogue` in-process instead of over HTTP.
 ARG NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=
-ARG NEXT_PUBLIC_AUTH_URL=https://auth.shrijit.tech
+ARG NEXT_PUBLIC_SUPABASE_URL=https://supabase.shrijit.tech/rjrynmjugsxuytpotfma
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_gB-4dti01NmMggaCj-o2cY-YsmWkw2_SxAiBHKaIoYQ_CyNbUZzt
 ARG NEXT_PUBLIC_SITE_URL=https://triptribe.shrijit.tech
 
 ENV NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=$NEXT_PUBLIC_GOOGLE_PLACES_API_KEY \
-    NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL \
+    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 # The server-only keys are read at request time, never at build time, so they
@@ -43,6 +47,12 @@ ENV NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=$NEXT_PUBLIC_GOOGLE_PLACES_API_KEY \
 RUN npm run build
 
 FROM node:24-bookworm-slim AS runtime
+
+# curl powers the Coolify container healthcheck (/health); bookworm-slim does
+# not ship it. Install in the runtime stage only, and drop the apt lists after.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
